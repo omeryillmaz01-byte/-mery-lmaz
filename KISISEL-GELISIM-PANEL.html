@@ -151,6 +151,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <button class="tab" data-v="zikir">📿 Zikir</button>
     <button class="tab" data-v="kuran">📖 Kuran</button>
     <button class="tab" data-v="islami">🕌 İslami Takvim</button>
+    <button class="tab" data-v="maneviyat">✨ Maneviyat</button>
     <button class="tab" data-v="butce">💰 Bütçe</button>
     <button class="tab" data-v="hedef">🎯 Hedefler</button>
     <button class="tab" data-v="analiz">📊 Analiz</button>
@@ -246,6 +247,62 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
       <div class="mut" id="kuranDurum" style="margin-top:10px;font-size:13px"></div>
     </div>
     <div id="kuranAyetler"></div>
+  </section>
+  <!-- MANEVIYAT -->
+  <section class="view" id="v-maneviyat">
+    <div class="card" style="background:linear-gradient(135deg,#0e7c4a,#1a9968);color:#fff;border:none">
+      <div style="font-size:11px;font-weight:800;letter-spacing:2px;opacity:.9">🤲 GÜNÜN DUASI & AYETİ</div>
+      <div id="gununDua" style="font-size:18px;line-height:1.7;margin-top:10px;font-weight:600"></div>
+      <div id="gununAyet" style="font-size:14px;line-height:1.7;margin-top:14px;opacity:.95;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)"></div>
+    </div>
+    <div class="grid g3">
+      <div class="card">
+        <h2 style="margin:0 0 10px">📓 Şükür Günlüğü</h2>
+        <p class="mut" style="margin:0 0 10px;font-size:12px">Bugün şükrettiğin 3 şey:</p>
+        <input id="sukur1" placeholder="1. ..." style="margin-bottom:6px">
+        <input id="sukur2" placeholder="2. ..." style="margin-bottom:6px">
+        <input id="sukur3" placeholder="3. ..." style="margin-bottom:8px">
+        <button class="btn" onclick="sukurKaydet()" style="width:100%">💾 Kaydet</button>
+        <div class="mut" id="sukurDurum" style="margin-top:8px;font-size:12px"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 10px">🤝 Sadaka Takibi</h2>
+        <div class="row" style="gap:6px"><input id="sadakaTutar" type="number" placeholder="Tutar (₺)"><button class="btn" onclick="sadakaEkle()">+</button></div>
+        <div style="margin-top:10px;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;text-align:center">
+          <div class="mut" style="font-size:11px">Bu ay toplam</div>
+          <div id="sadakaToplam" style="font-size:22px;font-weight:800;color:#0e9f6e">0 ₺</div>
+        </div>
+        <div id="sadakaListe" style="margin-top:8px;font-size:12px;max-height:120px;overflow:auto"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 10px">🧘 Bugün Nasılım?</h2>
+        <p class="mut" style="margin:0 0 8px;font-size:12px">Ruh halini seç (aylık haritan oluşur):</p>
+        <div id="moodSec" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+        <div id="moodHarita" style="display:grid;grid-template-columns:repeat(15,1fr);gap:3px;margin-top:10px"></div>
+        <div class="mut" style="font-size:10px;margin-top:6px">Son 30 günün ruh hali ısı haritası</div>
+      </div>
+    </div>
+    <div class="grid g3">
+      <div class="card">
+        <h2 style="margin:0 0 10px">📖 Ezber Takibi</h2>
+        <p class="mut" style="margin:0 0 8px;font-size:12px">Ezberlemek istediğin sure/dua:</p>
+        <div class="row" style="gap:6px;margin-bottom:8px"><input id="ezberAd" placeholder="örn. Yâsîn, Tebareke..."><button class="btn" onclick="ezberEkle()">+</button></div>
+        <div id="ezberListe"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 10px">🎂 Önemli Günler</h2>
+        <p class="mut" style="margin:0 0 8px;font-size:12px">Doğum günü/yıldönümleri:</p>
+        <div class="row" style="gap:6px;margin-bottom:6px"><input id="onemliAd" placeholder="örn. Annem"><input id="onemliTarih" type="date" style="max-width:140px"></div>
+        <button class="btn" onclick="onemliEkle()" style="width:100%;margin-bottom:8px">+ Ekle</button>
+        <div id="onemliListe"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 10px">🎬 Günün İlhamı</h2>
+        <p class="mut" style="margin:0 0 8px;font-size:12px">Motivasyon videosu önerisi:</p>
+        <a class="btn alt" id="motivBtn" style="display:block;text-align:center;text-decoration:none" target="_blank">▶ Motivasyon İzle</a>
+        <div class="mut" style="margin-top:8px;font-size:11px;text-align:center">Her gün farklı bir öneri açılır</div>
+      </div>
+    </div>
   </section>
   <!-- İSLAMİ TAKVİM -->
   <section class="view" id="v-islami">
@@ -405,7 +462,7 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
@@ -493,7 +550,9 @@ function notKaydet(){const g=gun();g.not=$("notArea").value;gunSet(g);$("notDuru
 /* ---- ZİKİR ---- */
 function zikirReset(){set("zikir_"+cur+"_"+$("zikirSec").value,0);renderZikir();}
 $("zikirSec").onchange=renderZikir;
-$("zikirTap").onclick=()=>{const k="zikir_"+cur+"_"+$("zikirSec").value;set(k,(get(k,0)+1));renderZikir();try{navigator.vibrate&&navigator.vibrate(20)}catch(e){}};
+// Tıklama sesi (Web Audio - dosyasız) + 33/100'de zil
+function zikSes(yuksek){try{var a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.value=yuksek?880:440;g.gain.value=yuksek?.18:.08;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+(yuksek?.4:.08));o.stop(a.currentTime+(yuksek?.4:.1));}catch(e){}}
+$("zikirTap").onclick=()=>{const k="zikir_"+cur+"_"+$("zikirSec").value;var yeni=get(k,0)+1;set(k,yeni);renderZikir();try{navigator.vibrate&&navigator.vibrate(20)}catch(e){}var mil=[33,66,100,99].includes(yeni);zikSes(mil);if(mil){try{navigator.vibrate&&navigator.vibrate([60,40,60]);}catch(e){}}};
 function renderZikir(){const k="zikir_"+cur+"_"+$("zikirSec").value;$("zikirN").textContent=get(k,0);$("zikirGun").textContent="Bugün toplam: "+zikirToplam(cur);}
 
 /* ════════ KURAN-I KERİM ════════ */
@@ -678,6 +737,105 @@ var TR_ILLER=[
  ["Sivas","Sivas"],["Sirnak","Şırnak"],["Tekirdag","Tekirdağ"],["Tokat","Tokat"],["Trabzon","Trabzon"],
  ["Tunceli","Tunceli"],["Usak","Uşak"],["Van","Van"],["Yalova","Yalova"],["Yozgat","Yozgat"],["Zonguldak","Zonguldak"]
 ];
+/* ════════ MANEVİYAT ════════ */
+var GUNLUK_DUA=[
+ {dua:"Allah'ım! Bana hidayet eyle, beni doğru yoldan ayırma.",ayet:"\"Ey iman edenler! Sabır ve namazla yardım dileyin. Şüphesiz Allah sabredenlerle beraberdir.\" — Bakara, 153"},
+ {dua:"Rabbim! Göğsümü genişlet, işimi kolaylaştır.",ayet:"\"Şüphesiz her zorlukla beraber bir kolaylık vardır.\" — İnşirâh, 6"},
+ {dua:"Allah'ım! Bize dünyada da iyilik, ahirette de iyilik ver.",ayet:"\"Rabbim! Bana hikmet ver ve beni iyiler arasına kat.\" — Şuarâ, 83"},
+ {dua:"Allah'ım! Beni şükredenlerden ve sabredenlerden eyle.",ayet:"\"Eğer şükrederseniz elbette size nimetimi artırırım.\" — İbrâhim, 7"},
+ {dua:"Rabbim! Beni helal rızıkla rızıklandır, kalbimi temiz tut.",ayet:"\"Allah'a tevekkül edene Allah yeter.\" — Talâk, 3"},
+ {dua:"Allah'ım! Anne babama merhamet et, onlara hayırlı evlat olmamı nasip et.",ayet:"\"Rabbim! Küçükken beni yetiştirdikleri gibi sen de onlara merhamet et.\" — İsrâ, 24"},
+ {dua:"Allah'ım! Kalbime huzur, gönlüme sevgi koy.",ayet:"\"Kalpler ancak Allah'ın zikriyle huzur bulur.\" — Ra'd, 28"},
+ {dua:"Rabbim! Gözümün nuru olacak hayırlı bir aile bana nasip et.",ayet:"\"Bilin ki dünya hayatı bir oyun, eğlence, süs, övünme, mal ve evlat çoğaltma yarışıdır.\" — Hadîd, 20"},
+ {dua:"Allah'ım! Sözümü doğru, niyetimi halis kıl.",ayet:"\"Ey iman edenler! Allah'tan korkun ve doğru söz söyleyin.\" — Ahzâb, 70"},
+ {dua:"Allah'ım! İlmimi artır, gafletten beni koru.",ayet:"\"De ki: Rabbim, ilmimi artır.\" — Tâhâ, 114"},
+ {dua:"Rabbim! Beni yalnız sana kul, yalnız sana muhtaç eyle.",ayet:"\"Ben cinleri ve insanları ancak bana kulluk etsinler diye yarattım.\" — Zâriyât, 56"},
+ {dua:"Allah'ım! Bana hayırlı işler nasip et, kötülüklerden uzak tut.",ayet:"\"İyilik ve kötülük bir değildir. Sen kötülüğü en güzel olan ile sav.\" — Fussilet, 34"},
+ {dua:"Allah'ım! Vakitlerimi bereketli kıl.",ayet:"\"Asra yemin olsun ki insan gerçekten ziyandadır.\" — Asr, 1-2"},
+ {dua:"Rabbim! Yüzümü ak, kalbimi pak eyle.",ayet:"\"Rabbim! Beni doğru bir girdirilişle girdir, doğru bir çıkarılışla çıkar.\" — İsrâ, 80"},
+ {dua:"Allah'ım! Bana cennet kapılarını açan ameller nasip et.",ayet:"\"Kim Allah'tan korkarsa Allah ona bir çıkış yolu bulur.\" — Talâk, 2"}
+];
+var MOTIV_VIDEOLAR=[
+ "https://www.youtube.com/results?search_query=motivasyon+konuşması+başarı",
+ "https://www.youtube.com/results?search_query=mehmet+yıldız+motivasyon",
+ "https://www.youtube.com/results?search_query=ezhel+yıldız+kişisel+gelişim",
+ "https://www.youtube.com/results?search_query=mustafa+karataş+motivasyon",
+ "https://www.youtube.com/results?search_query=erkan+mumcu+motivasyon+konuşması",
+ "https://www.youtube.com/results?search_query=hayata+dair+motivasyon",
+ "https://www.youtube.com/results?search_query=dr+ümit+aktaş+kişisel+gelişim"
+];
+var MOODLAR=[["😄","Harika"],["🙂","İyi"],["😐","Normal"],["😔","Kötü"],["😢","Çok kötü"],["😡","Sinirli"],["🤲","Şükür"]];
+function maneviyatInit(){
+  // Günün duası (gün indeksine göre döner)
+  var gn=Math.floor(new Date().getTime()/86400000)%GUNLUK_DUA.length;
+  var d=GUNLUK_DUA[gn];
+  $("gununDua").innerHTML="🤲 "+d.dua;
+  $("gununAyet").innerHTML="📖 "+d.ayet;
+  // Motivasyon videosu
+  $("motivBtn").href=MOTIV_VIDEOLAR[gn%MOTIV_VIDEOLAR.length];
+  // Şükür yükle
+  var s=get("sukur_"+todayStr(),["","",""]);
+  $("sukur1").value=s[0]||"";$("sukur2").value=s[1]||"";$("sukur3").value=s[2]||"";
+  // Sadaka render
+  sadakaRender();
+  // Mood
+  moodRender();
+  // Ezber & önemli
+  ezberRender();onemliRender();
+}
+function sukurKaydet(){
+  set("sukur_"+todayStr(),[$("sukur1").value,$("sukur2").value,$("sukur3").value]);
+  $("sukurDurum").innerHTML='<span style="color:var(--ok)">✓ Kaydedildi · Allah razı olsun</span>';
+  setTimeout(()=>$("sukurDurum").textContent="",2500);
+}
+function sadakaRender(){
+  var ay=todayStr().slice(0,7);
+  var list=get("sadakalar",[]).filter(s=>s.t.startsWith(ay));
+  var top=list.reduce((a,b)=>a+b.tutar,0);
+  $("sadakaToplam").textContent=top.toLocaleString("tr-TR")+" ₺";
+  $("sadakaListe").innerHTML=list.slice().reverse().slice(0,5).map(s=>'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)"><span class="mut">'+s.t.slice(8)+'</span><b>'+s.tutar.toLocaleString("tr-TR")+' ₺</b></div>').join("");
+}
+function sadakaEkle(){
+  var t=parseFloat($("sadakaTutar").value);if(!t||t<=0)return;
+  var list=get("sadakalar",[]);list.push({t:todayStr(),tutar:t});set("sadakalar",list);
+  $("sadakaTutar").value="";sadakaRender();
+}
+function moodRender(){
+  $("moodSec").innerHTML=MOODLAR.map((m,i)=>'<button class="iconbtn" onclick="moodSec2('+i+')" title="'+m[1]+'" style="font-size:22px;padding:6px 10px">'+m[0]+'</button>').join("");
+  // 30 günlük harita
+  var h="";
+  for(var i=29;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var ds=fmt(d);
+    var m=get("mood_"+ds,null);
+    var em=m!==null?MOODLAR[m][0]:'·';
+    var bg=m!==null?'rgba(34,192,138,.15)':'transparent';
+    h+='<div title="'+ds+(m!==null?' - '+MOODLAR[m][1]:'')+'" style="aspect-ratio:1;background:'+bg+';border:1px solid var(--line);border-radius:5px;display:grid;place-items:center;font-size:14px">'+em+'</div>';
+  }
+  $("moodHarita").innerHTML=h;
+}
+function moodSec2(i){set("mood_"+todayStr(),i);moodRender();}
+function ezberRender(){
+  var list=get("ezberler",[]);
+  if(!list.length){$("ezberListe").innerHTML='<div class="mut" style="font-size:12px;text-align:center;padding:10px">Henüz ezber eklenmedi</div>';return;}
+  $("ezberListe").innerHTML=list.map((e,i)=>'<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;margin-bottom:5px"><div style="flex:1"><b style="font-size:13px">'+esc(e.ad)+'</b><div style="height:6px;background:var(--line);border-radius:5px;margin-top:3px;overflow:hidden"><div style="height:100%;width:'+e.yuzde+'%;background:linear-gradient(90deg,#0e9f6e,#22c08a)"></div></div></div><button class="iconbtn" onclick="ezberArtir('+i+')" style="padding:4px 8px;font-size:12px">+10%</button><button class="iconbtn" onclick="ezberSil('+i+')" style="padding:4px 6px;font-size:11px">🗑</button></div>').join("");
+}
+function ezberEkle(){var v=$("ezberAd").value.trim();if(!v)return;var l=get("ezberler",[]);l.push({ad:v,yuzde:0});set("ezberler",l);$("ezberAd").value="";ezberRender();}
+function ezberArtir(i){var l=get("ezberler",[]);l[i].yuzde=Math.min(100,(l[i].yuzde||0)+10);set("ezberler",l);ezberRender();}
+function ezberSil(i){if(!confirm("Sil?"))return;var l=get("ezberler",[]);l.splice(i,1);set("ezberler",l);ezberRender();}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+function onemliRender(){
+  var list=get("onemliler",[]);if(!list.length){$("onemliListe").innerHTML='<div class="mut" style="font-size:12px;text-align:center;padding:10px">Henüz eklenmedi</div>';return;}
+  var bugun=new Date();bugun.setHours(0,0,0,0);
+  list=list.map(o=>{
+    var d=new Date(o.tarih);d.setFullYear(bugun.getFullYear());if(d<bugun)d.setFullYear(bugun.getFullYear()+1);
+    o._kalan=Math.round((d-bugun)/86400000);return o;
+  }).sort((a,b)=>a._kalan-b._kalan);
+  $("onemliListe").innerHTML=list.slice(0,5).map((o,i)=>'<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:'+(o._kalan===0?'rgba(229,57,53,.12)':o._kalan<=7?'rgba(243,156,18,.1)':'var(--panel2)')+';border:1px solid '+(o._kalan===0?'#e53935':o._kalan<=7?'#f39c12':'var(--line)')+';border-radius:9px;margin-bottom:5px"><b style="flex:1;font-size:13px">🎂 '+esc(o.ad)+'</b><span style="font-size:11px;font-weight:800;color:'+(o._kalan===0?'#e53935':o._kalan<=7?'#f39c12':'var(--acc)')+'">'+(o._kalan===0?'BUGÜN! 🎉':o._kalan+' gün')+'</span><button class="iconbtn" onclick="onemliSil('+get("onemliler",[]).indexOf(o)+')" style="padding:3px 6px;font-size:11px">🗑</button></div>').join("");
+}
+function onemliEkle(){var a=$("onemliAd").value.trim(),t=$("onemliTarih").value;if(!a||!t)return;var l=get("onemliler",[]);l.push({ad:a,tarih:t});set("onemliler",l);$("onemliAd").value="";$("onemliTarih").value="";onemliRender();}
+function onemliSil(i){if(!confirm("Sil?"))return;var l=get("onemliler",[]);l.splice(i,1);set("onemliler",l);onemliRender();}
+
 function islamiInit(){
   // 81 ili dropdown'a doldur (alfabetik)
   if($("islamiSehir").options.length===0){
