@@ -103,6 +103,7 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
   <div><h1>MUHASEBE PANELİ</h1><div class="tag">GELİR · GİDER · BİRİKİM</div></div>
   <span class="spacer"></span>
   <button class="iconbtn" id="themeBtn">🌙</button>
+  <button class="iconbtn" id="csvBtn">📥 CSV</button>
   <button class="iconbtn" id="clearBtn">🗑 Sıfırla</button>
 </header>
 <main><div class="wrap">
@@ -113,6 +114,21 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
     <div class="sumcard s2"><div class="lbl">📉 TOPLAM GİDER</div><div class="val neg" id="sumGider">0 ₺</div><div class="sub">Bu ay</div></div>
     <div class="sumcard s3"><div class="lbl">💳 NET BAKİYE</div><div class="val" id="sumBakiye">0 ₺</div><div class="sub">Gelir − Gider</div></div>
     <div class="sumcard s4"><div class="lbl">🏦 BİRİKİM</div><div class="val ntr" id="sumBirikim">0 ₺</div><div class="sub">Birikim işlemleri</div></div>
+  </div>
+
+  <!-- GRAFİKLER -->
+  <div class="twocol" style="margin-bottom:20px">
+    <div class="panel" style="margin-bottom:0">
+      <h2>🥧 Gider Dağılımı (Kategori)</h2>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        <canvas id="pieCanvas" width="200" height="200" style="flex:none"></canvas>
+        <div id="pieLegend" style="flex:1;min-width:150px;font-size:12px"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:0">
+      <h2>📊 Aylık Gelir / Gider</h2>
+      <canvas id="barCanvas" width="420" height="220" style="width:100%;max-width:100%"></canvas>
+    </div>
   </div>
 
   <!-- İşlem ekle -->
@@ -254,7 +270,59 @@ function renderHedefler(){
   document.querySelectorAll("[data-hi]").forEach(b=>b.onclick=()=>{hedefler.splice(+b.dataset.hi,1);save("muh_hedefler",hedefler);renderHedefler()});
 }
 
-function render(){renderOzet();renderIslemler();renderHedefler()}
+/* ===== GRAFİKLER (saf canvas) ===== */
+const PALET=["#ff5a8a","#5cc8ff","#ffd700","#22e3b0","#a855f7","#ff9f43","#54a0ff","#ee5253","#10ac84","#576574"];
+function pieChart(){
+  const cv=document.getElementById("pieCanvas");if(!cv)return;const ctx=cv.getContext("2d");
+  ctx.clearRect(0,0,200,200);
+  const giderler=islemler.filter(i=>i.tip==="gider");
+  const katMap={};giderler.forEach(i=>{katMap[i.kategori]=(katMap[i.kategori]||0)+i.tutar});
+  const entries=Object.entries(katMap).sort((a,b)=>b[1]-a[1]);
+  const top=entries.reduce((s,e)=>s+e[1],0);
+  if(!top){ctx.fillStyle="#6b7fa3";ctx.font="13px sans-serif";ctx.textAlign="center";ctx.fillText("Henüz gider yok",100,100);$("pieLegend").innerHTML="";return;}
+  let a0=-Math.PI/2;
+  entries.forEach((e,i)=>{
+    const ang=e[1]/top*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(100,100);ctx.arc(100,100,90,a0,a0+ang);ctx.closePath();
+    ctx.fillStyle=PALET[i%PALET.length];ctx.fill();a0+=ang;
+  });
+  // ortada delik (donut)
+  ctx.beginPath();ctx.arc(100,100,48,0,Math.PI*2);ctx.fillStyle=getComputedStyle(document.body).getPropertyValue("--bg1")||"#0c1322";ctx.fill();
+  ctx.fillStyle="#92a3bd";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.fillText("TOPLAM",100,94);
+  ctx.fillStyle="#eef3fb";ctx.font="bold 15px sans-serif";ctx.fillText(Math.round(top).toLocaleString("tr-TR")+"₺",100,112);
+  $("pieLegend").innerHTML=entries.map((e,i)=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:11px;height:11px;border-radius:3px;background:${PALET[i%PALET.length]};flex:none"></span><span style="flex:1">${e[0]}</span><b>${Math.round(e[1]/top*100)}%</b></div>`).join("");
+}
+function barChart(){
+  const cv=document.getElementById("barCanvas");if(!cv)return;const ctx=cv.getContext("2d");const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  // son 6 ay
+  const aylar=[];const now=new Date();
+  for(let k=5;k>=0;k--){const d=new Date(now.getFullYear(),now.getMonth()-k,1);aylar.push({y:d.getFullYear(),m:d.getMonth(),lbl:["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"][d.getMonth()],gelir:0,gider:0});}
+  islemler.forEach(i=>{const d=new Date(i.tarih);const a=aylar.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());if(a){if(i.tip==="gelir")a.gelir+=i.tutar;else if(i.tip==="gider")a.gider+=i.tutar;}});
+  const max=Math.max(1,...aylar.map(a=>Math.max(a.gelir,a.gider)));
+  const pad=30,bw=(W-pad*2)/aylar.length,gw=bw*0.32;
+  ctx.strokeStyle="rgba(120,150,200,.15)";ctx.beginPath();ctx.moveTo(pad,H-22);ctx.lineTo(W-pad,H-22);ctx.stroke();
+  aylar.forEach((a,i)=>{
+    const x=pad+bw*i+bw/2;
+    const gh=(a.gelir/max)*(H-50),dh=(a.gider/max)*(H-50);
+    ctx.fillStyle="#22e3b0";ctx.fillRect(x-gw-2,H-22-gh,gw,gh);
+    ctx.fillStyle="#ff5a8a";ctx.fillRect(x+2,H-22-dh,gw,dh);
+    ctx.fillStyle="#92a3bd";ctx.font="10px sans-serif";ctx.textAlign="center";ctx.fillText(a.lbl,x,H-8);
+  });
+  // legend
+  ctx.fillStyle="#22e3b0";ctx.fillRect(pad,8,10,10);ctx.fillStyle="#92a3bd";ctx.textAlign="left";ctx.fillText("Gelir",pad+14,17);
+  ctx.fillStyle="#ff5a8a";ctx.fillRect(pad+60,8,10,10);ctx.fillStyle="#92a3bd";ctx.fillText("Gider",pad+74,17);
+}
+function csvIndir(){
+  if(!islemler.length){alert("Dışa aktarılacak işlem yok.");return;}
+  let csv="Tarih;Aciklama;Kategori;Tip;Tutar\n";
+  islemler.forEach(i=>{csv+=`${i.tarih};${(i.aciklama||"").replace(/;/g,",")};${i.kategori};${i.tip};${i.tutar}\n`;});
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="muhasebe-"+new Date().toISOString().slice(0,10)+".csv";a.click();
+}
+$("csvBtn").onclick=csvIndir;
+
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart()}
 
 $("ekleBtn").onclick=()=>{
   const tip=$("tipSel").value;
