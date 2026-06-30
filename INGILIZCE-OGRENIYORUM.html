@@ -58,6 +58,7 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
   <div class="tab" data-v="konu">🌍 Konular</div>
   <div class="tab" data-v="ileri">🎓 C1 İleri</div>
   <div class="tab" data-v="test">✍️ Test & Quiz</div>
+  <div class="tab" data-v="sinav">📝 Sınav</div>
   <div class="tab" data-v="istat">📊 İstatistik</div>
 </div>
 <main>
@@ -91,6 +92,34 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
       </div>
       <label class="row" style="margin-top:12px;font-size:13px;gap:6px;cursor:pointer"><input type="checkbox" id="fAutoSpk" checked> 🔈 Kart açılınca otomatik sesli oku</label>
     </div>
+  </section>
+  <!-- SINAV -->
+  <section class="view" id="v-sinav">
+    <div class="card" id="sinavAyar">
+      <h2>📝 Çoktan Seçmeli Sınav</h2>
+      <p class="mut" style="margin:0 0 14px">Süreli, puanlı gerçek sınav. 4 şıktan doğru cevabı seç. Sonunda not + yanlışların listesi.</p>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div><label>Kaynak</label><select id="snvKaynak"><option value="words">📚 Kelimelerim</option><option value="konu">🌍 Konular</option><option value="ileri">🎓 C1 İleri</option><option value="all" selected>🔀 Karışık (hepsi)</option></select></div>
+        <div><label>Yön</label><select id="snvYon"><option value="en2tr">🇬🇧 İngilizce → 🇹🇷 Türkçe</option><option value="tr2en">🇹🇷 Türkçe → 🇬🇧 İngilizce</option></select></div>
+        <div><label>Soru sayısı</label><select id="snvAdet"><option>10</option><option selected>20</option><option>30</option><option>40</option></select></div>
+        <div><label>Soru başına süre</label><select id="snvSure"><option value="0">Süresiz</option><option value="10">10 sn</option><option value="15" selected>15 sn</option><option value="20">20 sn</option></select></div>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn" onclick="sinavBasla()">🚀 Sınavı Başlat</button><span class="mut" id="snvUyari"></span></div>
+    </div>
+
+    <div class="card" id="sinavSoru" style="display:none">
+      <div class="row spread" style="margin-bottom:10px">
+        <b id="snvIlerleme">Soru 1 / 20</b>
+        <b id="snvSayac" style="color:var(--acc)"></b>
+      </div>
+      <div class="bar" style="margin-bottom:16px"><i id="snvBar" style="width:0%"></i></div>
+      <div style="font-size:13px;color:var(--mut);margin-bottom:6px" id="snvYonEt">Bu kelimenin anlamı:</div>
+      <div style="font-size:30px;font-weight:800;text-align:center;padding:18px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;margin-bottom:16px" id="snvSoruMetin">—</div>
+      <div id="snvSiklar" style="display:grid;gap:10px"></div>
+      <div class="row spread" style="margin-top:14px"><span class="mut">Doğru: <b id="snvDogru" style="color:var(--ok)">0</b></span><button class="btn ghost" onclick="sinavBitir()">Sınavı Bitir</button></div>
+    </div>
+
+    <div class="card" id="sinavSonuc" style="display:none"></div>
   </section>
   <!-- İSTATİSTİK -->
   <section class="view" id="v-istat">
@@ -235,7 +264,7 @@ $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"da
 const HIZLAR=[{r:.6,t:"🐢 Yavaş"},{r:1,t:"🚶 Normal"},{r:1.3,t:"🐇 Hızlı"}];
 let hizIdx=get("seshiz",0);function hizUygula(){const h=HIZLAR[hizIdx];SES_HIZ=h.r;$("hizBtn").textContent=h.t;set("seshiz",hizIdx);}
 $("hizBtn").onclick=()=>{hizIdx=(hizIdx+1)%HIZLAR.length;hizUygula();};hizUygula();
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();if(t.dataset.v==="test"){quizYeni();telYeni();srsNext();}});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();if(t.dataset.v==="test"){quizYeni();telYeni();srsNext();}if(t.dataset.v==="sinav")sinavReset();});
 /* veri */
 function words(){return get("words",[])}
 function saveWords(w){set("words",w)}
@@ -427,8 +456,87 @@ function srsCevap(kalite){ // 0 zor,1 orta,2 kolay
 }
 
 /* init */
+/* ============ ÇOKTAN SEÇMELİ SINAV ============ */
+var snv={sorular:[],idx:0,dogru:0,yanlislar:[],timer:null,kalan:0,yon:"en2tr"};
+function karistir(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function sinavBasla(){
+  var kaynak=$("snvKaynak").value, pool=havuz(kaynak);
+  // tekilleştir
+  var gor={},uniq=[];pool.forEach(function(p){var k=(p[0]||"")+"|"+(p[1]||"");if(p[0]&&p[1]&&!gor[k]){gor[k]=1;uniq.push(p);}});
+  if(uniq.length<4){$("snvUyari").textContent="Bu kaynakta en az 4 farklı kelime gerekli.";return;}
+  var adet=Math.min(parseInt($("snvAdet").value),uniq.length);
+  snv.yon=$("snvYon").value; snv.sureBasi=parseInt($("snvSure").value);
+  snv.sorular=karistir(uniq).slice(0,adet).map(function(dogru){
+    // 3 yanlış şık seç
+    var yanlis=karistir(uniq.filter(function(x){return x!==dogru;})).slice(0,3);
+    var siklar=karistir([dogru].concat(yanlis));
+    return {dogru:dogru,siklar:siklar};
+  });
+  snv.idx=0;snv.dogru=0;snv.yanlislar=[];
+  $("sinavAyar").style.display="none";$("sinavSonuc").style.display="none";$("sinavSoru").style.display="block";
+  sinavGoster();
+}
+function sinavGoster(){
+  clearInterval(snv.timer);
+  var s=snv.sorular[snv.idx];
+  $("snvIlerleme").textContent="Soru "+(snv.idx+1)+" / "+snv.sorular.length;
+  $("snvBar").style.width=Math.round(snv.idx/snv.sorular.length*100)+"%";
+  $("snvDogru").textContent=snv.dogru;
+  var soruKelime=snv.yon==="en2tr"?s.dogru[0]:s.dogru[1];
+  $("snvYonEt").textContent=snv.yon==="en2tr"?"Bu kelimenin Türkçesi:":"Bu kelimenin İngilizcesi:";
+  $("snvSoruMetin").textContent=soruKelime;
+  if(snv.yon==="en2tr")konus(s.dogru[0]); // İngilizce soruyu seslendir
+  $("snvSiklar").innerHTML=s.siklar.map(function(sik,i){
+    var metin=snv.yon==="en2tr"?sik[1]:sik[0];
+    return '<button class="btn ghost snv-sik" style="text-align:left;justify-content:flex-start;font-size:15px;padding:13px 16px" data-i="'+i+'">'+String.fromCharCode(65+i)+') '+esc(metin)+'</button>';
+  }).join("");
+  document.querySelectorAll(".snv-sik").forEach(function(b){b.onclick=function(){sinavCevap(s.siklar[+b.dataset.i],b);};});
+  // süre
+  if(snv.sureBasi>0){
+    snv.kalan=snv.sureBasi;$("snvSayac").textContent="⏱ "+snv.kalan+" sn";
+    snv.timer=setInterval(function(){
+      snv.kalan--;$("snvSayac").textContent="⏱ "+snv.kalan+" sn";
+      if(snv.kalan<=0){clearInterval(snv.timer);sinavCevap(null,null);}
+    },1000);
+  } else $("snvSayac").textContent="";
+}
+function sinavCevap(secilen,btn){
+  clearInterval(snv.timer);
+  var s=snv.sorular[snv.idx], dogruBtn=null;
+  document.querySelectorAll(".snv-sik").forEach(function(b,i){
+    b.disabled=true;
+    if(s.siklar[i]===s.dogru){b.style.background="rgba(46,204,113,.25)";b.style.borderColor="var(--ok)";b.style.color="var(--txt)";}
+  });
+  if(secilen===s.dogru){snv.dogru++;}
+  else{
+    if(btn){btn.style.background="rgba(231,76,60,.25)";btn.style.borderColor="var(--bad)";}
+    snv.yanlislar.push(s.dogru);
+  }
+  $("snvDogru").textContent=snv.dogru;
+  setTimeout(function(){snv.idx++;if(snv.idx>=snv.sorular.length)sinavBitir();else sinavGoster();},secilen===s.dogru?650:1300);
+}
+function sinavBitir(){
+  clearInterval(snv.timer);
+  var top=snv.sorular.length, d=snv.dogru, yuzde=Math.round(d/top*100);
+  var not = yuzde>=85?"🏆 Mükemmel!":yuzde>=70?"👏 İyi iş!":yuzde>=50?"🙂 Fena değil":"💪 Çalışmaya devam";
+  // istatistik kaydet
+  var gec=get("sinavGecmis",[]);gec.unshift({tarih:today(),top:top,dogru:d,yuzde:yuzde});set("sinavGecmis",gec.slice(0,50));
+  var html='<h2 style="margin:0 0 8px">📊 Sınav Sonucu</h2>'
+    +'<div style="text-align:center;padding:20px 0"><div style="font-size:52px;font-weight:800;color:'+(yuzde>=50?"var(--ok)":"var(--bad)")+'">%'+yuzde+'</div>'
+    +'<div style="font-size:18px;font-weight:700;margin-top:4px">'+not+'</div>'
+    +'<div class="mut" style="margin-top:6px">'+d+' / '+top+' doğru</div></div>';
+  if(snv.yanlislar.length){
+    html+='<h3 style="margin:10px 0 8px;font-size:14px">❌ Yanlış / boş bıraktıkların ('+snv.yanlislar.length+')</h3>';
+    html+=snv.yanlislar.map(function(p){return '<div class="wrow" style="display:flex;align-items:center"><div style="flex:1"><span class="en">'+esc(p[0])+'</span> <span class="tr">— '+esc(p[1])+'</span></div>'+sesBtn(p[0])+'</div>';}).join("");
+  } else html+='<p style="text-align:center;color:var(--ok);font-weight:700">🎉 Hiç yanlışın yok, tebrikler!</p>';
+  html+='<div class="row" style="margin-top:16px"><button class="btn" onclick="sinavTekrar()">🔄 Yeni Sınav</button></div>';
+  $("sinavSoru").style.display="none";$("sinavSonuc").style.display="block";$("sinavSonuc").innerHTML=html;
+}
+function sinavTekrar(){$("sinavSonuc").style.display="none";$("sinavAyar").style.display="block";$("snvUyari").textContent="";}
+function sinavReset(){clearInterval(snv.timer);$("sinavSoru").style.display="none";$("sinavSonuc").style.display="none";$("sinavAyar").style.display="block";$("snvUyari").textContent="";}
+
 renderListe();renderIstat();streakGuncelle();renderKonu();
 </script>
-<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v200 🎓🔊✍️🎤🧠</div>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v210 📝 Sınav</div>
 </body>
 </html>
