@@ -413,6 +413,64 @@ const KGK_KONULAR = [
   {ad:'GENEL HUKUK', tip:'t8', ic:'⚖', hoca:'Ali Kemal Hoca'},
 ];
 
+// ════════════════════════════════════════════════════════════
+// HAZIR SORU BANKASI (Excel olmadan da dolu gelsin)
+// ════════════════════════════════════════════════════════════
+const HAZIR_SORULAR = {
+ 'MUHASEBE':[
+  {q:'Tek düzen hesap planında "1" ile başlayan hesap grubu neyi ifade eder?',a:'Dönen Varlıklar (bir yıl içinde paraya çevrilebilen varlıklar).',anahtar:'1=Dönen Varlık, 2=Duran Varlık, 3=KV Yab.Kaynak, 4=UV Yab.Kaynak, 5=Özkaynak.',puf:'Hesap kodunun ilk rakamı grubu, ilk iki rakamı alt grubu verir.'},
+  {q:'Amortisman nedir ve hangi varlıklara ayrılır?',a:'Maddi duran varlıkların yıpranma payının gidere dönüştürülmesidir; bir yıldan uzun kullanılan maddi duran varlıklara ayrılır (arsa hariç).',anahtar:'Arsaya amortisman ayrılmaz çünkü yıpranmaz.',puf:'Azalan bakiyeler yönteminde oran, normal yöntemin 2 katıdır (max %50).'},
+  {q:'Dönem sonu envanter işlemlerinde "tahakkuk esası" ne anlama gelir?',a:'Gelir ve giderlerin tahsil/ödeme zamanına değil, doğdukları döneme kaydedilmesidir.',anahtar:'Tahakkuk esası ≠ Nakit esası.',puf:'Gelir tahakkuku için 181, gider tahakkuku için 381 hesapları kullanılır.'},
+  {q:'Reeskont işlemi neden yapılır?',a:'Vadeli senetli alacak/borçların dönem sonu değerini bugünkü değere indirgemek için yapılır.',anahtar:'Alacak senedi reeskontu → 657 Reeskont Faiz Gideri.',puf:'Sadece senede bağlı alacak/borçlar reeskonta tabi tutulabilir.'},
+  {q:'Maliyet hesapları (7/A ve 7/B) arasındaki temel fark nedir?',a:'7/A fonksiyon esasına (üretim, AR-GE, pazarlama, genel yönetim), 7/B ise çeşit esasına göre gider izler.',anahtar:'7/A büyük işletmeler, 7/B küçük işletmeler için uygundur.',puf:'7/A’da 711-731 yansıtma hesapları kullanılır.'},
+  {q:'KDV açısından "indirilecek KDV" hangi hesapta izlenir?',a:'191 İndirilecek KDV (aktif/dönen varlık) hesabında izlenir.',anahtar:'391 Hesaplanan KDV (pasif), 191 İndirilecek KDV (aktif).',puf:'Ay sonunda 391>191 ise 360 Ödenecek Vergi, 191>391 ise 190 Devreden KDV.'},
+  {q:'Maddi olmayan duran varlıklara örnek veriniz.',a:'Haklar, şerefiye, kuruluş ve örgütlenme giderleri, araştırma-geliştirme giderleri, patent, marka, lisans.',anahtar:'26 grubu = Maddi Olmayan Duran Varlıklar.',puf:'İtfa payı (amortisman) 268 Birikmiş Amortismanlar ile izlenir.'}
+ ],
+ 'DENETİM':[
+  {q:'Bağımsız denetimin temel amacı nedir?',a:'Finansal tabloların, finansal raporlama çerçevesine uygun olarak gerçeği doğru ve dürüst yansıtıp yansıtmadığı konusunda makul güvence vermektir.',anahtar:'Makul güvence = mutlak güvence değildir.',puf:'Denetçi görüşü; olumlu, şartlı, olumsuz veya görüş bildirmekten kaçınma olabilir.'},
+  {q:'Denetim riski hangi bileşenlerden oluşur?',a:'Doğal risk (yapısal risk), kontrol riski ve bulgu (tespit edememe) riskinden oluşur.',anahtar:'DR = Doğal Risk × Kontrol Riski × Bulgu Riski.',puf:'Denetçi yalnızca bulgu riskini kontrol edebilir; diğerleri işletmeye aittir.'},
+  {q:'"Önemlilik" (materiality) kavramı denetimde neyi belirler?',a:'Finansal tablo kullanıcılarının kararlarını etkileyebilecek hata/yanlışlık eşiğini belirler.',anahtar:'Önemlilik hem tutar (nicel) hem nitelik (nitel) açısından değerlendirilir.',puf:'Önemlilik düştükçe toplanması gereken kanıt artar.'},
+  {q:'Denetim kanıtı toplama yöntemlerinden üçünü sayınız.',a:'Gözlem, doğrulama (mutabakat), yeniden hesaplama, belge inceleme, soruşturma, analitik inceleme.',anahtar:'En güvenilir kanıt dışarıdan doğrudan elde edilen (3. taraf) kanıttır.',puf:'Doğrulama özellikle alacaklar ve banka bakiyeleri için kullanılır.'},
+  {q:'İç kontrol sisteminin denetçi açısından önemi nedir?',a:'İç kontrol güçlüyse kontrol riski düşer, denetçi daha az tözel test yapar.',anahtar:'COSO çerçevesi: kontrol ortamı, risk değerlendirme, kontrol faaliyetleri, bilgi-iletişim, izleme.',puf:'İç kontrol testi yapılmadan kontrol riski "yüksek" varsayılır.'}
+ ],
+ 'FİNANS':[
+  {q:'Paranın zaman değeri kavramını açıklayınız.',a:'Bugünkü bir liranın, gelecekteki bir liradan daha değerli olmasıdır; çünkü bugünkü para yatırılarak getiri sağlar.',anahtar:'Gelecek Değer = BD × (1+i)^n.',puf:'Net Bugünkü Değer (NPV) > 0 ise proje kabul edilir.'},
+  {q:'Çalışma (işletme) sermayesi nasıl hesaplanır?',a:'Net Çalışma Sermayesi = Dönen Varlıklar − Kısa Vadeli Yabancı Kaynaklar.',anahtar:'Pozitif çalışma sermayesi likidite gücünü gösterir.',puf:'Cari oran = Dönen Varlık / KVYK; ideal değer ~2 kabul edilir.'},
+  {q:'Finansal kaldıraç oranı neyi ölçer?',a:'İşletmenin varlıklarının ne kadarının yabancı kaynakla finanse edildiğini ölçer.',anahtar:'Kaldıraç = Toplam Yabancı Kaynak / Toplam Aktif.',puf:'Yüksek kaldıraç hem getiriyi hem riski artırır.'},
+  {q:'Sermaye maliyeti (WACC) nedir?',a:'İşletmenin öz ve yabancı kaynaklarının ağırlıklı ortalama maliyetidir.',anahtar:'WACC = (E/V)×Re + (D/V)×Rd×(1−vergi).',puf:'Borç maliyeti vergi kalkanı nedeniyle özkaynaktan ucuzdur.'},
+  {q:'Likidite oranlarından "asit-test" oranı nasıl bulunur?',a:'(Dönen Varlıklar − Stoklar) / Kısa Vadeli Yabancı Kaynaklar.',anahtar:'Stoklar en az likit dönen varlık olduğu için çıkarılır.',puf:'İdeal asit-test oranı ~1 kabul edilir.'}
+ ],
+ 'TMS-TFRS':[
+  {q:'TMS 2 Stoklar standardına göre stoklar hangi değerle ölçülür?',a:'Maliyet bedeli ile net gerçekleşebilir değerden düşük olanı ile ölçülür.',anahtar:'Net Gerçekleşebilir Değer = Tahmini satış fiyatı − tamamlanma ve satış giderleri.',puf:'LIFO yöntemi TMS 2’ye göre yasaktır; FIFO ve ağırlıklı ortalama serbesttir.'},
+  {q:'TMS 16 kapsamında maddi duran varlık ilk kayıtta nasıl ölçülür?',a:'Maliyet bedeli ile ölçülür (satın alma fiyatı + varlığı kullanıma hazır hale getiren tüm giderler).',anahtar:'Sonraki ölçüm: maliyet modeli veya yeniden değerleme modeli.',puf:'Yeniden değerleme artışı özkaynakta "yeniden değerleme fonu"na yazılır.'},
+  {q:'TFRS 15 hasılatın muhasebeleştirilmesinde 5 aşamalı model nedir?',a:'1) Sözleşmenin belirlenmesi 2) Edim yükümlülükleri 3) İşlem fiyatı 4) Fiyatın dağıtımı 5) Hasılatın kaydı.',anahtar:'Hasılat, kontrol müşteriye geçtiğinde kaydedilir.',puf:'Edim yükümlülüğü zamana yayılı veya bir anda yerine getirilebilir.'},
+  {q:'TMS 36 Varlıklarda Değer Düşüklüğü ne zaman test edilir?',a:'Değer düşüklüğü belirtisi olduğunda; şerefiye ve sınırsız ömürlü varlıklar her yıl test edilir.',anahtar:'Geri kazanılabilir tutar = Gerçeğe uygun değer − satış gideri ile kullanım değerinden YÜKSEK olanı.',puf:'Defter değeri > geri kazanılabilir tutar ise aradaki fark zarar yazılır.'},
+  {q:'TFRS 16 Kiralamalar standardının getirdiği temel değişiklik nedir?',a:'Kiracı açısından neredeyse tüm kiralamalar bilançoya alınır: "kullanım hakkı varlığı" ve "kira yükümlülüğü".',anahtar:'Faaliyet/finansal kiralama ayrımı kiracı için büyük ölçüde kalktı.',puf:'Düşük değerli ve 12 aydan kısa kiralamalar istisnadır.'}
+ ],
+ 'VERGİ MEVZUATI':[
+  {q:'Gelir Vergisi Kanunu’na göre kaç gelir unsuru vardır, sayınız.',a:'7 unsur: ticari kazanç, zirai kazanç, ücret, serbest meslek kazancı, gayrimenkul sermaye iradı, menkul sermaye iradı, diğer kazanç ve iratlar.',anahtar:'GVK md. 2.',puf:'Gerçek kişiler gelir vergisi, kurumlar kurumlar vergisi mükellefidir.'},
+  {q:'Vergiyi doğuran olay nedir?',a:'Vergi kanunlarının vergiyi bağladıkları olayın vuku bulması veya hukuki durumun oluşmasıdır.',anahtar:'VUK md. 19.',puf:'Vergiyi doğuran olayın kanunlarla yasaklanmış olması mükellefiyeti kaldırmaz.'},
+  {q:'KDV’de "vergi sorumlusu" (tevkifat) kavramını açıklayınız.',a:'Verginin, mükellef yerine işleme taraf olan başka biri tarafından kesilip beyan edilmesidir.',anahtar:'Tam ve kısmi tevkifat olarak ikiye ayrılır.',puf:'Tevkifatta amaç vergi güvenliği ve tahsilatın garanti altına alınmasıdır.'},
+  {q:'Beyanname verme ve ödeme süreleri neden önemlidir?',a:'Süresinde verilmeyen beyanname için vergi ziyaı ve usulsüzlük cezaları, geç ödeme için gecikme faizi/zammı doğar.',anahtar:'Gecikme zammı (kamu alacağı) ≠ gecikme faizi (tarhiyat).',puf:'Pişmanlıkla beyan, vergi ziyaı cezasını kaldırır.'}
+ ],
+ 'KGK MEVZUATI':[
+  {q:'KGK’nın açılımı ve temel görevi nedir?',a:'Kamu Gözetimi, Muhasebe ve Denetim Standartları Kurumu; denetim standartlarını belirlemek ve bağımsız denetçileri yetkilendirip denetlemektir.',anahtar:'KGK 660 sayılı KHK ile kurulmuştur.',puf:'Türkiye Denetim Standartları (TDS) KGK tarafından yayımlanır.'},
+  {q:'Bağımsız denetçi olabilmek için temel şartlardan üçünü sayınız.',a:'SMMM/YMM ruhsatına sahip olmak, KGK denetçi sınavında başarılı olmak, mesleki uygulama (staj) şartını sağlamak.',anahtar:'Denetçi belgesi KGK tarafından verilir.',puf:'Sürekli eğitim yükümlülüğü vardır.'},
+  {q:'Denetçi rotasyonu (eş değiştirme) kuralı nedir?',a:'Aynı denetçinin/şirketin belirli süreyi aşan kesintisiz denetimi sınırlandırılır; bağımsızlığı korur.',anahtar:'Kilit denetçi için rotasyon süresi sınırı vardır.',puf:'Rotasyon, denetçi-müşteri yakınlaşmasını (familiarity threat) önler.'}
+ ],
+ 'KURUMSAL YÖNETİM':[
+  {q:'Kurumsal yönetimin 4 temel ilkesini sayınız.',a:'Şeffaflık, hesap verebilirlik, sorumluluk ve adillik (eşitlik).',anahtar:'SPK Kurumsal Yönetim İlkeleri.',puf:'Bu ilkeler özellikle halka açık şirketler için önemlidir.'},
+  {q:'Yönetim kurulunda bağımsız üyenin işlevi nedir?',a:'Azınlık ve menfaat sahiplerinin haklarını gözeterek tarafsız karar alınmasını sağlamaktır.',anahtar:'Bağımsız üye, şirketle çıkar ilişkisi olmayan üyedir.',puf:'Denetim komitesi tamamen bağımsız üyelerden oluşur.'},
+  {q:'"Menfaat sahipleri" (stakeholders) kimlerdir?',a:'Ortaklar, çalışanlar, müşteriler, tedarikçiler, kredi verenler, kamu ve toplum.',anahtar:'Pay sahibi (shareholder) ⊂ menfaat sahibi (stakeholder).',puf:'Kurumsal yönetim sadece ortakların değil tüm tarafların çıkarını gözetir.'}
+ ],
+ 'GENEL HUKUK':[
+  {q:'Bir ticari şirket türü olarak anonim şirketin temel özelliği nedir?',a:'Sermayesi paylara bölünmüş, ortakların sorumluluğu taahhüt ettikleri sermaye ile sınırlı sermaye şirketidir.',anahtar:'TTK’ya göre asgari sermaye ve pay senedi çıkarabilme özelliği vardır.',puf:'Ortak sayısı tek kişiye kadar düşebilir (tek kişilik AŞ).'},
+  {q:'Tacir olmanın hukuki sonuçlarından üçünü sayınız.',a:'Ticaret siciline tescil, ticari defter tutma, basiretli iş adamı gibi davranma, iflasa tabi olma, ticaret unvanı kullanma.',anahtar:'TTK md. 18.',puf:'Tacirler arasında temerrüt faizi ve ihtar konusunda özel kurallar vardır.'},
+  {q:'Sözleşmenin kurulması için gerekli temel unsur nedir?',a:'Karşılıklı ve birbirine uygun irade beyanları (icap ve kabul).',anahtar:'TBK md. 1.',puf:'İrade beyanı açık veya örtülü (zımni) olabilir.'},
+  {q:'"Müteselsil sorumluluk" ne demektir?',a:'Birden fazla borçludan her birinin borcun tamamından sorumlu tutulabilmesidir.',anahtar:'Alacaklı borçlulardan herhangi birine tamamı için başvurabilir.',puf:'Ödeyen borçlu, diğerlerine rücu edebilir.'}
+ ]
+};
+
 // Eski paneldeki veri yapısı: sheets[konuAdi].data = [{q, a}, ...]
 let SHEETS = {};        // {konuAdi: [{q,a,added}]}
 let GECMIS = [];        // [{yil, sinav, konu, sno, q, a, harf}]
@@ -454,7 +512,29 @@ const App = {
         this.guncelle();
         this.toast('✓ Önceki Excel veriniz geri yüklendi');
       }catch(e){}
+    } else {
+      // Excel yoksa hazır soru bankasını yükle
+      this.hazirSorulariYukle();
     }
+  },
+
+  hazirSorulariYukle(){
+    SHEETS={};
+    Object.keys(HAZIR_SORULAR).forEach(konu=>{
+      SHEETS[konu]=HAZIR_SORULAR[konu].map(s=>({q:s.q, a:s.a, added:false}));
+      // anahtar kavram + püf noktası notlarını yaz
+      HAZIR_SORULAR[konu].forEach((s,idx)=>{
+        const key=`${konu}-${idx}`;
+        if(!NOTLAR[key]) NOTLAR[key]={};
+        if(s.anahtar && !NOTLAR[key].anahtar) NOTLAR[key].anahtar=s.anahtar;
+        if(s.puf && !NOTLAR[key].puf) NOTLAR[key].puf=s.puf;
+      });
+    });
+    try{localStorage.setItem('kgkNotlar', JSON.stringify(NOTLAR));}catch(e){}
+    this.konulariCiz();
+    this.istatistikGuncelle();
+    this.guncelle();
+    this.toast('✓ Hazır soru bankası yüklendi · Excel ile genişletebilirsin');
   },
 
   saatTik(){
