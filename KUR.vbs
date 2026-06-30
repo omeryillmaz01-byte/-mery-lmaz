@@ -1,8 +1,14 @@
+Dim masa, html, ico, kisayol
+masa = "C:\Users\omery\OneDrive\Desktop\"
+html = masa & "OMER-YILMAZ.html"
+ico  = masa & "OMER-YILMAZ.ico"
+
 Set sh = CreateObject("WScript.Shell")
-Set k = sh.CreateShortcut(sh.SpecialFolders("Desktop") & "\OMER YILMAZ.lnk")
-k.TargetPath = Replace(WScript.ScriptFullName, "KUR.vbs", "OMER-YILMAZ.html")
-k.IconLocation = Replace(WScript.ScriptFullName, "KUR.vbs", "OMER-YILMAZ.ico") & ",0"
-k.Description = "Omer Yilmaz Komut Merkezi v100"
-k.WindowStyle = 3
+Set k = sh.CreateShortcut(masa & "OMER YILMAZ.lnk")
+k.TargetPath   = html
+k.IconLocation = ico & ",0"
+k.Description  = "Omer Yilmaz Komut Merkezi v100"
+k.WindowStyle  = 3
 k.Save
-MsgBox "✅ OMER YILMAZ masaüstüne eklendi!", 64, "Kurulum Tamamlandı"
+
+MsgBox "Tamam! OMER YILMAZ masaustune eklendi.", 64, "Kurulum"
