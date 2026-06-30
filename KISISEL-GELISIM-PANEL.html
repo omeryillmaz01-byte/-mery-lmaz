@@ -203,6 +203,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
         <button class="btn ghost" onclick="kuranDur()">⏸️ Durdur</button>
         <label class="row" style="gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="kuranArapGizle"> Arapçayı gizle</label>
         <label class="row" style="gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="kuranMealGizle"> Meali gizle</label>
+        <label class="row" style="gap:6px;font-size:13px">🏃 Ok hızı <input type="range" id="kuranHiz" min="1" max="1.4" step="0.01" style="width:110px"> <b id="kuranHizN" style="min-width:34px">1.15</b></label>
       </div>
       <div class="mut" id="kuranDurum" style="margin-top:10px;font-size:13px"></div>
     </div>
@@ -443,6 +444,17 @@ function kuranInit(){
   // son seçili sure/kâri
   $("kuranSure").value=get("kuranSonSure",1);
   $("kuranKari").value=get("kuranSonKari",0);
+  // ok hızı kaydırıcı
+  var h=get("kuranHiz",1.15);$("kuranHiz").value=h;$("kuranHizN").textContent=(+h).toFixed(2);
+  $("kuranHiz").oninput=function(){set("kuranHiz",parseFloat(this.value));$("kuranHizN").textContent=parseFloat(this.value).toFixed(2);};
+}
+// Besmeleyi seçili hafızdan dinle (Fâtiha 1. ayet = besmele)
+function kuranBesmele(cb){
+  kuranDur();
+  kuranAudio=new Audio("https://everyayah.com/data/"+KARILER[+$("kuranKari").value][0]+"/001001.mp3");
+  kuranAudio.onended=function(){if(cb)cb();};
+  kuranAudio.onerror=function(){$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Besmele sesi yüklenemedi (internet gerekir).</span>';if(cb)cb();};
+  kuranAudio.play().catch(()=>{if(cb)cb();});
 }
 var kuranSureNo=1;
 function kuranVurgu(no){
@@ -480,14 +492,12 @@ function kuranOkSync(no,audio){
   }
   yerlestir(0);
   if(kuranOkRAF)cancelAnimationFrame(kuranOkRAF);
-  // KONUSMA_ORANI: ayet sesinin sondaki kısa sessizliği telafi (ok geride kalmasın)
-  // ONDE: okun çok minik önde gitmesi (gözle takip daha doğal)
-  var KONUSMA_ORANI=0.93, ONDE=0.015;
   function dongu(){
     if(!audio||audio.paused||audio.ended){kuranOkRAF=null;return;}
     if(audio.duration){
-      var ham=audio.currentTime/audio.duration;
-      var p=Math.min(1, ham/KONUSMA_ORANI + ONDE);
+      // hiz: 1.0 = sesle birebir; >1 = sondaki sessizliği telafi + öne al (ok geride kalmasın)
+      var hiz=get("kuranHiz",1.15);
+      var p=Math.min(1, (audio.currentTime/audio.duration)*hiz);
       yerlestir(p);
     }
     kuranOkRAF=requestAnimationFrame(dongu);
@@ -506,6 +516,9 @@ function kuranAyetOynat(sureNo,ayetNo){
 function kuranTumunuOynat(){
   if(!kuranAyetCache.length){$("kuranDurum").textContent="Önce '📥 Getir' ile sureyi yükle.";return;}
   var i=0;
+  // sure başında besmele (Fâtiha ve Tevbe hariç)
+  if(kuranSureNo!==1 && kuranSureNo!==9){kuranBesmele(function(){sonraki();});}
+  else {sonraki();}
   function sonraki(){
     if(i>=kuranAyetCache.length){kuranDur();return;}
     var no=kuranAyetCache[i];
@@ -515,7 +528,6 @@ function kuranTumunuOynat(){
     kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir).</span>';};
     kuranAudio.play().catch(()=>{});
   }
-  sonraki();
 }
 function kuranToggle(){
   if($("mushafKutu"))$("mushafKutu").style.display=$("kuranArapGizle").checked?"none":"";
@@ -532,7 +544,7 @@ function kuranYukle(){
       var ar=d.data[0].ayahs, tr=d.data[1].ayahs, sure=SURELER[kuranSureNo-1];
       // SOL: mushaf sayfası (akıcı arapça + durak işaretleri)
       var mushaf='<div class="mushaf-bas">۞ '+sure[2].toUpperCase()+' SÛRESİ ۞</div><div class="mushaf-ic">';
-      if(kuranSureNo!==1 && kuranSureNo!==9){mushaf+='<div class="besmele-mushaf">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';}
+      if(kuranSureNo!==1 && kuranSureNo!==9){mushaf+='<div class="besmele-mushaf" onclick="kuranBesmele()" style="cursor:pointer" title="Besmeleyi dinle 🔊">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ 🔊</div>';}
       // SAĞ: meal listesi
       var meal='<div class="meal-baslik">📖 '+sure[2].toUpperCase()+' SÛRESİ · MEAL (DİYANET)</div>';
       for(var i=0;i<ar.length;i++){
