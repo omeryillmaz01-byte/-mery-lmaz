@@ -55,7 +55,7 @@ main{max-width:960px;margin:0 auto;padding:18px}
 /* okunan ayetin ALTINA gelen hareketli kırmızı ok */
 .mushaf-ok{position:absolute;display:none;color:#e53935;font-size:18px;line-height:1;font-weight:900;
   transform:translateX(-50%);pointer-events:none;text-shadow:0 1px 4px rgba(229,57,53,.5);z-index:5;
-  transition:top .18s ease;animation:okzip .8s ease-in-out infinite}
+  will-change:left,top;animation:okzip .8s ease-in-out infinite}
 @keyframes okzip{0%,100%{margin-top:0}50%{margin-top:-5px}}
 .m-ayet.calar{background:rgba(229,57,53,.10);box-shadow:inset 0 -3px 0 #e53935}
 .m-tr{font-size:14px;line-height:1.62;color:var(--txt)}
@@ -480,9 +480,16 @@ function kuranOkSync(no,audio){
   }
   yerlestir(0);
   if(kuranOkRAF)cancelAnimationFrame(kuranOkRAF);
+  // KONUSMA_ORANI: ayet sesinin sondaki kısa sessizliği telafi (ok geride kalmasın)
+  // ONDE: okun çok minik önde gitmesi (gözle takip daha doğal)
+  var KONUSMA_ORANI=0.93, ONDE=0.015;
   function dongu(){
     if(!audio||audio.paused||audio.ended){kuranOkRAF=null;return;}
-    if(audio.duration)yerlestir(audio.currentTime/audio.duration);
+    if(audio.duration){
+      var ham=audio.currentTime/audio.duration;
+      var p=Math.min(1, ham/KONUSMA_ORANI + ONDE);
+      yerlestir(p);
+    }
     kuranOkRAF=requestAnimationFrame(dongu);
   }
   kuranOkRAF=requestAnimationFrame(dongu);
