@@ -34,6 +34,43 @@ main{max-width:960px;margin:0 auto;padding:18px}
   font-size:12px;font-weight:800;color:#0e7c4a;vertical-align:middle;
   background:radial-gradient(circle,#fff,#f0e6c8);border:2px solid #c9a24a;border-radius:50%;box-shadow:0 1px 3px rgba(120,90,30,.3)}
 .besmele-mushaf{text-align:center;font-size:28px;direction:rtl;font-family:"Traditional Arabic","Amiri",serif;color:#3a2c12;margin-bottom:18px;padding-bottom:14px;border-bottom:1.5px solid rgba(176,138,66,.3)}
+/* İslami takvim */
+.islami-hero{background:linear-gradient(135deg,#0e7c4a,#1a9968);color:#fff;border:none}
+.islami-hero .mut{color:rgba(255,255,255,.85)!important}
+.islami-hero input,.islami-hero .btn{color:#fff}
+.islami-hero input{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)}
+.islami-hero input::placeholder{color:rgba(255,255,255,.7)}
+.namaz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.namaz-vakit{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:13px 10px;text-align:center;transition:.2s}
+.namaz-vakit.aktif{background:linear-gradient(135deg,#0e7c4a,#1a9968);color:#fff;border-color:#0e7c4a;box-shadow:0 6px 18px -8px rgba(14,124,74,.6)}
+.namaz-vakit.aktif .v-ad,.namaz-vakit.aktif .v-saat{color:#fff}
+.v-ic{font-size:22px;margin-bottom:4px}
+.v-ad{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--mut);text-transform:uppercase}
+.v-saat{font-size:18px;font-weight:800;color:var(--txt);margin-top:3px}
+.namaz-sayac{text-align:center;padding:14px;background:linear-gradient(135deg,rgba(14,124,74,.12),rgba(26,153,104,.06));border:1px dashed #0e7c4a;border-radius:12px;font-weight:700}
+.namaz-sayac b{color:#0e7c4a;font-size:18px}
+.dini-gun{display:flex;align-items:center;gap:14px;padding:14px;border-radius:13px;background:var(--panel2);border:1px solid var(--line);margin-bottom:9px;transition:.2s}
+.dini-gun.bugun{border-color:#e53935;background:linear-gradient(135deg,rgba(229,57,53,.1),transparent)}
+.dini-gun.yakin{border-color:#f39c12;background:linear-gradient(135deg,rgba(243,156,18,.08),transparent)}
+.dini-gun .dg-ic{width:44px;height:44px;flex:none;display:grid;place-items:center;font-size:22px;border-radius:12px;background:linear-gradient(135deg,#0e7c4a,#1a9968);color:#fff}
+.dini-gun .t{flex:1}
+.dini-gun .t b{font-size:15px;display:block}
+.dini-gun .t span{font-size:12px;color:var(--mut)}
+.dini-gun .kalan{font-weight:800;color:#0e7c4a;font-size:13px;text-align:right}
+.dini-gun.bugun .kalan{color:#e53935}
+.takvim-ay{margin-bottom:18px}
+.takvim-ay h4{margin:0 0 8px;font-size:13px;color:var(--acc);letter-spacing:.5px;display:flex;align-items:center;gap:7px}
+.takvim-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.takvim-baslik{text-align:center;font-size:10px;font-weight:800;color:var(--mut);padding:4px;letter-spacing:.5px}
+.takvim-gun{text-align:center;font-size:12px;font-weight:600;padding:6px 2px;border-radius:8px;background:var(--panel2);border:1px solid transparent;position:relative;cursor:default}
+.takvim-gun.bos{background:transparent;border:none}
+.takvim-gun.cuma{color:#0e7c4a;font-weight:800}
+.takvim-gun.bugun{background:linear-gradient(135deg,#0e7c4a,#1a9968);color:#fff;font-weight:800}
+.takvim-gun.dini{background:rgba(243,156,18,.18);border-color:#f39c12;color:#a14b00;font-weight:800}
+.takvim-gun.dini.bugun{background:linear-gradient(135deg,#e53935,#c62828);color:#fff;border-color:#e53935}
+.takvim-gun .nokta{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);font-size:8px}
+.takvim-gun .baloncuk{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;z-index:10;margin-bottom:4px;pointer-events:none}
+.takvim-gun.dini:hover .baloncuk{display:block}
 .mushaf-bas{text-align:center;font-weight:800;color:#8a6a2a;font-size:13px;letter-spacing:1px;margin-bottom:16px;font-family:system-ui}
 /* sağ: meal paneli */
 .meal-panel{background:var(--panel,#fff);border:1px solid var(--line);border-radius:14px;padding:8px;max-height:72vh;overflow:auto;position:sticky;top:10px}
@@ -113,6 +150,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <button class="tab active" data-v="bugun">📅 Bugün</button>
     <button class="tab" data-v="zikir">📿 Zikir</button>
     <button class="tab" data-v="kuran">📖 Kuran</button>
+    <button class="tab" data-v="islami">🕌 İslami Takvim</button>
     <button class="tab" data-v="butce">💰 Bütçe</button>
     <button class="tab" data-v="hedef">🎯 Hedefler</button>
     <button class="tab" data-v="analiz">📊 Analiz</button>
@@ -208,6 +246,41 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
       <div class="mut" id="kuranDurum" style="margin-top:10px;font-size:13px"></div>
     </div>
     <div id="kuranAyetler"></div>
+  </section>
+  <!-- İSLAMİ TAKVİM -->
+  <section class="view" id="v-islami">
+    <div class="card islami-hero">
+      <div class="row spread" style="flex-wrap:wrap;gap:14px">
+        <div>
+          <h2 style="margin:0;font-size:20px">🕌 İslami Takvim</h2>
+          <div class="mut" id="islamiHicri" style="margin-top:4px;font-size:13px"></div>
+        </div>
+        <div class="row" style="gap:8px">
+          <input id="islamiSehir" placeholder="Şehir (ör. Istanbul)" style="width:160px">
+          <button class="btn" onclick="namazYukle()">📍 Namaz Vakti</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="namazKart" style="display:none">
+      <div class="row spread" style="margin-bottom:12px">
+        <h2 style="margin:0;font-size:15px">📿 Bugünkü Namaz Vakitleri</h2>
+        <span class="mut" id="namazSehir" style="font-size:12px"></span>
+      </div>
+      <div class="namaz-grid" id="namazVakitler"></div>
+      <div class="namaz-sayac" id="namazSayac" style="margin-top:14px"></div>
+    </div>
+    <div class="card" id="ramazanKart" style="display:none">
+      <h2 style="margin:0 0 10px">🌙 Ramazan</h2>
+      <div id="ramazanIc"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 12px">🌟 Önemli Dini Günler & Geceler</h2>
+      <div id="diniGunler"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 12px">📅 Yıllık İslami Takvim <span id="takvimYil" style="color:var(--acc);font-size:13px"></span></h2>
+      <div id="takvimAylar"></div>
+    </div>
   </section>
   <!-- BÜTÇE -->
   <section class="view" id="v-butce">
@@ -332,7 +405,7 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
@@ -560,6 +633,169 @@ function kuranYukle(){
     .catch(e=>{$("kuranDurum").innerHTML='<span style="color:#e74c3c">⚠ İnternet gerekiyor (metin & meal çevrimiçi yüklenir). Bağlantını kontrol et.</span>';});
 }
 document.addEventListener("change",function(e){if(e.target.id==="kuranArapGizle"||e.target.id==="kuranMealGizle")kuranToggle();});
+
+/* ════════ İSLAMİ TAKVİM ════════ */
+// 2026 Türkiye dini günleri (Diyanet kaynaklı, miladi tarihler)
+var DINI_GUNLER_2026=[
+ {ad:"Regaib Kandili",ic:"🌟",tarih:"2026-01-15",not:"Recep ayının ilk Cuma gecesi"},
+ {ad:"Mîrâc Kandili",ic:"✨",tarih:"2026-01-26",not:"Mîrâc gecesi"},
+ {ad:"Berât Kandili",ic:"🕊️",tarih:"2026-02-10",not:"Şâban ayının 15. gecesi"},
+ {ad:"Ramazan Başlangıcı",ic:"🌙",tarih:"2026-02-18",not:"İlk oruç günü"},
+ {ad:"Kadir Gecesi",ic:"⭐",tarih:"2026-03-15",not:"Bin aydan hayırlı gece"},
+ {ad:"Arefe Günü (Ramazan)",ic:"🕌",tarih:"2026-03-19",not:"Ramazan Bayramı arefesi"},
+ {ad:"Ramazan Bayramı (1. Gün)",ic:"🎉",tarih:"2026-03-20",not:"Ramazan Bayramı"},
+ {ad:"Ramazan Bayramı (2. Gün)",ic:"🎉",tarih:"2026-03-21"},
+ {ad:"Ramazan Bayramı (3. Gün)",ic:"🎉",tarih:"2026-03-22"},
+ {ad:"Hicri Yılbaşı (1448)",ic:"🌒",tarih:"2026-06-16",not:"Muharrem 1"},
+ {ad:"Aşure Günü",ic:"🥣",tarih:"2026-06-25",not:"Muharrem 10"},
+ {ad:"Arefe Günü (Kurban)",ic:"🕋",tarih:"2026-05-26",not:"Kurban Bayramı arefesi"},
+ {ad:"Kurban Bayramı (1. Gün)",ic:"🐏",tarih:"2026-05-27",not:"Kurban Bayramı"},
+ {ad:"Kurban Bayramı (2. Gün)",ic:"🐏",tarih:"2026-05-28"},
+ {ad:"Kurban Bayramı (3. Gün)",ic:"🐏",tarih:"2026-05-29"},
+ {ad:"Kurban Bayramı (4. Gün)",ic:"🐏",tarih:"2026-05-30"},
+ {ad:"Mevlid Kandili",ic:"🌹",tarih:"2026-08-25",not:"Hz. Peygamber'in doğum gecesi"}
+];
+var AYLAR_TR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+var GUNLER_KISA=["Pzr","Pzt","Sal","Çar","Per","Cum","Cmt"];
+
+var namazSayacTimer=null;
+function islamiInit(){
+  // şehri yükle
+  var sehir=get("islamiSehir","Istanbul");$("islamiSehir").value=sehir;
+  // hicri tarih (basit hesap, Diyanet verisinden)
+  hicriGoster();
+  diniGunlerRender();
+  takvimRender();
+  ramazanRender();
+  if(sehir)namazYukle();
+}
+function hicriGoster(){
+  // Yaklaşık hicri ay/yıl - 2026-06-30 = Zilhicce 1447 civarı
+  // Basitleştirilmiş: API üzerinden çekilebilir ama uygun referans veriyoruz
+  fetch("https://api.aladhan.com/v1/gToH?date="+todayStr().split("-").reverse().join("-"))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d&&d.data&&d.data.hijri){
+        var h=d.data.hijri;
+        $("islamiHicri").textContent="📅 "+h.day+" "+h.month.en+" "+h.year+" ("+h.weekday.en+")";
+      }
+    })
+    .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
+}
+function namazYukle(){
+  var sehir=$("islamiSehir").value.trim()||"Istanbul";
+  set("islamiSehir",sehir);
+  $("namazSehir").textContent="📍 "+sehir;
+  $("namazKart").style.display="block";
+  $("namazVakitler").innerHTML='<div class="mut" style="grid-column:1/-1;text-align:center;padding:14px">⏳ Yükleniyor…</div>';
+  // Aladhan API - timing by city (Türkiye Diyanet uyumlu method=13)
+  fetch("https://api.aladhan.com/v1/timingsByCity?city="+encodeURIComponent(sehir)+"&country=Turkey&method=13")
+    .then(r=>r.json())
+    .then(d=>{
+      if(!d||!d.data||!d.data.timings)throw 0;
+      var t=d.data.timings;
+      var vakitler=[
+        {ad:"İmsak",ic:"🌅",saat:t.Fajr},
+        {ad:"Güneş",ic:"☀️",saat:t.Sunrise},
+        {ad:"Öğle",ic:"🌤️",saat:t.Dhuhr},
+        {ad:"İkindi",ic:"🌇",saat:t.Asr},
+        {ad:"Akşam",ic:"🌆",saat:t.Maghrib},
+        {ad:"Yatsı",ic:"🌃",saat:t.Isha}
+      ];
+      // hangi vakit aktif
+      var simdi=new Date(),simdiD=simdi.getHours()*60+simdi.getMinutes();
+      var aktifIdx=-1;
+      for(var i=vakitler.length-1;i>=0;i--){
+        var p=vakitler[i].saat.split(":"),d2=(+p[0])*60+(+p[1]);
+        if(simdiD>=d2){aktifIdx=i;break;}
+      }
+      $("namazVakitler").innerHTML=vakitler.map(function(v,i){
+        return '<div class="namaz-vakit'+(i===aktifIdx?' aktif':'')+'"><div class="v-ic">'+v.ic+'</div><div class="v-ad">'+v.ad+'</div><div class="v-saat">'+v.saat+'</div></div>';
+      }).join("");
+      // bir sonraki vakte sayaç
+      namazSayacBaslat(vakitler,aktifIdx);
+    })
+    .catch(()=>{
+      $("namazVakitler").innerHTML='<div class="mut" style="grid-column:1/-1;text-align:center;padding:14px;color:#e67e22">⚠ Namaz vakitleri yüklenemedi (internet gerekli). Şehir adını İngilizce yaz: Istanbul, Ankara, Izmir...</div>';
+    });
+}
+function namazSayacBaslat(vakitler,aktifIdx){
+  if(namazSayacTimer)clearInterval(namazSayacTimer);
+  function guncelle(){
+    var simdi=new Date(),simdiSn=simdi.getHours()*3600+simdi.getMinutes()*60+simdi.getSeconds();
+    var sonrakiIdx=(aktifIdx+1)%vakitler.length;
+    var sonraki=vakitler[sonrakiIdx];
+    var p=sonraki.saat.split(":"),hedef=(+p[0])*3600+(+p[1])*60;
+    var fark=hedef-simdiSn;if(fark<0)fark+=86400;
+    var sa=Math.floor(fark/3600),dk=Math.floor((fark%3600)/60),sn=fark%60;
+    $("namazSayac").innerHTML="⏳ Bir sonraki vakte ("+sonraki.ic+" "+sonraki.ad+") kalan: <b>"+sa+" sa "+dk+" dk "+sn+" sn</b>";
+  }
+  guncelle();namazSayacTimer=setInterval(guncelle,1000);
+}
+function gunFarki(t1,t2){var d1=new Date(t1),d2=new Date(t2);d1.setHours(0,0,0,0);d2.setHours(0,0,0,0);return Math.round((d2-d1)/86400000);}
+function diniGunlerRender(){
+  var bugun=todayStr();
+  var liste=DINI_GUNLER_2026.slice().sort(function(a,b){
+    var fa=gunFarki(bugun,a.tarih),fb=gunFarki(bugun,b.tarih);
+    // bugün veya gelecekteki olanlar önce, sonra geçmiş
+    var sa=fa<0?fa+10000:fa, sb=fb<0?fb+10000:fb;
+    return sa-sb;
+  });
+  $("diniGunler").innerHTML=liste.map(function(g){
+    var fark=gunFarki(bugun,g.tarih);
+    var sinif=fark===0?'bugun':(fark>0&&fark<=15?'yakin':'');
+    var kalanTxt=fark===0?'BUGÜN! 🎊':fark>0?(fark+' gün kaldı'):(Math.abs(fark)+' gün önce');
+    var tarihKisa=new Date(g.tarih).toLocaleDateString("tr-TR",{day:"numeric",month:"long"});
+    return '<div class="dini-gun '+sinif+'"><span class="dg-ic">'+g.ic+'</span>'
+      +'<div class="t"><b>'+g.ad+'</b><span>'+tarihKisa+(g.not?' · '+g.not:'')+'</span></div>'
+      +'<div class="kalan">'+kalanTxt+'</div></div>';
+  }).join("");
+}
+function ramazanRender(){
+  var bas="2026-02-18",bit="2026-03-19",bugun=todayStr();
+  var basFark=gunFarki(bugun,bas),bitFark=gunFarki(bugun,bit);
+  var html="";
+  if(basFark>0){
+    html='<div style="text-align:center;padding:18px;background:linear-gradient(135deg,rgba(124,77,255,.12),rgba(94,234,212,.08));border-radius:12px"><div style="font-size:36px">🌙</div><div style="font-size:18px;font-weight:800;margin-top:6px">Ramazana <b style="color:#7c4dff">'+basFark+' gün</b> kaldı</div><div class="mut" style="margin-top:4px;font-size:13px">Başlangıç: 18 Şubat 2026</div></div>';
+  } else if(basFark<=0 && bitFark>=0){
+    var gun=Math.abs(basFark)+1;
+    html='<div style="text-align:center;padding:18px;background:linear-gradient(135deg,rgba(34,192,138,.15),rgba(14,159,110,.08));border-radius:12px"><div style="font-size:36px">🌙</div><div style="font-size:20px;font-weight:800;color:#0e9f6e;margin-top:6px">Ramazan '+gun+'. gün</div><div class="mut" style="margin-top:4px;font-size:13px">Hayırlı oruçlar 🤲 · Bayrama '+(bitFark+1)+' gün</div></div>';
+  } else {
+    $("ramazanKart").style.display="none";return;
+  }
+  $("ramazanKart").style.display="block";
+  $("ramazanIc").innerHTML=html;
+}
+function takvimRender(){
+  var yil=2026;$("takvimYil").textContent="("+yil+")";
+  var bugun=new Date();bugun.setHours(0,0,0,0);
+  var bugunStr=todayStr();
+  var diniMap={};DINI_GUNLER_2026.forEach(function(g){if(g.tarih.startsWith(yil))diniMap[g.tarih]={ad:g.ad,ic:g.ic};});
+  var html="";
+  for(var ay=0;ay<12;ay++){
+    var ilk=new Date(yil,ay,1),son=new Date(yil,ay+1,0);
+    var ilkGun=ilk.getDay(),gunSay=son.getDate();
+    html+='<div class="takvim-ay"><h4>📅 '+AYLAR_TR[ay]+' '+yil+'</h4><div class="takvim-grid">';
+    GUNLER_KISA.forEach(function(g){html+='<div class="takvim-baslik">'+g+'</div>';});
+    for(var b=0;b<ilkGun;b++)html+='<div class="takvim-gun bos"></div>';
+    for(var g=1;g<=gunSay;g++){
+      var tarihStr=yil+"-"+String(ay+1).padStart(2,"0")+"-"+String(g).padStart(2,"0");
+      var d=new Date(yil,ay,g);
+      var sinif="";
+      if(d.getDay()===5)sinif+=" cuma";
+      if(tarihStr===bugunStr)sinif+=" bugun";
+      if(diniMap[tarihStr])sinif+=" dini";
+      var nokta="",bal="";
+      if(diniMap[tarihStr]){
+        nokta='<span class="nokta">'+diniMap[tarihStr].ic+'</span>';
+        bal='<span class="baloncuk">'+diniMap[tarihStr].ad+'</span>';
+      }
+      html+='<div class="takvim-gun'+sinif+'">'+g+nokta+bal+'</div>';
+    }
+    html+='</div></div>';
+  }
+  $("takvimAylar").innerHTML=html;
+}
 
 /* ---- HARCAMA / BÜTÇE ---- */
 function harcamalar(){return get("harcama_"+cur,[])}
