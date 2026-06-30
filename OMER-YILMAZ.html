@@ -6680,8 +6680,19 @@ main{max-width:960px;margin:0 auto;padding:18px}
 .meal-baslik{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:1px;padding:10px 12px 8px}
 .m-row{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;border-radius:11px;cursor:pointer;transition:.18s}
 .m-row:hover{background:var(--panel2,#f4f7fb)}
-.m-row.calar{background:rgba(34,160,110,.12);box-shadow:inset 0 0 0 1px rgba(14,159,110,.3)}
-.m-no{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;background:linear-gradient(135deg,#22c08a,#0e9f6e);color:#fff}
+.m-row{position:relative}
+.m-row.calar{background:rgba(34,160,110,.14);box-shadow:inset 4px 0 0 #0e9f6e,inset 0 0 0 1px rgba(14,159,110,.3)}
+.m-ok{display:none;color:#0e9f6e;font-weight:900;font-size:16px;flex:none;align-self:center}
+.m-row.calar .m-ok{display:inline-block;animation:okkay 1s ease-in-out infinite}
+@keyframes okkay{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+.m-no{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;background:linear-gradient(135deg,#22c08a,#0e9f6e);color:#fff;transition:.2s}
+.m-row.calar .m-no{box-shadow:0 0 0 4px rgba(14,159,110,.25);animation:nabiz 1.1s ease-in-out infinite}
+@keyframes nabiz{0%,100%{box-shadow:0 0 0 3px rgba(14,159,110,.22)}50%{box-shadow:0 0 0 7px rgba(14,159,110,.05)}}
+/* Arapça tarafı okuma takip oku */
+.m-ayet.calar{background:rgba(34,160,110,.22);box-shadow:0 0 0 1px rgba(14,159,110,.4)}
+.m-ayet.calar .durak{animation:durakNabiz 1.1s ease-in-out infinite;border-color:#0e9f6e;color:#0e7c4a}
+@keyframes durakNabiz{0%,100%{box-shadow:0 0 0 2px rgba(14,159,110,.25)}50%{box-shadow:0 0 0 6px rgba(14,159,110,.04)}}
+.okisaret{display:inline-block;color:#0e9f6e;font-weight:900;animation:okkay 1s ease-in-out infinite}
 .m-tr{font-size:14px;line-height:1.62;color:var(--txt)}
 .m-play{margin-left:auto;flex:none;font-size:15px;opacity:.5}
 .m-row:hover .m-play{opacity:1}
@@ -7070,10 +7081,25 @@ function kuranInit(){
 }
 var kuranSureNo=1;
 function kuranVurgu(no){
+  // eski vurguları ve okları temizle
   document.querySelectorAll(".m-ayet.calar,.m-row.calar").forEach(e=>e.classList.remove("calar"));
+  document.querySelectorAll(".okisaret").forEach(e=>e.remove());
   if(no==null)return;
-  var a=document.querySelector('.m-ayet[data-ayet="'+no+'"]');if(a)a.classList.add("calar");
-  var r=document.getElementById("meal-"+no);if(r){r.classList.add("calar");r.scrollIntoView({behavior:"smooth",block:"center"});}
+  // Arapça: vurgula + okuma oku ekle + sayfayı kaydır
+  var a=document.querySelector('.m-ayet[data-ayet="'+no+'"]');
+  if(a){
+    a.classList.add("calar");
+    var ok=document.createElement("span");ok.className="okisaret";ok.textContent="◀ ";
+    a.insertBefore(ok,a.firstChild);
+    a.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+  // Meal: vurgula + panel içinde ortala (sayfayı kaydırmadan)
+  var r=document.getElementById("meal-"+no);
+  if(r){
+    r.classList.add("calar");
+    var panel=$("mealKutu");
+    if(panel)panel.scrollTo({top:r.offsetTop-panel.clientHeight/2+r.clientHeight/2,behavior:"smooth"});
+  }
 }
 function kuranDur(){if(kuranAudio){kuranAudio.pause();kuranAudio=null;}kuranVurgu(null);}
 function ayetSes(sure,ayet){var n=String(sure).padStart(3,"0")+String(ayet).padStart(3,"0");return "https://everyayah.com/data/"+KARILER[+$("kuranKari").value][0]+"/"+n+".mp3";}
@@ -7119,7 +7145,7 @@ function kuranYukle(){
       for(var i=0;i<ar.length;i++){
         var no=ar[i].numberInSurah;kuranAyetCache.push(no);
         mushaf+='<span class="m-ayet" data-ayet="'+no+'" onclick="kuranAyetOynat('+kuranSureNo+','+no+')">'+ar[i].text+' <span class="durak">'+no+'</span></span> ';
-        meal+='<div class="m-row" id="meal-'+no+'" data-ayet="'+no+'" onclick="kuranAyetOynat('+kuranSureNo+','+no+')"><span class="m-no">'+no+'</span><span class="m-tr">'+tr[i].text+'</span><span class="m-play">🔊</span></div>';
+        meal+='<div class="m-row" id="meal-'+no+'" data-ayet="'+no+'" onclick="kuranAyetOynat('+kuranSureNo+','+no+')"><span class="m-ok">▶</span><span class="m-no">'+no+'</span><span class="m-tr">'+tr[i].text+'</span><span class="m-play">🔊</span></div>';
       }
       mushaf+='</div>';
       $("kuranAyetler").innerHTML='<div class="kuran-iki"><div class="mushaf" id="mushafKutu">'+mushaf+'</div><div class="meal-panel" id="mealKutu">'+meal+'</div></div>';
