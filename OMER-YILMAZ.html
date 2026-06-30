@@ -4718,6 +4718,7 @@ kbd{background:var(--panel2);border:1px solid var(--border);border-radius:4px;pa
     <button data-view="srs">🔁 Tekrar</button>
     <button data-view="wrong">❌ Yanlış</button>
     <button data-view="stats">📊 İstatistik</button>
+    <button data-view="gundem">📰 Mali Gündem</button>
   </div>
   <div class="sheets" id="sheets"></div>
   <div class="file-actions">
@@ -5024,12 +5025,77 @@ document.querySelectorAll(".nav-tabs button").forEach(b=>{
 
 function render(){
   if(view==="yeni"){document.getElementById("mainToolbar").style.display="none";return renderYeni();}
+  if(view==="gundem"){document.getElementById("mainToolbar").style.display="none";return renderGundem();}
   if(!current||!sheets[current]){document.getElementById("content").innerHTML='<div class="empty"><h3>Sayfa seçin</h3></div>';return}
   document.getElementById("mainToolbar").style.display=view==="list"?"flex":"none";
   if(view==="stats")return renderStats();
   if(view==="wrong")return renderWrong();
   if(view==="test"||view==="flash"||view==="srs")return;
   renderList();
+}
+
+function renderGundem(){
+  document.getElementById("sheetTitle").textContent="📰 Mali Gündem & Kaynaklar";
+  document.getElementById("stats").textContent="Güncel mali haberler, beyanname takvimi ve pratik bilgi linkleri";
+  const KAYNAKLAR={
+    "📰 Mali Haber Siteleri":[
+      ["Özdoğrular","https://www.ozdogrular.com.tr/","Güncel makaleler, bültenler, flaş haberler"],
+      ["Vergi Algı","https://www.vergialgi.com/","Vergi haberleri ve analizler"],
+      ["Alomaliye","https://www.alomaliye.com/","Mali konularda haber ve mevzuat"],
+      ["Vergidegundem","https://www.vergidegundem.com/","Güncel vergi gündemi"],
+      ["MuhasebeTR","https://www.muhasebetr.com/","Muhasebe portali"]
+    ],
+    "🏛️ Resmi Kurumlar":[
+      ["Resmi Gazete","https://www.resmigazete.gov.tr","T.C. Cumhurbaşkanlığı"],
+      ["Gelir İdaresi Başkanlığı (GİB)","https://www.gib.gov.tr","Mevzuat ve duyurular"],
+      ["Vergi Mevzuatı Arama","https://www.gib.gov.tr/mevzuat","GİB mevzuat veritabanı"],
+      ["KGK","https://www.kgk.gov.tr","Kamu Gözetimi Kurumu"],
+      ["TÜRMOB","https://www.turmob.org.tr/","Mali müşavirler odası"],
+      ["TCMB Döviz Kurları","https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+page+site+area/bugun","Günlük döviz kurları"]
+    ],
+    "📊 Standartlar & Mevzuat":[
+      ["TMS / TFRS","https://www.kgk.gov.tr/DynamicContentDetail/9182/TMS/TFRS-2019-Seti","Türkiye Muhasebe Standartları"],
+      ["Türkiye Denetim Standartları","https://www.kgk.gov.tr/DynamicContentDetail/4105/TurkiyeMuhasebeStandartları","TDS"],
+      ["IFRS","https://www.ifrs.org/issued-standards/list-of-standards/","Uluslararası Standartlar"],
+      ["BDDK Mevzuatı","https://www.bddk.org.tr/Mevzuat/Liste/50","Bankacılık mevzuatı"],
+      ["SPK","https://spk.gov.tr/","Sermaye Piyasası Kurulu"]
+    ],
+    "🧮 Hesaplama Araçları":[
+      ["GİB Hesaplama Programları","https://www.gib.gov.tr/yardim-ve-kaynaklar/yararli-bilgiler/hesaplama-programlari","Resmi GİB hesaplayıcı"],
+      ["MTV Hesapla","https://intvrg.gib.gov.tr/","Motorlu Taşıtlar Vergisi"],
+      ["SGK e-Bildirge","https://www.sgk.gov.tr/","Sosyal Güvenlik"],
+      ["e-Devlet Vergi","https://www.turkiye.gov.tr/gelir-idaresi-baskanligi","Tüm vergi işlemleri"]
+    ],
+    "📚 Pratik Bilgiler (Özdoğrular)":[
+      ["Beyanname Verme Süreleri","https://www.ozdogrular.com.tr/v1/pratik-bilgiler/beyanname-verme-süreleri","Tüm beyannameler"],
+      ["Asgari Ücret & Yasal Kesintiler","https://www.ozdogrular.com.tr/v1/pratik-bilgiler/hadler-tutarlar/asgari-ücret-ve-yasal-kesintiler","Güncel rakamlar"],
+      ["Gelir Vergisi Tarifesi","https://www.ozdogrular.com.tr/v1/pratik-bilgiler/oranlar/gelir-vergisi-tarifesi","Dilim ve oranlar"],
+      ["KDV Oranları","https://www.ozdogrular.com.tr/v1/pratik-bilgiler/oranlar/katma-değer-vergisi-oranları","KDV oran listesi"],
+      ["Damga Vergisi Oranları","https://www.ozdogrular.com.tr/v1/pratik-bilgiler/oranlar/damga-vergisi-oranları","Damga vergisi"],
+      ["Tekdüzen Hesap Planı","https://www.ozdogrular.com.tr/v1/standartlar/tekdüzen-hesap-planı","THP"]
+    ],
+    "🎥 Video & Eğitim":[
+      ["Özdoğrular YouTube","https://www.youtube.com/channel/UC6ruAadMlVXIC49lHz9OZMA","Eğitim videoları"],
+      ["GİB YouTube","https://www.youtube.com/@GelirIdaresiBaskanligi","Resmi videolar"],
+      ["KGK Bağımsız Denetçi Sınav Soruları","https://www.kgk.gov.tr/","Geçmiş sınav soruları"]
+    ]
+  };
+  let html='<div style="padding:18px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1400px">';
+  Object.entries(KAYNAKLAR).forEach(([baslik,linkler])=>{
+    html+='<div style="background:var(--bg-card,#1a2230);border:1px solid var(--border,#2d3a4d);border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.15)">';
+    html+='<h3 style="margin:0 0 14px;font-size:14px;color:var(--accent,#4cc2ff);letter-spacing:.5px">'+baslik+'</h3>';
+    html+='<div style="display:flex;flex-direction:column;gap:8px">';
+    linkler.forEach(([ad,url,aciklama])=>{
+      html+='<a href="'+url+'" target="_blank" rel="noopener" style="display:block;padding:10px 12px;background:var(--bg-card-2,#222d3d);border:1px solid var(--border,#2d3a4d);border-radius:9px;text-decoration:none;color:var(--text,#e6edf3);transition:.15s;font-size:13px" onmouseover="this.style.borderColor=\\'#4cc2ff\\';this.style.transform=\\'translateX(3px)\\'" onmouseout="this.style.borderColor=\\'\\';this.style.transform=\\'\\'">';
+      html+='<b style="display:block;margin-bottom:2px">🔗 '+ad+'</b>';
+      html+='<span style="font-size:11.5px;color:var(--muted,#8b9bb0)">'+aciklama+'</span>';
+      html+='</a>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  html+='<div style="padding:0 22px 22px;max-width:1400px"><div style="background:linear-gradient(135deg,rgba(76,194,255,.1),rgba(34,211,160,.05));border:1px dashed var(--accent,#4cc2ff);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--muted,#8b9bb0)">💡 <b>İpucu:</b> Buraya eklemek istediğin başka kaynaklar olursa söyle, sana özel olarak ekleyeyim. Sitelerin tamamı yeni sekmede açılır.</div></div>';
+  document.getElementById("content").innerHTML=html;
 }
 
 function bugunISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -6896,7 +6962,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
           <div class="mut" id="islamiHicri" style="margin-top:4px;font-size:13px"></div>
         </div>
         <div class="row" style="gap:8px">
-          <input id="islamiSehir" placeholder="Şehir (ör. Istanbul)" style="width:160px">
+          <select id="islamiSehir" style="width:180px"></select>
           <button class="btn" onclick="namazYukle()">📍 Namaz Vakti</button>
         </div>
       </div>
@@ -7299,9 +7365,32 @@ var AYLAR_TR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağust
 var GUNLER_KISA=["Pzr","Pzt","Sal","Çar","Per","Cum","Cmt"];
 
 var namazSayacTimer=null;
+// 81 İL — Aladhan API uyumlu (İngilizce-Türkçe yazım)
+var TR_ILLER=[
+ ["Adana","Adana"],["Adiyaman","Adıyaman"],["Afyonkarahisar","Afyonkarahisar"],["Agri","Ağrı"],["Aksaray","Aksaray"],
+ ["Amasya","Amasya"],["Ankara","Ankara"],["Antalya","Antalya"],["Ardahan","Ardahan"],["Artvin","Artvin"],
+ ["Aydin","Aydın"],["Balikesir","Balıkesir"],["Bartin","Bartın"],["Batman","Batman"],["Bayburt","Bayburt"],
+ ["Bilecik","Bilecik"],["Bingol","Bingöl"],["Bitlis","Bitlis"],["Bolu","Bolu"],["Burdur","Burdur"],
+ ["Bursa","Bursa"],["Canakkale","Çanakkale"],["Cankiri","Çankırı"],["Corum","Çorum"],["Denizli","Denizli"],
+ ["Diyarbakir","Diyarbakır"],["Duzce","Düzce"],["Edirne","Edirne"],["Elazig","Elazığ"],["Erzincan","Erzincan"],
+ ["Erzurum","Erzurum"],["Eskisehir","Eskişehir"],["Gaziantep","Gaziantep"],["Giresun","Giresun"],["Gumushane","Gümüşhane"],
+ ["Hakkari","Hakkari"],["Hatay","Hatay"],["Igdir","Iğdır"],["Isparta","Isparta"],["Istanbul","İstanbul"],
+ ["Izmir","İzmir"],["Kahramanmaras","Kahramanmaraş"],["Karabuk","Karabük"],["Karaman","Karaman"],["Kars","Kars"],
+ ["Kastamonu","Kastamonu"],["Kayseri","Kayseri"],["Kilis","Kilis"],["Kirikkale","Kırıkkale"],["Kirklareli","Kırklareli"],
+ ["Kirsehir","Kırşehir"],["Kocaeli","Kocaeli"],["Konya","Konya"],["Kutahya","Kütahya"],["Malatya","Malatya"],
+ ["Manisa","Manisa"],["Mardin","Mardin"],["Mersin","Mersin"],["Mugla","Muğla"],["Mus","Muş"],
+ ["Nevsehir","Nevşehir"],["Nigde","Niğde"],["Ordu","Ordu"],["Osmaniye","Osmaniye"],["Rize","Rize"],
+ ["Sakarya","Sakarya"],["Samsun","Samsun"],["Sanliurfa","Şanlıurfa"],["Siirt","Siirt"],["Sinop","Sinop"],
+ ["Sivas","Sivas"],["Sirnak","Şırnak"],["Tekirdag","Tekirdağ"],["Tokat","Tokat"],["Trabzon","Trabzon"],
+ ["Tunceli","Tunceli"],["Usak","Uşak"],["Van","Van"],["Yalova","Yalova"],["Yozgat","Yozgat"],["Zonguldak","Zonguldak"]
+];
 function islamiInit(){
-  // şehri yükle
+  // 81 ili dropdown'a doldur (alfabetik)
+  if($("islamiSehir").options.length===0){
+    $("islamiSehir").innerHTML=TR_ILLER.sort((a,b)=>a[1].localeCompare(b[1],"tr")).map(s=>'<option value="'+s[0]+'">'+s[1]+'</option>').join("");
+  }
   var sehir=get("islamiSehir","Istanbul");$("islamiSehir").value=sehir;
+  $("islamiSehir").onchange=function(){set("islamiSehir",this.value);namazYukle();};
   // hicri tarih (basit hesap, Diyanet verisinden)
   hicriGoster();
   diniGunlerRender();
@@ -7323,7 +7412,7 @@ function hicriGoster(){
     .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
 }
 function namazYukle(){
-  var sehir=$("islamiSehir").value.trim()||"Istanbul";
+  var sehir=($("islamiSehir").value||"Istanbul").trim();
   set("islamiSehir",sehir);
   $("namazSehir").textContent="📍 "+sehir;
   $("namazKart").style.display="block";

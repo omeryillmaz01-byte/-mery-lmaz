@@ -256,7 +256,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
           <div class="mut" id="islamiHicri" style="margin-top:4px;font-size:13px"></div>
         </div>
         <div class="row" style="gap:8px">
-          <input id="islamiSehir" placeholder="Şehir (ör. Istanbul)" style="width:160px">
+          <select id="islamiSehir" style="width:180px"></select>
           <button class="btn" onclick="namazYukle()">📍 Namaz Vakti</button>
         </div>
       </div>
@@ -659,9 +659,32 @@ var AYLAR_TR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağust
 var GUNLER_KISA=["Pzr","Pzt","Sal","Çar","Per","Cum","Cmt"];
 
 var namazSayacTimer=null;
+// 81 İL — Aladhan API uyumlu (İngilizce-Türkçe yazım)
+var TR_ILLER=[
+ ["Adana","Adana"],["Adiyaman","Adıyaman"],["Afyonkarahisar","Afyonkarahisar"],["Agri","Ağrı"],["Aksaray","Aksaray"],
+ ["Amasya","Amasya"],["Ankara","Ankara"],["Antalya","Antalya"],["Ardahan","Ardahan"],["Artvin","Artvin"],
+ ["Aydin","Aydın"],["Balikesir","Balıkesir"],["Bartin","Bartın"],["Batman","Batman"],["Bayburt","Bayburt"],
+ ["Bilecik","Bilecik"],["Bingol","Bingöl"],["Bitlis","Bitlis"],["Bolu","Bolu"],["Burdur","Burdur"],
+ ["Bursa","Bursa"],["Canakkale","Çanakkale"],["Cankiri","Çankırı"],["Corum","Çorum"],["Denizli","Denizli"],
+ ["Diyarbakir","Diyarbakır"],["Duzce","Düzce"],["Edirne","Edirne"],["Elazig","Elazığ"],["Erzincan","Erzincan"],
+ ["Erzurum","Erzurum"],["Eskisehir","Eskişehir"],["Gaziantep","Gaziantep"],["Giresun","Giresun"],["Gumushane","Gümüşhane"],
+ ["Hakkari","Hakkari"],["Hatay","Hatay"],["Igdir","Iğdır"],["Isparta","Isparta"],["Istanbul","İstanbul"],
+ ["Izmir","İzmir"],["Kahramanmaras","Kahramanmaraş"],["Karabuk","Karabük"],["Karaman","Karaman"],["Kars","Kars"],
+ ["Kastamonu","Kastamonu"],["Kayseri","Kayseri"],["Kilis","Kilis"],["Kirikkale","Kırıkkale"],["Kirklareli","Kırklareli"],
+ ["Kirsehir","Kırşehir"],["Kocaeli","Kocaeli"],["Konya","Konya"],["Kutahya","Kütahya"],["Malatya","Malatya"],
+ ["Manisa","Manisa"],["Mardin","Mardin"],["Mersin","Mersin"],["Mugla","Muğla"],["Mus","Muş"],
+ ["Nevsehir","Nevşehir"],["Nigde","Niğde"],["Ordu","Ordu"],["Osmaniye","Osmaniye"],["Rize","Rize"],
+ ["Sakarya","Sakarya"],["Samsun","Samsun"],["Sanliurfa","Şanlıurfa"],["Siirt","Siirt"],["Sinop","Sinop"],
+ ["Sivas","Sivas"],["Sirnak","Şırnak"],["Tekirdag","Tekirdağ"],["Tokat","Tokat"],["Trabzon","Trabzon"],
+ ["Tunceli","Tunceli"],["Usak","Uşak"],["Van","Van"],["Yalova","Yalova"],["Yozgat","Yozgat"],["Zonguldak","Zonguldak"]
+];
 function islamiInit(){
-  // şehri yükle
+  // 81 ili dropdown'a doldur (alfabetik)
+  if($("islamiSehir").options.length===0){
+    $("islamiSehir").innerHTML=TR_ILLER.sort((a,b)=>a[1].localeCompare(b[1],"tr")).map(s=>'<option value="'+s[0]+'">'+s[1]+'</option>').join("");
+  }
   var sehir=get("islamiSehir","Istanbul");$("islamiSehir").value=sehir;
+  $("islamiSehir").onchange=function(){set("islamiSehir",this.value);namazYukle();};
   // hicri tarih (basit hesap, Diyanet verisinden)
   hicriGoster();
   diniGunlerRender();
@@ -683,7 +706,7 @@ function hicriGoster(){
     .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
 }
 function namazYukle(){
-  var sehir=$("islamiSehir").value.trim()||"Istanbul";
+  var sehir=($("islamiSehir").value||"Istanbul").trim();
   set("islamiSehir",sehir);
   $("namazSehir").textContent="📍 "+sehir;
   $("namazKart").style.display="block";
