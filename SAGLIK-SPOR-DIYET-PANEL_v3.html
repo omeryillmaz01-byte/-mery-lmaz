@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sağlık & Spor & Diyet Paneli v10.0</title>
+<style>
+:root{
+  --bg:#0f1419; --panel:#1a2230; --panel2:#222d3d; --line:#2d3a4d;
+  --txt:#e6edf3; --mut:#8b9bb0; --acc:#4cc2ff; --acc2:#22d3a0;
+  --ok:#2ecc71; --warn:#f1c40f; --bad:#e74c3c; --radius:14px;
+  --shadow:0 4px 18px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --bg:#eef2f7; --panel:#ffffff; --panel2:#f4f7fb; --line:#dde5ef;
+  --txt:#15202b; --mut:#5d6b7d; --acc:#1273e6; --acc2:#0aa97a;
+  --shadow:0 4px 16px rgba(60,90,130,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Arial,sans-serif;line-height:1.5}
+header{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--panel),var(--panel2));border-bottom:1px solid var(--line);padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--shadow)}
+header h1{font-size:19px;margin:0;display:flex;align-items:center;gap:9px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.tab{background:transparent;border:1px solid var(--line);color:var(--mut);padding:8px 13px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.15s}
+.tab:hover{color:var(--txt);border-color:var(--acc)}
+.tab.active{background:var(--acc);color:#06121c;border-color:var(--acc)}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
+main{max-width:1100px;margin:0 auto;padding:18px}
+.view{display:none;animation:fade .25s}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 14px;font-size:17px;display:flex;align-items:center;gap:8px}
+.card h3{margin:18px 0 8px;font-size:15px;color:var(--acc)}
+.grid{display:grid;gap:13px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:4px;font-weight:600}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 11px;border-radius:9px;font-size:14px}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
+.btn{background:var(--acc);color:#06121c;border:none;padding:10px 16px;border-radius:9px;cursor:pointer;font-weight:700;font-size:14px}
+.btn.alt{background:var(--acc2)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.btn:active{transform:scale(.97)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.big{font-size:40px;font-weight:800;line-height:1}
+.mut{color:var(--mut);font-size:13px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.toggle{display:flex;gap:8px}
+.toggle button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--mut);cursor:pointer;font-weight:700;font-size:13px}
+.toggle button.on-yes{background:var(--ok);color:#04140a;border-color:var(--ok)}
+.toggle button.on-no{background:var(--bad);color:#fff;border-color:var(--bad)}
+.counter{display:flex;align-items:center;gap:6px}
+.counter button{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:19px;cursor:pointer;font-weight:700}
+.counter .val{min-width:70px;text-align:center;font-size:20px;font-weight:800}
+.exgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.ex{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ex .imgwrap{position:relative;height:150px;background:#0c1118;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ex img{width:100%;height:100%;object-fit:cover;background:#fff}
+.ex .fallback{font-size:54px}
+.ex .body{padding:11px}
+.ex .body b{font-size:14.5px}
+.ex .tag{font-size:11.5px;color:var(--acc2);font-weight:700}
+.ex .reps{font-size:13px;color:var(--mut);margin-top:3px}
+.daybadge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--acc);color:#06121c;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center}
+th{color:var(--mut);font-weight:700}
+.bar{height:9px;border-radius:5px;background:var(--panel2);overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.meal{border-left:3px solid var(--acc);padding:8px 12px;margin-bottom:9px;background:var(--panel2);border-radius:0 9px 9px 0}
+.meal b{font-size:14px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.stat .n{font-size:26px;font-weight:800;color:var(--acc)}
+.stat .l{font-size:12px;color:var(--mut);margin-top:2px}
+.streak{font-size:13px}
+.notice{font-size:12.5px;color:var(--mut);background:var(--panel2);border:1px dashed var(--line);padding:9px 12px;border-radius:9px}
+.wkrow td:first-child{text-align:left;font-weight:700}
+@media(max-width:640px){header h1{font-size:16px}.big{font-size:32px}}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>💪 Sağlık Paneli <span class="mut" style="font-size:12px">v3</span></h1>
+  <div class="tabs">
+    <button class="tab active" data-view="profil">🧮 VKİ & Profil</button>
+    <button class="tab" data-view="takip">📅 Günlük Takip</button>
+    <button class="tab" data-view="hafta">📊 Haftalık / Aylık</button>
+    <button class="tab" data-view="spor">🏋️ Spor Programı</button>
+    <button class="tab" data-view="diyet">🥗 Diyet Programı</button>
+    <button class="tab" data-view="hatirla">🔔 Hatırlatıcılar</button>
+    <button class="tab" data-view="foto">📸 Foto Analiz</button>
+    <button class="tab" data-view="ogun">🍽️ Kalori (Öğün)</button>
+    <button class="tab" data-view="vucut">💪 Vücut Analizi</button>
+  </div>
+  <button class="iconbtn" id="themeBtn" title="Tema">🌙</button>
+</header>
+<main>
+
+<!-- ============ VKİ & PROFİL ============ -->
+<section class="view active" id="v-profil">
+  <div class="card">
+    <h2>🧮 Vücut Kitle Endeksi (VKİ) & Profil</h2>
+    <div class="grid g3">
+      <div><label>Ad (opsiyonel)</label><input id="p-ad" placeholder="Adın"></div>
+      <div><label>Yaş</label><input id="p-yas" type="number" min="10" max="100" value="27" placeholder="örn. 30"></div>
+      <div><label>Cinsiyet</label><select id="p-cins"><option value="e">Erkek</option><option value="k">Kadın</option></select></div>
+      <div><label>Boy (cm)</label><input id="p-boy" type="number" min="120" max="230" value="178" placeholder="örn. 175"></div>
+      <div><label>Kilo (kg)</label><input id="p-kilo" type="number" min="30" max="250" step="0.1" value="100" placeholder="örn. 80"></div>
+      <div><label>Aktivite düzeyi</label><select id="p-akt">
+        <option value="1.2">Hareketsiz (masa başı)</option>
+        <option value="1.375" selected>Az aktif (haftada 1-3 gün)</option>
+        <option value="1.55">Orta aktif (3-5 gün)</option>
+        <option value="1.725">Çok aktif (6-7 gün)</option>
+      </select></div>
+      <div><label>Hedef</label><select id="p-hedef">
+        <option value="ver" selected>Kas kazan + kilo ver (recomp)</option>
+        <option value="koru">Kiloyu korumak</option>
+        <option value="al">Kilo almak / kas</option>
+      </select></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="p-hesapla">Hesapla & Kaydet</button><span class="mut" id="p-kayit"></span></div>
+  </div>
+
+  <div class="card" id="p-sonuc" style="display:none">
+    <h2>📋 Sonuçlar</h2>
+    <div class="grid g3">
+      <div class="stat"><div class="n" id="r-vki">–</div><div class="l">VKİ (kg/m²)</div></div>
+      <div class="stat"><div class="n" id="r-kat" style="font-size:18px">–</div><div class="l">Kategori</div></div>
+      <div class="stat"><div class="n" id="r-ideal" style="font-size:18px">–</div><div class="l">İdeal kilo aralığı</div></div>
+      <div class="stat"><div class="n" id="r-kalori">–</div><div class="l">Günlük kalori hedefi</div></div>
+      <div class="stat"><div class="n" id="r-su">–</div><div class="l">Günlük su (litre)</div></div>
+      <div class="stat"><div class="n" id="r-fark" style="font-size:18px">–</div><div class="l">İdeale göre fark</div></div>
+    </div>
+    <div style="margin-top:14px"><div class="row spread"><span class="mut">Zayıf</span><span class="mut">Normal</span><span class="mut">Kilolu</span><span class="mut">Obez</span></div>
+      <div class="bar" style="height:14px;margin-top:4px;position:relative;background:linear-gradient(90deg,#4cc2ff 0 25%,#2ecc71 25% 50%,#f1c40f 50% 75%,#e74c3c 75% 100%)">
+        <div id="r-marker" style="position:absolute;top:-4px;width:4px;height:22px;background:#fff;border-radius:2px;box-shadow:0 0 4px #000;left:0"></div>
+      </div>
+    </div>
+    <p class="notice" style="margin-top:14px" id="r-yorum"></p>
+  </div>
+</section>
+
+<!-- ============ GÜNLÜK TAKİP ============ -->
+<section class="view" id="v-takip">
+  <div class="card">
+    <h2>📅 Günlük Takip</h2>
+    <div class="row spread">
+      <div class="row"><button class="iconbtn" id="t-prev">‹</button>
+        <input id="t-date" type="date" style="width:auto">
+        <button class="iconbtn" id="t-next">›</button></div>
+      <button class="btn ghost" id="t-today">Bugün</button>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div><label>🛏️ Yattığın saat</label><input id="t-yat" type="time"></div>
+      <div><label>⏰ Kalktığın saat</label><input id="t-kalk" type="time"></div>
+      <div><label>😴 Uyku süresi</label><input id="t-uyku" readonly placeholder="otomatik"></div>
+      <div><label>⚖️ Kilo (kg, ops.)</label><input id="t-kilo" type="number" step="0.1" placeholder="örn. 79.5"></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div><label>🏃 Sabah spora gittin mi?</label>
+        <div class="toggle" data-key="spor"><button data-v="1">Evet ✅</button><button data-v="0">Hayır ❌</button></div></div>
+      <div><label>🍰 Tatlı yedin mi?</label>
+        <div class="toggle" data-key="tatli"><button data-v="1">Evet 🍰</button><button data-v="0">Hayır 🚫</button></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div><label>💧 Su (bardak × 250 ml)</label>
+        <div class="counter"><button data-c="su" data-d="-1">−</button><span class="val" id="t-su">0</span><button data-c="su" data-d="1">+</button>
+        <span class="mut" id="t-su-lt">0 L</span></div></div>
+      <div><label>👟 Koşu / Yürüyüş (km)</label>
+        <div class="counter"><button data-c="km" data-d="-0.5">−</button><span class="val" id="t-km">0</span><button data-c="km" data-d="0.5">+</button>
+        <span class="mut">km</span></div></div>
+    </div>
+    <div style="margin-top:14px"><label>📝 Not</label><input id="t-not" placeholder="bugün nasıldı?"></div>
+    <div class="row" style="margin-top:14px"><button class="btn alt" id="t-kaydet">💾 Günü Kaydet</button><span class="mut" id="t-durum"></span></div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">🎯 Bugünün Hedef Durumu</h3>
+    <div id="t-hedefler"></div>
+  </div>
+</section>
+
+<!-- ============ HAFTALIK / AYLIK ============ -->
+<section class="view" id="v-hafta">
+  <div class="card">
+    <h2>📊 Özet İstatistik <span class="mut" style="font-size:12px">(son 30 gün)</span></h2>
+    <div class="grid g3" id="h-statlar"></div>
+  </div>
+  <div class="card">
+    <h2>🗓️ Bu Hafta</h2>
+    <div style="overflow-x:auto"><table id="h-hafta"></table></div>
+  </div>
+  <div class="card">
+    <h2>📈 Trendler (son 14 gün)</h2>
+    <h3>💧 Su (bardak)</h3><div id="h-su"></div>
+    <h3>👟 Mesafe (km)</h3><div id="h-km"></div>
+    <h3>😴 Uyku (saat)</h3><div id="h-uyku"></div>
+  </div>
+</section>
+
+<!-- ============ SPOR PROGRAMI ============ -->
+<section class="view" id="v-spor">
+  <div class="card">
+    <h2>🏋️ Haftalık Spor Programı <span class="mut" style="font-size:12px">(başlangıç–orta seviye)</span></h2>
+    <p class="notice">Görseller internetten (free-exercise-db) yüklenir; çevrimdışıyken yerine emoji görünür. Her egzersiz 3 set; setler arası 60 sn dinlen. Isınmayı (5 dk) unutma.</p>
+    <div class="toggle" id="spor-mode" style="max-width:340px;margin-top:12px"></div>
+    <div class="row" id="spor-gunler" style="margin:14px 0 0;gap:6px"></div>
+    <div class="exgrid" id="spor-liste"></div>
+  </div>
+</section>
+
+<!-- ============ DİYET PROGRAMI ============ -->
+<section class="view" id="v-diyet">
+  <div class="card">
+    <h2>🥗 Diyet Programı</h2>
+    <div class="row spread"><p class="mut" id="d-ozet" style="margin:0">Profil hedefine göre örnek plan.</p>
+      <select id="d-hedef" style="width:auto"><option value="ver">Kilo vermek</option><option value="koru">Korumak</option><option value="al">Kilo almak</option></select></div>
+    <div id="d-plan" style="margin-top:14px"></div>
+    <p class="notice" style="margin-top:8px">Bu plan genel örnektir; sağlık sorunun varsa diyetisyene/doktora danış. Porsiyonları günlük kalori hedefine göre ayarla.</p>
+  </div>
+</section>
+
+<!-- ============ HATIRLATICILAR ============ -->
+<section class="view" id="v-hatirla">
+  <div class="card">
+    <h2>🔔 Hatırlatıcılar</h2>
+    <p class="notice">Tarayıcı bildirimi kullanır. Çalışması için bu sekmenin/panelin açık olması ve bildirim izni verilmesi gerekir.</p>
+    <div class="row" style="margin:12px 0"><button class="btn" id="n-izin">Bildirimlere İzin Ver</button><span class="mut" id="n-durum"></span></div>
+    <div class="grid g2">
+      <div class="row spread"><label style="margin:0">💧 Su hatırlatması (her X saat)</label><input id="n-su" type="number" min="1" max="6" value="2" style="width:80px"></div>
+      <div class="row spread"><label style="margin:0">🏃 Sabah spor saati</label><input id="n-spor" type="time" value="07:00" style="width:auto"></div>
+      <div class="row spread"><label style="margin:0">🛏️ Uyku hatırlatması</label><input id="n-uyku" type="time" value="23:00" style="width:auto"></div>
+      <div class="row spread"><label style="margin:0">🥗 Öğün hatırlatması (öğle)</label><input id="n-ogun" type="time" value="12:30" style="width:auto"></div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn alt" id="n-kaydet">Hatırlatıcıları Kaydet</button>
+      <button class="btn ghost" id="n-test">Test bildirimi</button></div>
+    <div id="n-aktif" class="mut" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ============ FOTO ANALİZ ============ -->
+<section class="view" id="v-foto">
+  <div class="card">
+    <h2>📸 Haftalık İlerleme Fotoğrafı</h2>
+    <p class="notice">Her hafta bir fotoğraf çek/yükle (telefon kamerası, galeri veya WhatsApp). Fotoğraflar SADECE bu cihazda saklanır (gizli). İlk-son karşılaştırma ve kilo/VKİ ile birlikte gösterilir.</p>
+    <div class="grid g2" style="margin-top:12px">
+      <div><label>📅 Tarih</label><input id="f-date" type="date"></div>
+      <div><label>⚖️ O günkü kilo (kg)</label><input id="f-kilo" type="number" step="0.1" placeholder="örn. 99.5"></div>
+    </div>
+    <div style="margin-top:12px">
+      <label>📷 Fotoğraf seç (kamera / galeri / WhatsApp)</label>
+      <input id="f-input" type="file" accept="image/*">
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn alt" id="f-save" disabled>💾 Bu Haftayı Kaydet</button><span class="mut" id="f-status"></span></div>
+    <img id="f-preview" style="display:none;max-width:220px;border-radius:10px;margin-top:12px;border:1px solid var(--line)">
+  </div>
+
+  <div class="card" id="f-cmp-card" style="display:none">
+    <h2>🔄 İlk → Son Karşılaştırma</h2>
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div style="text-align:center"><div class="mut" id="f-cmp-a-lbl"></div><img id="f-cmp-a" style="max-width:160px;border-radius:10px;border:1px solid var(--line)"></div>
+      <div style="font-size:28px;align-self:center">➜</div>
+      <div style="text-align:center"><div class="mut" id="f-cmp-b-lbl"></div><img id="f-cmp-b" style="max-width:160px;border-radius:10px;border:1px solid var(--line)"></div>
+    </div>
+    <p class="notice" id="f-cmp-analiz" style="margin-top:12px"></p>
+  </div>
+
+  <div class="card">
+    <h2>🤖 AI Görsel Analiz <span class="mut" style="font-size:12px">(opsiyonel)</span></h2>
+    <p class="notice">Yapay zekânın fotoğrafa bakıp form/duruş/ilerleme yorumu yapması için Anthropic API anahtarı gerekir. Anahtar SADECE bu cihazda saklanır; analiz için fotoğraf Anthropic'e gönderilir. Tıbbi tavsiye değildir.</p>
+    <div class="grid g2" style="margin-top:10px">
+      <div><label>🔑 Anthropic API anahtarı</label><input id="f-key" type="password" placeholder="sk-ant-..."></div>
+      <div><label>Model</label><select id="f-model"><option value="claude-sonnet-4-6">Sonnet 4.6 (dengeli)</option><option value="claude-opus-4-8">Opus 4.8 (en güçlü)</option><option value="claude-haiku-4-5-20251001">Haiku 4.5 (hızlı/ucuz)</option></select></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="f-ai" disabled>🤖 Son Fotoğrafı Analiz Et</button><span class="mut" id="f-ai-status"></span></div>
+    <div id="f-ai-out" class="notice" style="display:none;margin-top:12px;white-space:pre-wrap;line-height:1.6"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ Tüm Fotoğraflar</h2>
+    <div id="f-gallery" class="exgrid"></div>
+  </div>
+</section>
+
+<!-- ============ ÖĞÜN KALORİ ANALİZİ ============ -->
+<section class="view" id="v-ogun">
+  <div class="card">
+    <h2>🍽️ Öğün Kalori Analizi <span class="mut" style="font-size:12px">(AI · Opus 4.8)</span></h2>
+    <p class="notice">Yediğin öğünün fotoğrafını çek/yükle; yapay zekâ yiyecekleri tanıyıp tahmini kalori ve makroları en ince ayrıntısına kadar çıkarır. En iyi sonuç için Opus 4.8 önerilir. Değerler tahminidir, fotoğraf analiz için Anthropic'e gönderilir.</p>
+    <div style="margin-top:10px"><label>📷 Öğün fotoğrafı (kamera / galeri / WhatsApp)</label><input id="o-input" type="file" accept="image/*"></div>
+    <img id="o-preview" style="display:none;max-width:240px;border-radius:10px;margin-top:12px;border:1px solid var(--line)">
+    <div class="grid g2" style="margin-top:12px">
+      <div><label>🔑 Anthropic API anahtarı</label><input id="o-key" type="password" placeholder="sk-ant-..."></div>
+      <div><label>Model</label><select id="o-model"><option value="claude-opus-4-8">Opus 4.8 (en detaylı) ⭐</option><option value="claude-sonnet-4-6">Sonnet 4.6 (dengeli)</option><option value="claude-haiku-4-5-20251001">Haiku 4.5 (hızlı)</option></select></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="o-ai" disabled>🔍 Öğünü Analiz Et</button><span class="mut" id="o-status"></span></div>
+    <div id="o-out" class="notice" style="display:none;margin-top:12px;white-space:pre-wrap;line-height:1.6"></div>
+    <div id="o-add" style="display:none;margin-top:12px" class="row">
+      <label style="margin:0">Bu öğünü bugüne ekle (kcal):</label>
+      <input id="o-kcal" type="number" style="width:120px" placeholder="örn. 650">
+      <button class="btn alt" id="o-addbtn">➕ Ekle</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📒 Bugünün Öğünleri</h2>
+    <div id="o-today"></div>
+  </div>
+</section>
+
+<!-- ============ VÜCUT ANALİZİ ============ -->
+<section class="view" id="v-vucut">
+  <div class="card">
+    <h2>💪 Vücut Analizi (Kompozisyon)</h2>
+    <p class="notice">Akıllı tartı veya spor salonundaki InBody cihazının değerlerini gir (haftada 1 yeterli). Her metriği tek tek takip edip trendini gösteririm. Hedef: yağ ver + kası koru. Yağ kütlesi ve yağsız kütle otomatik hesaplanır.</p>
+    <div class="grid g3" style="margin-top:12px">
+      <div><label>📅 Tarih</label><input id="b-date" type="date"></div>
+      <div><label>⚖️ Kilo (kg)</label><input id="b-kilo" type="number" step="0.1" placeholder="örn. 99.5"></div>
+      <div><label>🔥 Yağ oranı (%)</label><input id="b-yag" type="number" step="0.1" placeholder="örn. 28"></div>
+      <div><label>💪 Kas kütlesi (kg)</label><input id="b-kas" type="number" step="0.1" placeholder="örn. 65"></div>
+      <div><label>💧 Su oranı (%)</label><input id="b-su" type="number" step="0.1" placeholder="örn. 52"></div>
+      <div><label>🦴 Kemik kütlesi (kg)</label><input id="b-kemik" type="number" step="0.1" placeholder="örn. 3.2"></div>
+      <div><label>🎯 İç (visseral) yağ</label><input id="b-vis" type="number" step="1" placeholder="örn. 12"></div>
+      <div><label>⚡ Bazal metabolizma (kcal)</label><input id="b-bmr" type="number" step="1" placeholder="örn. 1900"></div>
+      <div><label>🧬 Vücut yaşı</label><input id="b-vyas" type="number" step="1" placeholder="örn. 32"></div>
+    </div>
+    <h3>📏 Çevre Ölçüleri (cm) — opsiyonel</h3>
+    <div class="grid g3">
+      <div><label>Bel</label><input id="b-bel" type="number" step="0.5"></div>
+      <div><label>Göğüs</label><input id="b-gogus" type="number" step="0.5"></div>
+      <div><label>Kol</label><input id="b-kol" type="number" step="0.5"></div>
+      <div><label>Kalça</label><input id="b-kalca" type="number" step="0.5"></div>
+      <div><label>Bacak</label><input id="b-bacak" type="number" step="0.5"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn alt" id="b-save">💾 Ölçümü Kaydet</button><span class="mut" id="b-status"></span></div>
+  </div>
+
+  <div class="card" id="b-sum-card" style="display:none">
+    <h2>📊 Son Durum & Değişim <span class="mut" style="font-size:12px">(ilk ölçüme göre)</span></h2>
+    <div class="grid g3" id="b-cards"></div>
+    <p class="notice" id="b-form" style="margin-top:14px"></p>
+  </div>
+
+  <div class="card" id="b-trend-card" style="display:none">
+    <h2>📈 Trendler</h2>
+    <div id="b-trends"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ Tüm Ölçümler</h2>
+    <div style="overflow-x:auto"><table id="b-table"></table></div>
+  </div>
+</section>
+
+<!-- Egzersiz detay penceresi -->
+<div id="ex-modal" onclick="if(event.target===this)exKapat()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:480px;width:100%;max-height:88vh;overflow:auto;padding:20px;box-shadow:var(--shadow)">
+    <div class="row spread" style="margin-bottom:4px"><span class="mut" style="font-size:12px">🏋️ Hareket Rehberi</span><button class="iconbtn" onclick="exKapat()">✕</button></div>
+    <div id="ex-modal-body"></div>
+  </div>
+</div>
+
+</main>
+<script>
+const LS="saglik_";
+const $=id=>document.getElementById(id);
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+function get(k,def){try{return JSON.parse(localStorage.getItem(LS+k))??def;}catch(e){return def;}}
+function set(k,v){localStorage.setItem(LS+k,JSON.stringify(v));}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");$("v-"+t.dataset.view).classList.add("active");
+  if(t.dataset.view==="hafta")renderHafta();
+  if(t.dataset.view==="diyet")renderDiyet();
+  if(t.dataset.view==="foto")renderFoto();
+  if(t.dataset.view==="ogun")renderOgun();
+  if(t.dataset.view==="vucut")renderVucut();
+});
+/* ---------- Theme ---------- */
+$("themeBtn").onclick=()=>{const b=document.body;const n=b.dataset.theme==="dark"?"light":"dark";b.dataset.theme=n;$("themeBtn").textContent=n==="dark"?"🌙":"☀️";set("theme",n);};
+(function(){const t=get("theme","dark");document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";})();
+
+/* ================= PROFİL & VKİ ================= */
+function hesapla(){
+  const yas=+$("p-yas").value, boy=+$("p-boy").value, kilo=+$("p-kilo").value;
+  const cins=$("p-cins").value, akt=+$("p-akt").value, hedef=$("p-hedef").value;
+  if(!boy||!kilo){alert("Boy ve kilo gerekli.");return;}
+  const m=boy/100, vki=kilo/(m*m);
+  let kat,col;
+  if(vki<18.5){kat="Zayıf";col="var(--acc)";}
+  else if(vki<25){kat="Normal";col="var(--ok)";}
+  else if(vki<30){kat="Kilolu";col="var(--warn)";}
+  else{kat="Obez";col="var(--bad)";}
+  const idealMin=(18.5*m*m), idealMax=(24.9*m*m);
+  // BMR Mifflin-St Jeor
+  let bmr=cins==="e"?(10*kilo+6.25*boy-5*yas+5):(10*kilo+6.25*boy-5*yas-161);
+  let kal=bmr*akt;
+  if(hedef==="ver")kal-=500; if(hedef==="al")kal+=350;
+  const su=(kilo*0.035).toFixed(1);
+  const fark = kilo>idealMax?("+"+(kilo-idealMax).toFixed(1)+" kg fazla"):kilo<idealMin?((idealMin-kilo).toFixed(1)+" kg az"):"İdeal aralıkta ✅";
+  $("r-vki").textContent=vki.toFixed(1);
+  $("r-kat").textContent=kat;$("r-kat").style.color=col;
+  $("r-ideal").textContent=idealMin.toFixed(0)+"–"+idealMax.toFixed(0)+" kg";
+  $("r-kalori").textContent=Math.round(kal);
+  $("r-su").textContent=su;
+  $("r-fark").textContent=fark;
+  const pct=Math.max(0,Math.min(100,((vki-15)/(35-15))*100));
+  $("r-marker").style.left=pct+"%";
+  let yorum="";
+  if(kat==="Normal")yorum="🎉 Tebrikler, kilon sağlıklı aralıkta. Korumak için düzenli hareket ve dengeli beslen.";
+  else if(kat==="Zayıf")yorum="ℹ️ Biraz kilo almak iyi olabilir. Protein ve kalori alımını artır, kuvvet antrenmanı yap.";
+  else if(kat==="Kilolu")yorum="⚠️ Hafif kilo fazlan var. Haftada 0.5 kg vermek için günlük ~500 kalori açık + kardiyo hedefle.";
+  else yorum="⚠️ Sağlık riski açısından kilo vermen önerilir. Doktor/diyetisyen desteğiyle kademeli ilerle.";
+  $("r-yorum").textContent=yorum;
+  $("p-sonuc").style.display="block";
+  const prof={ad:$("p-ad").value,yas,boy,kilo,cins,akt,hedef,vki:+vki.toFixed(1),kalori:Math.round(kal),su:+su};
+  set("profil",prof);
+  $("p-kayit").textContent="✓ kaydedildi";
+  $("d-hedef").value=hedef;
+}
+$("p-hesapla").onclick=hesapla;
+(function(){const p=get("profil",null);if(p){$("p-ad").value=p.ad||"";$("p-yas").value=p.yas||"";$("p-boy").value=p.boy||"";$("p-kilo").value=p.kilo||"";$("p-cins").value=p.cins||"e";$("p-akt").value=p.akt||"1.375";$("p-hedef").value=p.hedef||"koru";if(p.boy&&p.kilo)hesapla();}else{if($("p-boy").value&&$("p-kilo").value)hesapla();}})();
+
+/* ================= GÜNLÜK TAKİP ================= */
+let curDate=todayStr();
+function loadDay(){
+  const days=get("days",{});const d=days[curDate]||{};
+  $("t-date").value=curDate;
+  $("t-yat").value=d.yat||"";$("t-kalk").value=d.kalk||"";$("t-kilo").value=d.kilo||"";
+  $("t-not").value=d.not||"";
+  $("t-su").textContent=d.su||0;updSuLt(d.su||0);
+  $("t-km").textContent=(d.km||0);
+  updUyku();
+  setToggle("spor",d.spor);setToggle("tatli",d.tatli);
+  renderHedefler(d);
+}
+function setToggle(key,val){
+  document.querySelectorAll(`.toggle[data-key="${key}"] button`).forEach(b=>{b.classList.remove("on-yes","on-no");
+    if(val!==undefined&&+b.dataset.v===val)b.classList.add(val===1?"on-yes":"on-no");});
+}
+function updSuLt(n){$("t-su-lt").textContent=((n*250)/1000).toFixed(2)+" L";}
+function updUyku(){
+  const y=$("t-yat").value,k=$("t-kalk").value;if(!y||!k){$("t-uyku").value="";return;}
+  let[yh,ym]=y.split(":").map(Number),[kh,km]=k.split(":").map(Number);
+  let mins=(kh*60+km)-(yh*60+ym);if(mins<0)mins+=1440;
+  $("t-uyku").value=Math.floor(mins/60)+" sa "+(mins%60)+" dk";
+}
+document.querySelectorAll(".toggle button").forEach(b=>b.onclick=()=>{const key=b.parentElement.dataset.key;setToggle(key,+b.dataset.v);});
+document.querySelectorAll(".counter button").forEach(b=>b.onclick=()=>{
+  const c=b.dataset.c,delta=+b.dataset.d;let el=$("t-"+c);let v=+el.textContent+delta;if(v<0)v=0;
+  v=c==="km"?+v.toFixed(1):v;el.textContent=v;if(c==="su")updSuLt(v);
+});
+$("t-yat").onchange=updUyku;$("t-kalk").onchange=updUyku;
+$("t-date").onchange=()=>{curDate=$("t-date").value;loadDay();};
+$("t-prev").onclick=()=>{curDate=shift(curDate,-1);loadDay();};
+$("t-next").onclick=()=>{curDate=shift(curDate,1);loadDay();};
+$("t-today").onclick=()=>{curDate=todayStr();loadDay();};
+function shift(ds,n){const d=new Date(ds);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function getToggle(key){const on=document.querySelector(`.toggle[data-key="${key}"] button.on-yes,.toggle[data-key="${key}"] button.on-no`);return on?+on.dataset.v:undefined;}
+$("t-kaydet").onclick=()=>{
+  const days=get("days",{});
+  days[curDate]={yat:$("t-yat").value,kalk:$("t-kalk").value,kilo:$("t-kilo").value,
+    su:+$("t-su").textContent,km:+$("t-km").textContent,spor:getToggle("spor"),tatli:getToggle("tatli"),not:$("t-not").value};
+  set("days",days);$("t-durum").textContent="✓ "+curDate+" kaydedildi";renderHedefler(days[curDate]);
+  setTimeout(()=>$("t-durum").textContent="",2500);
+};
+function renderHedefler(d){
+  const p=get("profil",{su:8});const suHedef=Math.round((p.su||2)*4); // litre→bardak (250ml)
+  const items=[
+    {ad:"💧 Su",now:(d.su||0),hedef:suHedef,unit:"bardak"},
+    {ad:"👟 Mesafe",now:(d.km||0),hedef:5,unit:"km"},
+    {ad:"🏃 Sabah spor",now:d.spor===1?1:0,hedef:1,unit:"",bool:true},
+    {ad:"🍰 Tatlı yok",now:d.tatli===0?1:0,hedef:1,unit:"",bool:true},
+  ];
+  $("t-hedefler").innerHTML=items.map(it=>{
+    const pct=Math.min(100,(it.now/it.hedef)*100||0);
+    const txt=it.bool?(it.now?"✅ tamam":"⏳ bekliyor"):`${it.now}/${it.hedef} ${it.unit}`;
+    return `<div style="margin-bottom:11px"><div class="row spread"><span>${it.ad}</span><span class="mut">${txt}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+}
+
+/* ================= HAFTALIK / AYLIK ================= */
+function renderHafta(){
+  const days=get("days",{});
+  const keys=Object.keys(days);
+  // son 30 gün istatistik
+  let last30=[],sumSu=0,sumKm=0,sporGun=0,tatliGun=0,uykuTop=0,uykuN=0;
+  for(let i=0;i<30;i++){const ds=shift(todayStr(),-i);const d=days[ds];if(d){last30.push(d);sumSu+=d.su||0;sumKm+=d.km||0;if(d.spor===1)sporGun++;if(d.tatli===1)tatliGun++;const u=uykuSaat(d);if(u){uykuTop+=u;uykuN++;}}}
+  // streak (spor)
+  let streak=0;for(let i=0;i<60;i++){const d=days[shift(todayStr(),-i)];if(d&&d.spor===1)streak++;else if(i>0)break;}
+  $("h-statlar").innerHTML=[
+    ["🏃 Spor günü (30g)",sporGun],["🔥 Spor serisi",streak+" gün"],
+    ["💧 Toplam su",sumSu+" bardak"],["👟 Toplam mesafe",sumKm.toFixed(1)+" km"],
+    ["😴 Ort. uyku",uykuN?(uykuTop/uykuN).toFixed(1)+" sa":"–"],["🍰 Tatlı günü",tatliGun]
+  ].map(s=>`<div class="stat"><div class="n">${s[1]}</div><div class="l">${s[0]}</div></div>`).join("");
+  // bu hafta tablo (Pzt-Paz)
+  const gun=["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+  const now=new Date(todayStr());const dow=(now.getDay()+6)%7;const mon=shift(todayStr(),-dow);
+  let head="<tr><th>Gün</th><th>🏃</th><th>💧</th><th>👟km</th><th>😴</th><th>🍰</th></tr>";
+  let body="";
+  for(let i=0;i<7;i++){const ds=shift(mon,i);const d=days[ds]||{};const u=uykuSaat(d);
+    body+=`<tr class="wkrow"><td>${gun[i]} <span class="mut">${ds.slice(5)}</span></td>
+    <td>${d.spor===1?"✅":d.spor===0?"❌":"–"}</td><td>${d.su||0}</td><td>${d.km||0}</td>
+    <td>${u?u.toFixed(1):"–"}</td><td>${d.tatli===1?"🍰":d.tatli===0?"🚫":"–"}</td></tr>`;}
+  $("h-hafta").innerHTML=head+body;
+  // trendler son 14 gün
+  trend("h-su",14,d=>d.su||0,"bardak");
+  trend("h-km",14,d=>d.km||0,"km");
+  trend("h-uyku",14,d=>uykuSaat(d)||0,"sa");
+}
+function uykuSaat(d){if(!d||!d.yat||!d.kalk)return 0;let[yh,ym]=d.yat.split(":").map(Number),[kh,km]=d.kalk.split(":").map(Number);let m=(kh*60+km)-(yh*60+ym);if(m<0)m+=1440;return m/60;}
+function trend(id,n,fn,unit){
+  const days=get("days",{});let max=1,arr=[];
+  for(let i=n-1;i>=0;i--){const ds=shift(todayStr(),-i);const v=fn(days[ds]||{});arr.push([ds,v]);if(v>max)max=v;}
+  $(id).innerHTML=`<div class="row" style="align-items:flex-end;gap:4px;height:90px">`+arr.map(([ds,v])=>{
+    const h=Math.round((v/max)*78)+2;
+    return `<div title="${ds}: ${typeof v==='number'?v.toFixed(1):v} ${unit}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="width:100%;height:${h}px;background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:4px 4px 0 0"></div>
+      <span style="font-size:9px;color:var(--mut)">${ds.slice(8)}</span></div>`;}).join("")+`</div>`;
+}
+
+/* ================= SPOR PROGRAMI ================= */
+const IMG="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
+const EX={
+  sinav:["Şınav (Push-up)","Göğüs · Triceps","3×10-15","Pushups","🤸"],
+  squat:["Squat (Çömelme)","Bacak · Kalça","3×15","Bodyweight_Squat","🦵"],
+  plank:["Plank","Karın (core)","3×30-45 sn","Plank","🧘"],
+  daggci:["Dağcı (Mountain Climbers)","Kardiyo · Karın","3×30 sn","Mountain_Climbers","🏃"],
+  ip:["İp Atlama","Kardiyo","3×60 sn","Rope_Jumping","🪢"],
+  mekik:["Mekik (Crunch)","Karın","3×20","Crunches","💪"],
+  bisiklet:["Bisiklet Mekiği","Karın (oblik)","3×20","Air_Bike","🚲"],
+  kopru:["Köprü (Glute Bridge)","Kalça","3×15","Barbell_Glute_Bridge","🌉"],
+  lunge:["Yürüyen Lunge","Bacak · Kalça","3×12/bacak","Barbell_Walking_Lunge","🚶"],
+  curl:["Biceps Curl","Kol (biceps)","3×12","Barbell_Curl","💪"],
+  barfiks:["Destekli Barfiks","Sırt","3×8-10","Band_Assisted_Pull-Up","🧗"],
+  pullup:["Barfiks (Pull-up)","Sırt","3×6-10","Pullups","🧗"],
+  dips:["Dips","Triceps","3×8-12","Dips_-_Triceps_Version","💪"],
+  rus:["Rus Twist","Karın (oblik)","3×20","Russian_Twist","🌀"],
+  baldir:["Topuk Kaldırma","Baldır","3×20","Standing_Calf_Raises","🦶"],
+  lat:["Lat Pulldown","Sırt","3×12","Wide-Grip_Lat_Pulldown","🏋️"],
+  egimsinav:["Eğimli Şınav (kolay)","Göğüs · Triceps","3×10-12","Incline_Push-Up","🤸"],
+  darsinav:["Dar Şınav","Triceps · Göğüs","3×8-12","Push-Ups_-_Close_Triceps_Position","💪"],
+  sehpadips:["Sehpa Dips","Triceps","3×10-15","Bench_Dips","🪑"],
+  tersrow:["Ters Kürek (masa altı)","Sırt · Biceps","3×8-12","Inverted_Row","🚣"],
+  superman:["Süpermen","Bel · Sırt","3×12","Superman","🦸"],
+  yanplank:["Yan Plank","Karın (oblik)","3×30 sn/yön","Side_Bridge","🧘"],
+  tersmekik:["Ters Mekik","Alt karın","3×15","Reverse_Crunch","💪"],
+  makas:["Makas (Flutter Kicks)","Alt karın","3×30 sn","Flutter_Kicks","✂️"],
+  stepup:["Step-up + Diz Çekme","Bacak · Kardiyo","3×12/bacak","Step-up_with_Knee_Raise","🪜"],
+  evlunge:["Lunge (vücut ağırlığı)","Bacak · Kalça","3×12/bacak","Bodyweight_Walking_Lunge","🚶"],
+  dbench:["Dambıl Bench Press","Göğüs","4×10-12","Dumbbell_Bench_Press","🏋️"],
+  ibench:["Eğimli Dambıl Press","Üst Göğüs","3×10-12","Incline_Dumbbell_Press","🏋️"],
+  fly:["Dambıl Fly","Göğüs (açma)","3×12-15","Dumbbell_Flyes","🏋️"],
+  crossover:["Cable Crossover","Göğüs","3×15","Cable_Crossover","🏋️"],
+  cgbench:["Dar Tutuş Bench Press","Arka Kol · Göğüs","3×10","Close-Grip_Barbell_Bench_Press","💪"],
+  pushdown:["Triceps Pushdown","Arka Kol","4×12","Triceps_Pushdown","💪"],
+  overhead:["İple Overhead Extension","Arka Kol","3×12-15","Triceps_Overhead_Extension_with_Rope","💪"],
+  lytri:["Skull Crusher (Yatarak Triceps)","Arka Kol","3×10-12","Lying_Triceps_Press","💪"],
+  military:["Military Press","Omuz","4×8-10","Standing_Military_Press","🏋️"],
+  dbomuz:["Dambıl Omuz Press","Omuz","3×10-12","Dumbbell_Shoulder_Press","🏋️"],
+  yanraise:["Yan Lateral Raise","Yan Omuz","3×15","Side_Lateral_Raise","🏋️"],
+  reardelt:["Reverse Fly","Arka Omuz","3×15","Reverse_Flyes","🏋️"],
+  bsquat:["Barbell Squat","Bacak","4×8-10","Barbell_Full_Squat","🦵"],
+  legpress:["Leg Press","Bacak","4×12","Leg_Press","🦵"],
+  legcurl:["Leg Curl","Arka Bacak","3×12","Lying_Leg_Curls","🦵"],
+  hangleg:["Asılı Bacak Kaldırma","Karın","3×12","Hanging_Leg_Raise","💪"],
+  deadlift:["Deadlift","Sırt · Tüm Vücut","3×6-8","Barbell_Deadlift","🏋️"],
+  brow:["Barbell Row","Sırt","4×10","Bent_Over_Barbell_Row","🏋️"],
+  cablerow:["Oturarak Kablo Row","Sırt","3×12","Seated_Cable_Rows","🏋️"],
+  dbrow:["Tek Kol Dambıl Row","Sırt","3×10/kol","One-Arm_Dumbbell_Row","🏋️"],
+  dbcurl:["Dambıl Biceps Curl","Ön Kol","3×12","Dumbbell_Bicep_Curl","💪"],
+  hammer:["Hammer Curl","Ön Kol","3×12","Hammer_Curls","💪"],
+  preacher:["Preacher Curl","Biceps","3×12","Preacher_Curl","💪"],
+};
+const PROGRAMS={
+ salon:[
+  ["Pazartesi","Üst Vücut",["sinav","barfiks","dips","curl","lat"]],
+  ["Salı","Kardiyo + Karın",["ip","daggci","plank","mekik","rus","bisiklet"]],
+  ["Çarşamba","Alt Vücut",["squat","lunge","kopru","baldir"]],
+  ["Perşembe","Aktif Dinlenme",["_walk"]],
+  ["Cuma","Tam Vücut",["sinav","squat","plank","bisiklet","curl"]],
+  ["Cumartesi","Kardiyo Günü",["_run","ip"]],
+  ["Pazar","Dinlenme & Esneme",["_rest"]],
+ ],
+ ev:[
+  ["Pazartesi","Üst Vücut (ekipmansız)",["sinav","egimsinav","sehpadips","tersrow","superman"]],
+  ["Salı","Kardiyo + Karın",["ip","daggci","plank","yanplank","mekik","makas"]],
+  ["Çarşamba","Alt Vücut",["squat","evlunge","stepup","baldir"]],
+  ["Perşembe","Aktif Dinlenme",["_walk"]],
+  ["Cuma","Tam Vücut",["sinav","squat","plank","bisiklet","tersmekik"]],
+  ["Cumartesi","Kardiyo Günü",["_run","ip"]],
+  ["Pazar","Dinlenme & Esneme",["_rest"]],
+ ],
+ split3:[
+  ["1. Gün","Göğüs + Arka Kol (Triceps)",["dbench","ibench","fly","crossover","cgbench","pushdown","overhead","lytri"]],
+  ["2. Gün","Omuz + Bacak + Karın",["military","dbomuz","yanraise","reardelt","bsquat","legpress","legcurl","baldir","hangleg","plank"]],
+  ["3. Gün","Sırt + Ön Kol (Biceps)",["deadlift","lat","pullup","brow","cablerow","dbrow","curl","dbcurl","hammer","preacher"]],
+ ]
+};
+let sporMode=get("sporMode","split3");
+let sporGun=0;
+function renderSporMode(){
+  $("spor-mode").innerHTML=`<button data-m="split3" class="${sporMode==='split3'?'on-yes':''}">💪 3 Gün Split</button><button data-m="salon" class="${sporMode==='salon'?'on-yes':''}">🏋️ Salon Haftalık</button><button data-m="ev" class="${sporMode==='ev'?'on-yes':''}">🏠 Ev</button>`;
+  document.querySelectorAll("#spor-mode button").forEach(b=>b.onclick=()=>{sporMode=b.dataset.m;set("sporMode",sporMode);renderSporMode();renderSporGunler();renderSporListe();});
+}
+function renderSporGunler(){
+  const P=PROGRAMS[sporMode];
+  $("spor-gunler").innerHTML=P.map((p,i)=>`<button class="tab ${i===sporGun?'active':''}" data-g="${i}">${p[0].slice(0,3)}</button>`).join("");
+  document.querySelectorAll("#spor-gunler .tab").forEach(b=>b.onclick=()=>{sporGun=+b.dataset.g;renderSporGunler();renderSporListe();});
+}
+function exCard(key){
+  if(key==="_walk")return card2("🚶 Tempolu Yürüyüş","Aktif dinlenme","30-40 dk","🚶");
+  if(key==="_run")return card2("🏃 Koşu / Tempolu Yürüyüş","Kardiyo","25-35 dk","🏃");
+  if(key==="_rest")return card2("🧘 Esneme & Yoga","Toparlanma","15-20 dk","🧘");
+  const e=EX[key];const url=IMG+e[3]+"/0.jpg";
+  return `<div class="ex" style="cursor:pointer" onclick="exDetay('${key}')"><div class="imgwrap"><img src="${url}" alt="${e[0]}"
+     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+     <div class="fallback" style="display:none">${e[4]}</div></div>
+     <div class="body"><span class="tag">${e[1]}</span><br><b>${e[0]}</b><div class="reps">🔁 ${e[2]}</div><div style="font-size:11px;color:var(--acc);margin-top:5px;font-weight:600">👆 nasıl yapılır + 🎬 video</div></div></div>`;
+}
+function card2(t,tag,reps,emoji){return `<div class="ex"><div class="imgwrap"><div class="fallback">${emoji}</div></div>
+  <div class="body"><span class="tag">${tag}</span><br><b>${t}</b><div class="reps">⏱ ${reps}</div></div></div>`;}
+const HOWTO={
+ sinav:{a:["Eller omuz hizasından biraz geniş, avuçlar yere düz","Vücut baştan topuğa düz bir çizgi olsun (kalça düşmesin)","Dirsekleri ~45° bükerek göğsünü yere yaklaştır","Göğsünü sıkarak yukarı it, başlangıca dön"],i:"Karnını sık, boyun nötr. Zorlanırsan dizlerin üstünde yap.",yt:"şınav push up doğru teknik"},
+ squat:{a:["Ayaklar omuz genişliğinde, parmaklar hafif dışa","Göğüs dik, kalçayı geriye iterek in","Uyluk yere paralel olana kadar çök","Topuktan güç alıp yukarı kalk"],i:"Dizler içe çökmesin, topuklar yerden kalkmasın.",yt:"squat çömelme doğru teknik"},
+ plank:{a:["Dirsekler omuz altında, ön kola yaslan","Vücut baştan topuğa düz","Karın ve kalçayı sıkı tut","Nefes alarak süreyi koru"],i:"Kalçanı kaldırma/çökertme. Süreyi kademeli artır.",yt:"plank nasıl yapılır"},
+ daggci:{a:["Şınav pozisyonu, eller omuz altında","Karın sıkı, sırt düz","Dizleri sırayla göğse hızlı çek","Tempoyu koru"],i:"Kalça çok yükselmesin, ritmi düşürme.",yt:"mountain climbers dağcı hareketi"},
+ ip:{a:["İpi bilekten çevir, dirsekler gövdeye yakın","Parmak ucunda hafifçe zıpla","Dizler hafif bükük","Ritmik nefes al"],i:"Yüksek zıplama; güç bilekten gelsin, koldan değil.",yt:"ip atlama tekniği"},
+ mekik:{a:["Sırtüstü yat, dizler bükük, eller şakakta","Karnı sıkıp omuzları yerden kaldır","Beli yerde tut","Kontrollü geri in"],i:"Boyundan çekme; hareketi karın yapsın.",yt:"mekik crunch nasıl yapılır"},
+ bisiklet:{a:["Sırtüstü, eller şakakta, bacaklar havada","Bir dizi göğse çek, ters dirsekle dokundur","Diğer bacağı uzat","Pedal çevirir gibi değiştir"],i:"Bel yere yapışık kalsın, kontrollü yap.",yt:"bisiklet mekiği air bike egzersiz"},
+ kopru:{a:["Sırtüstü, dizler bükük, ayaklar yerde","Topuktan güç alıp kalçayı yukarı kaldır","Tepede kalçayı sık","Kontrollü indir"],i:"Beli değil kalçayı çalıştır; tepede 1 sn dur.",yt:"glute bridge köprü hareketi"},
+ lunge:{a:["Bir adım öne at","Arka dizi yere yaklaştır, ön diz 90°","Ön topuktan güç alıp kalk","Bacak değiştir"],i:"Ön diz parmak ucunu çok geçmesin; gövde dik.",yt:"lunge hamlesi doğru teknik"},
+ curl:{a:["Avuç içi öne, dirsekler gövdeye sabit","Ön kolu kıvırarak ağırlığı kaldır","Tepede bisepsi sık","Kontrollü indir"],i:"Gövdeyi sallama; dirsek sabit kalsın.",yt:"biceps curl dambıl tekniği"},
+ barfiks:{a:["Barı tut (direnç bandı/ayak desteğiyle)","Sırtı sıkarak çeneyi bara yaklaştır","Kontrollü aşağı in","Kürek kemiklerini aşağı-geri çek"],i:"Sallanmadan, sırt kaslarıyla çek.",yt:"destekli barfiks band assisted pull up"},
+ pullup:{a:["Barı avuç dışa bakacak şekilde tut","Sırtı sıkarak vücudu yukarı çek","Çene barı geçsin","Kontrollü aşağı in"],i:"Tam uzan, momentum kullanma.",yt:"barfiks pull up nasıl yapılır"},
+ dips:{a:["Paralel bar/sehpada kollar düz","Dirsekleri bükerek gövdeyi indir","Göğüs hafif öne eğik","Triceps'i sıkıp yukarı it"],i:"Omuz çok aşağı düşmesin, kontrollü.",yt:"dips triceps paralel bar"},
+ rus:{a:["Otur, dizler bükük, gövde hafif geriye","Ayakları kaldır (zorsa yerde tut)","Gövdeyi sağa-sola döndür","Karın yanlarını sık"],i:"Belden değil gövdeden döndür.",yt:"russian twist rus twist"},
+ baldir:{a:["Ayakta, parmak ucunda yüksel","Topukları olabildiğince kaldır","Tepede baldırı sık","Yavaşça indir"],i:"Tam aralık kullan; istersen tek ayak.",yt:"topuk kaldırma calf raise"},
+ lat:{a:["Makineye otur, barı geniş tut","Sırtı sıkarak barı göğse çek","Dirsekleri aşağı-geri yönelt","Kontrollü bırak"],i:"Geriye yatma; sırt kaslarıyla çek.",yt:"lat pulldown doğru teknik"},
+ egimsinav:{a:["Elleri yüksek bir yüzeye koy (sehpa/duvar)","Vücut düz, dirsekleri bük","Göğsü yüzeye yaklaştır","İt ve başlangıca dön"],i:"Yüzey ne kadar yüksekse o kadar kolay; başlangıç için ideal.",yt:"incline push up eğimli şınav"},
+ darsinav:{a:["Eller omuz genişliğinden dar","Dirsekler gövdeye yakın bükülsün","Göğsü yere indir","Triceps'le yukarı it"],i:"Triceps'i daha çok çalıştırır; bel düşmesin.",yt:"dar şınav triceps push up"},
+ sehpadips:{a:["Sehpa/sandalye kenarına eller dayalı","Kalçayı öne kaydır, dirsekleri bük","Gövdeyi aşağı indir","Triceps'le yukarı it"],i:"Omuzları kulaklardan uzak tut.",yt:"bench dips sehpa triceps"},
+ tersrow:{a:["Sağlam masa altına sırtüstü gir","Kenarı tut, vücut düz","Göğsü kenara doğru çek","Kontrollü aşağı in"],i:"Evde barfiks alternatifi; vücut düz kalsın.",yt:"inverted row ters kürek ev"},
+ superman:{a:["Yüzüstü yat, kollar öne uzanık","Kol-bacak-göğsü aynı anda yerden kaldır","Tepede 1-2 sn beli sık","Yavaş indir"],i:"Bel/sırt güçlendirir; aşırı zorlama.",yt:"superman egzersizi bel"},
+ yanplank:{a:["Yan yat, dirsek omuz altında","Kalçayı kaldır, vücut yandan düz","Karnın yanını sık","Süreyi koru, yön değiştir"],i:"Kalça düşmesin; kademeli artır.",yt:"yan plank side plank"},
+ tersmekik:{a:["Sırtüstü yat, eller yanda","Dizleri göğse çek, kalçayı hafif kaldır","Alt karnı sık","Kontrollü indir"],i:"Savurma; alt karnı hisset.",yt:"ters mekik reverse crunch"},
+ makas:{a:["Sırtüstü, eller kalça altında","Bacaklar düz, yerden hafif kaldır","Küçük tempoyla aşağı-yukarı sallat","Beli yerde tut"],i:"Bel kalkarsa bacakları biraz yukarı al.",yt:"makas hareketi flutter kicks"},
+ stepup:{a:["Sağlam basamak/sehpa önünde dur","Bir ayağı bas, üstüne çık","Diğer dizi yukarı çek","Kontrollü in, bacak değiştir"],i:"Tüm ayağı bas, dengeyi koru.",yt:"step up diz çekme egzersiz"},
+ evlunge:{a:["Ayakta dur","İleri adım at, kalçayı dikçe indir","Ön diz 90°, arka diz yere yakın","Kalkıp yürüyerek devam et"],i:"Gövde dik; ön diz içe çökmesin.",yt:"vücut ağırlığı lunge bodyweight"},
+ dbench:{a:["Bench'e sırtüstü uzan, dambıllar göğüs hizasında","Dambılları yukarı it, tepede hafif yaklaştır","Kontrollü indir, göğsü ger"],i:"Beli aşırı kavislendirme, dirsekler ~45°.",yt:"dumbbell bench press dambıl göğüs"},
+ ibench:{a:["Sehpayı 30-45° eğ, sırtüstü uzan","Dambılları üst göğüsten yukarı it","Kontrollü indir"],i:"Çok dik açı omuza biner; üst göğsü hedefler.",yt:"incline dumbbell press eğimli göğüs"},
+ fly:{a:["Sırtüstü, dambıllar yukarıda, dirsek hafif bükük","Kolları yay gibi yana aç","Göğsü gerip yukarıda topla"],i:"Dirsek açısını sabit tut, çok ağır seçme.",yt:"dumbbell fly göğüs açma"},
+ crossover:{a:["Makineler yukarıda, kabloları tut, hafif öne eğil","Kolları önde birleştir","Göğsü sıkıp kontrollü aç"],i:"Hareketi göğüsle yap, omuz öne düşmesin.",yt:"cable crossover göğüs"},
+ cgbench:{a:["Barı omuz genişliğinden dar tut","Dirsekler gövdeye yakın indir","Triceps'le yukarı it"],i:"Bilek düz; dar tutuş triceps'i vurur.",yt:"close grip bench dar tutuş triceps"},
+ pushdown:{a:["Kabloyu yukarıdan tut, dirsekler gövdede sabit","Kolu aşağı tam aç","Triceps'i sıkıp kontrollü bırak"],i:"Sadece ön kol hareket etsin, dirsek sabit.",yt:"triceps pushdown"},
+ overhead:{a:["İpi başının arkasına al","Dirsekleri sabitleyip yukarı uzat","Kontrollü geri indir"],i:"Dirsekler içe kapanmasın.",yt:"overhead triceps extension ip"},
+ lytri:{a:["Sırtüstü, ağırlığı alna doğru indir","Dirsek sabit, sadece ön kol kırılsın","Triceps'le yukarı it"],i:"Dirsekleri açma; kontrollü (skull crusher).",yt:"skull crusher lying triceps"},
+ military:{a:["Bar omuz önünde, ayaklar omuz genişliğinde","Karnı sık, barı baş üstüne it","Kontrollü omuz hizasına indir"],i:"Beli aşırı kavislendirme, kalçayı sık.",yt:"military press omuz barbell"},
+ dbomuz:{a:["Otur, dambıllar kulak hizasında","Yukarı it, tepede hafif yaklaştır","Kontrollü indir"],i:"Dirsekleri kilitleyip omuza yükleme.",yt:"dumbbell shoulder press omuz"},
+ yanraise:{a:["Dambıllar yanda, dirsek hafif bükük","Kolları yanlara omuz hizasına kaldır","Kontrollü indir"],i:"Trapez'e yükleme; bilek omuzdan yüksek olmasın.",yt:"side lateral raise yan omuz"},
+ reardelt:{a:["Öne eğil, dambıllar sarkık","Kolları yana-arkaya aç","Arka omuzu sıkıp indir"],i:"Hafif ağırlık; sırtı düz tut.",yt:"reverse fly arka omuz"},
+ bsquat:{a:["Bar trapez üstünde, ayaklar omuz genişliği","Kalçayı geri it, dik in","Uyluk paralel olunca topuktan kalk"],i:"Diz içe çökmesin, çekirdek sıkı.",yt:"barbell squat sırt squat"},
+ legpress:{a:["Makineye otur, ayaklar platformda","Dizleri göğse kontrollü indir","Topuktan iterek uzat (dizi kilitleme)"],i:"Bel minderden kalkmasın.",yt:"leg press bacak makine"},
+ legcurl:{a:["Yüzüstü/oturarak ayak bileği pede","Topuğu kalçaya doğru çek","Arka bacağı sıkıp kontrollü bırak"],i:"Kalça yerden kalkmasın.",yt:"leg curl arka bacak"},
+ hangleg:{a:["Bara asıl, omuzları aktif tut","Bacakları (düz/bükük) yukarı kaldır","Alt karnı sıkıp kontrollü indir"],i:"Sallanma; zorsa dizden çek.",yt:"hanging leg raise asılı karın"},
+ deadlift:{a:["Bar ayak ortasında, sırt düz, kalça geride","Topuktan iterek barı dizden yukarı kaldır","Kalçayı öne it, dik dur; kontrollü indir"],i:"Sırt asla yuvarlanmasın; ağırlığı kademeli artır.",yt:"deadlift doğru teknik"},
+ brow:{a:["Öne eğil, sırt düz, barı tut","Barı göbeğe doğru çek","Kürekleri sıkıp kontrollü indir"],i:"Gövde sabit; belden çekme.",yt:"barbell row bent over sırt"},
+ cablerow:{a:["Otur, ayaklar dayalı, kabloyu tut","Göğsü dik, kabloyu göbeğe çek","Kürekleri sık, kontrollü bırak"],i:"Geriye yatma; sırtla çek.",yt:"seated cable row sırt"},
+ dbrow:{a:["Bir diz ve eli bench'e koy, dambıl serbest","Dambılı kalçaya doğru çek","Kürek sık, kontrollü indir"],i:"Sırt düz, gövde dönmesin.",yt:"one arm dumbbell row tek kol"},
+ dbcurl:{a:["Dambıllar yanda, avuç öne","Ön kolu kıvırıp kaldır","Bisepsi sıkıp kontrollü indir"],i:"Dirsek sabit, sallanma.",yt:"dumbbell biceps curl dambıl"},
+ hammer:{a:["Dambıllar avuç içe (çekiç tutuş)","Dirsek sabit kıvır","Kontrollü indir"],i:"Ön kol ve biceps; sallama yok.",yt:"hammer curl çekiç"},
+ preacher:{a:["Kolları preacher sehpasına yasla","Ağırlığı kıvırarak kaldır","Kontrollü tam aşağı indir"],i:"Tam aşağıda dirseği kilitleme.",yt:"preacher curl biceps"},
+};
+function exDetay(key){
+  var e=EX[key];if(!e)return;var h=HOWTO[key]||{a:[],i:"",yt:e[0]};
+  var img0=IMG+e[3]+"/0.jpg",img1=IMG+e[3]+"/1.jpg";
+  var yt="https://www.youtube.com/results?search_query="+encodeURIComponent((h.yt||e[0])+" nasıl yapılır");
+  $("ex-modal-body").innerHTML=
+    '<h2 style="margin:0 0 4px">'+e[0]+'</h2><div class="tag" style="color:var(--acc2);font-weight:700">'+e[1]+' · 🔁 '+e[2]+'</div>'+
+    '<div class="row" style="gap:8px;margin:12px 0;align-items:flex-start">'+
+      '<div style="flex:1;text-align:center"><div class="mut" style="font-size:11px;margin-bottom:3px">① Başlangıç</div><img src="'+img0+'" onerror="this.style.opacity=.15" style="width:100%;border-radius:8px;background:#fff"></div>'+
+      '<div style="flex:1;text-align:center"><div class="mut" style="font-size:11px;margin-bottom:3px">② Bitiş</div><img src="'+img1+'" onerror="this.src=\''+img0+'\'" style="width:100%;border-radius:8px;background:#fff"></div>'+
+    '</div>'+
+    '<h3 style="margin:6px 0 4px;color:var(--acc)">📝 Nasıl Yapılır</h3>'+
+    '<ol style="margin:0;padding-left:20px;line-height:1.7">'+h.a.map(function(s){return "<li>"+s+"</li>";}).join("")+'</ol>'+
+    (h.i?'<p class="notice" style="margin-top:10px">💡 '+h.i+'</p>':'')+
+    '<a href="'+yt+'" target="_blank" rel="noopener" class="btn" style="display:inline-block;margin-top:14px;text-decoration:none">🎬 Videolu Anlatımı İzle (YouTube)</a>';
+  $("ex-modal").style.display="flex";
+}
+function exKapat(){$("ex-modal").style.display="none";}
+function renderSporListe(){
+  const p=PROGRAMS[sporMode][sporGun];
+  $("spor-liste").innerHTML=`<div style="grid-column:1/-1" class="row"><span class="daybadge">${p[0]}</span><b style="font-size:16px">${p[1]}</b></div>`+
+    p[2].map(exCard).join("");
+}
+renderSporMode();renderSporGunler();renderSporListe();
+
+/* ================= DİYET ================= */
+const DIYET={
+ver:{baslik:"Kas Koru + Yağ Yak (yüksek protein, ~2200 kcal)",ogun:[
+  ["🌅 Kahvaltı","3 yumurtalı omlet (1 tam+2 beyaz), light peynir, 1 dilim tam buğday ekmek, domates-salatalık, şekersiz çay","~380 kcal","28 g pro"],
+  ["☕ Ara öğün","200 g light süzme yoğurt + 1 avuç badem (10 adet) + tarçın","~260 kcal","22 g pro"],
+  ["🍽️ Öğle","Izgara tavuk göğsü (180 g), 5 yk bulgur pilavı, bol yeşil salata (1 tk zeytinyağı-limon)","~560 kcal","48 g pro"],
+  ["💪 Antrenman sonrası","1 ölçek whey protein + 1 muz (ya da 250 ml süt + 1 muz)","~300 kcal","30 g pro"],
+  ["🌙 Akşam","Izgara köfte/balık (180 g), fırın sebze, light cacık, bol salata","~520 kcal","42 g pro"],
+  ["🌃 Gece (ops.)","150 g light süzme peynir veya yoğurt","~160 kcal","20 g pro"],
+]},
+koru:{baslik:"Dengeli Koruma Planı",ogun:[
+  ["🌅 Kahvaltı","Menemen (2 yumurta), peynir, ekmek 2 dilim, domates-salatalık, çay","~420 kcal"],
+  ["☕ Ara öğün","1 muz + 1 avuç ceviz","~220 kcal"],
+  ["🍽️ Öğle","Etli/tavuklu sebze yemeği, 6 kaşık pirinç/bulgur, yoğurt, salata","~600 kcal"],
+  ["🍎 Ara öğün","Mevsim meyvesi + kahve","~150 kcal"],
+  ["🌙 Akşam","Izgara köfte/tavuk, fırın sebze, salata, ayran","~550 kcal"],
+]},
+al:{baslik:"Kilo Alma / Kas Planı (kalori fazlası + protein)",ogun:[
+  ["🌅 Kahvaltı","3 yumurtalı omlet + peynir, bal-tereyağı, ekmek 3 dilim, süt","~600 kcal"],
+  ["☕ Ara öğün","Muz + fıstık ezmesi + tam yağlı yoğurt + yulaf","~400 kcal"],
+  ["🍽️ Öğle","Tavuk/et (180 g), pilav (bol), salata, ayran","~750 kcal"],
+  ["💪 Antrenman sonrası","Protein shake veya süt + muz + yulaf","~350 kcal"],
+  ["🌙 Akşam","Izgara et/balık (180 g), makarna/patates, sebze, yoğurt","~700 kcal"],
+]}};
+function renderDiyet(){
+  const p=get("profil",null);const h=$("d-hedef").value;const d=DIYET[h];
+  let toplam=d.ogun.reduce((a,o)=>a+(+o[2].replace(/\D/g,"")),0);
+  let pro=d.ogun.reduce((a,o)=>a+(o[3]?+o[3].replace(/\D/g,""):0),0);
+  $("d-ozet").innerHTML=`<b>${d.baslik}</b>`+(p&&p.kalori?` · Senin günlük hedefin: <b>${p.kalori} kcal</b>`:" · (VKİ sekmesinden profil gir, kişiselleşsin)");
+  $("d-plan").innerHTML=d.ogun.map(o=>`<div class="meal"><div class="row spread"><b>${o[0]}</b><span class="pill" style="background:var(--panel);color:var(--acc2)">${o[2]}${o[3]?' · '+o[3]:''}</span></div><div class="mut" style="margin-top:3px">${o[1]}</div></div>`).join("")
+    +`<div class="row spread" style="margin-top:6px;padding:0 6px"><b>Örnek toplam</b><b style="color:var(--acc)">~${toplam} kcal${pro?' · ~'+pro+' g protein':''}</b></div>`;
+}
+$("d-hedef").onchange=renderDiyet;
+
+/* ================= HATIRLATICILAR ================= */
+$("n-izin").onclick=()=>{if(!("Notification"in window)){$("n-durum").textContent="Tarayıcı bildirimi desteklemiyor.";return;}
+  Notification.requestPermission().then(p=>{$("n-durum").textContent=p==="granted"?"✅ izin verildi":"❌ izin yok ("+p+")";});};
+function loadN(){const n=get("notif",{su:2,spor:"07:00",uyku:"23:00",ogun:"12:30"});$("n-su").value=n.su;$("n-spor").value=n.spor;$("n-uyku").value=n.uyku;$("n-ogun").value=n.ogun;showAktif(n);}
+$("n-kaydet").onclick=()=>{const n={su:+$("n-su").value,spor:$("n-spor").value,uyku:$("n-uyku").value,ogun:$("n-ogun").value};set("notif",n);showAktif(n);$("n-durum").textContent="✓ kaydedildi";setTimeout(()=>$("n-durum").textContent="",2000);};
+$("n-test").onclick=()=>notify("Test ✅","Hatırlatıcılar çalışıyor! 💪");
+function showAktif(n){$("n-aktif").innerHTML=`Aktif: 💧 her ${n.su} saatte · 🏃 ${n.spor} · 🛏️ ${n.uyku} · 🥗 ${n.ogun}`;}
+function notify(t,b){if(("Notification"in window)&&Notification.permission==="granted")new Notification(t,{body:b});}
+let lastSu=Date.now();
+setInterval(()=>{
+  const n=get("notif",null);if(!n)return;const now=new Date();const hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  const stamp=todayStr()+" "+hm;const fired=get("fired",{});
+  if(hm===n.spor&&fired.spor!==stamp){notify("🏃 Spor zamanı!","Sabah sporuna hazır mısın? Hadi başlayalım 💪");fired.spor=stamp;set("fired",fired);}
+  if(hm===n.uyku&&fired.uyku!==stamp){notify("🛏️ Uyku zamanı","Kaliteli uyku için ekranları kapat, iyi geceler 😴");fired.uyku=stamp;set("fired",fired);}
+  if(hm===n.ogun&&fired.ogun!==stamp){notify("🥗 Öğün zamanı","Dengeli bir öğün ye, su içmeyi unutma 🍽️");fired.ogun=stamp;set("fired",fired);}
+  if(Date.now()-lastSu>=n.su*3600*1000){notify("💧 Su iç!","Bir bardak su içme zamanı. Hidrasyon önemli 💦");lastSu=Date.now();}
+},30000);
+
+/* ---------- init ---------- */
+/* ================= FOTO ANALİZ ================= */
+function fGet(){return get("fotos",[]);}
+function fSet(v){try{set("fotos",v);return true;}catch(e){alert("Depolama doldu. Eski fotoğraflardan birkaçını silmen gerekebilir.");return false;}}
+let _fPending=null;
+function resizeImg(file,maxw,cb){
+  try{var img=new Image();var url=URL.createObjectURL(file);
+    img.onload=function(){var w=img.width,h=img.height;if(w>maxw){h=Math.round(h*maxw/w);w=maxw;}
+      var c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);cb(c.toDataURL("image/jpeg",0.65));};
+    img.onerror=function(){URL.revokeObjectURL(url);cb(null);};img.src=url;
+  }catch(e){cb(null);}
+}
+function vkiOf(kilo){var p=get("profil",{});if(!p.boy||!kilo)return null;var m=p.boy/100;return kilo/(m*m);}
+var _fi=$("f-input");
+if(_fi)_fi.onchange=function(e){var file=e.target.files[0];if(!file)return;
+  resizeImg(file,800,function(b64){if(!b64){$("f-status").textContent="Görsel okunamadı, başka foto dene";return;}
+    _fPending=b64;var p=$("f-preview");p.src=b64;p.style.display="block";$("f-save").disabled=false;});};
+var _fs=$("f-save");
+if(_fs)_fs.onclick=function(){if(!_fPending)return;
+  var d=$("f-date").value||todayStr();var prof=get("profil",{});var kilo=$("f-kilo").value||prof.kilo||"";
+  var arr=fGet();arr.push({date:d,kilo:kilo,img:_fPending});arr.sort(function(a,b){return a.date<b.date?-1:1;});
+  if(fSet(arr)){_fPending=null;$("f-input").value="";$("f-preview").style.display="none";$("f-save").disabled=true;
+    $("f-status").textContent="✓ kaydedildi";setTimeout(function(){$("f-status").textContent="";},2000);renderFoto();}};
+function fDel(i){var arr=fGet();if(arr[i]&&confirm("Bu fotoğraf silinsin mi?")){arr.splice(i,1);fSet(arr);renderFoto();}}
+function renderFoto(){
+  if($("f-date")&&!$("f-date").value)$("f-date").value=todayStr();
+  var prof=get("profil",{});if($("f-kilo")&&!$("f-kilo").value&&prof.kilo)$("f-kilo").value=prof.kilo;
+  var arr=fGet();
+  if($("f-ai"))$("f-ai").disabled=arr.length===0||!($("f-key").value||"").trim();
+  $("f-gallery").innerHTML=arr.length?arr.slice().reverse().map(function(p,ri){
+    var idx=arr.length-1-ri;var v=vkiOf(+p.kilo);
+    return '<div class="ex"><div class="imgwrap" style="height:170px"><img src="'+p.img+'" style="object-fit:cover"></div>'+
+      '<div class="body"><b>'+p.date+'</b><div class="reps">'+(p.kilo?('⚖️ '+p.kilo+' kg'):'')+(v?(' · VKİ '+v.toFixed(1)):'')+'</div>'+
+      '<button class="btn ghost" style="margin-top:6px;padding:4px 9px;font-size:12px" onclick="fDel('+idx+')">🗑️ Sil</button></div></div>';
+  }).join(""):'<span class="mut">Henüz fotoğraf yok. Yukarıdan ekle.</span>';
+  if(arr.length>=2){var a=arr[0],b=arr[arr.length-1];$("f-cmp-card").style.display="block";
+    $("f-cmp-a").src=a.img;$("f-cmp-b").src=b.img;
+    $("f-cmp-a-lbl").textContent=a.date+(a.kilo?(' · '+a.kilo+'kg'):'');
+    $("f-cmp-b-lbl").textContent=b.date+(b.kilo?(' · '+b.kilo+'kg'):'');
+    var txt="";
+    if(a.kilo&&b.kilo){var dk=(+b.kilo-+a.kilo);var gun=Math.max(1,Math.round((new Date(b.date)-new Date(a.date))/86400000));
+      txt=a.date+' → '+b.date+' ('+gun+' gün): kilo '+(dk>0?'+':'')+dk.toFixed(1)+' kg. ';
+      var hedef=(get("profil",{}).hedef)||"ver";
+      if(dk<=-0.3)txt+="🎉 Güzel ilerleme! Kas korumak için protein hedefini tut.";
+      else if(dk>=0.3&&hedef==="al")txt+="💪 Kas alımı yolunda, devam.";
+      else if(dk>=0.5)txt+="⚠️ Artış var — kalori ve aktiviteyi gözden geçir.";
+      else txt+="Stabil görünüyor, düzenli devam et.";
+    }else txt="İpucu: her foto ile kilonu girersen kilo/VKİ değişimini de hesaplarım.";
+    $("f-cmp-analiz").textContent=txt;
+  }else if($("f-cmp-card"))$("f-cmp-card").style.display="none";
+}
+var _fk=$("f-key");
+if(_fk){var sk=get("anthropicKey","");if(sk)_fk.value=sk;
+  _fk.oninput=function(){set("anthropicKey",_fk.value.trim());if($("f-ai"))$("f-ai").disabled=fGet().length===0||!_fk.value.trim();};}
+var _fa=$("f-ai");
+if(_fa)_fa.onclick=async function(){
+  var arr=fGet();if(!arr.length)return;var key=($("f-key").value||"").trim();
+  if(!key){$("f-ai-status").textContent="Önce API anahtarı gir";return;}
+  var last=arr[arr.length-1];var b64=last.img.split(",")[1];var prof=get("profil",{});
+  var prompt="Sen destekleyici, profesyonel bir fitness ve sağlık koçusun. Aşağıdaki ilerleme fotoğrafına bakarak TÜRKÇE, kısa ama somut bir değerlendirme yap: 1) genel vücut formu ve duruş gözlemi, 2) varsa görünür ilerleme/güçlü yönler, 3) kişiye özel 3 pratik öneri (antrenman + beslenme). Kesin tıbbi teşhis KOYMA, tahmini ve nazik konuş, motive et. Kişi profili: yaş "+(prof.yas||"?")+", boy "+(prof.boy||"?")+" cm, kilo "+(last.kilo||prof.kilo||"?")+" kg, hedef: kas kazanırken yağ vermek (recomp).";
+  $("f-ai-status").textContent="🤖 analiz ediliyor...";_fa.disabled=true;$("f-ai-out").style.display="none";
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:$("f-model").value,max_tokens:800,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
+    var j=await r.json();
+    $("f-ai-out").style.display="block";
+    if(j.content&&j.content[0]){$("f-ai-out").textContent=j.content.map(function(c){return c.text||"";}).join("\n");$("f-ai-status").textContent="✓ tamam";}
+    else{$("f-ai-out").textContent="Hata: "+(j.error?j.error.message:JSON.stringify(j));$("f-ai-status").textContent="";}
+  }catch(e){$("f-ai-out").style.display="block";$("f-ai-out").textContent="Bağlantı hatası: "+e.message+"\n(İnternet bağlantını ve API anahtarını kontrol et.)";$("f-ai-status").textContent="";}
+  _fa.disabled=false;
+};
+/* ================= ÖĞÜN KALORİ ANALİZİ ================= */
+let _oPending=null;
+function refreshOgunBtn(){if($("o-ai"))$("o-ai").disabled=!_oPending||!(($("o-key").value)||"").trim();}
+var _oi=$("o-input");
+if(_oi)_oi.onchange=function(e){var f=e.target.files[0];if(!f)return;resizeImg(f,1024,function(b64){if(!b64){$("o-status").textContent="Görsel okunamadı, başka foto dene";return;}_oPending=b64;var p=$("o-preview");p.src=b64;p.style.display="block";refreshOgunBtn();});};
+var _ok2=$("o-key");
+if(_ok2){var sk=get("anthropicKey","");if(sk)_ok2.value=sk;_ok2.oninput=function(){set("anthropicKey",_ok2.value.trim());refreshOgunBtn();};}
+var _oa=$("o-ai");
+if(_oa)_oa.onclick=async function(){
+  if(!_oPending)return;var key=(($("o-key").value)||"").trim();if(!key){$("o-status").textContent="Önce API anahtarı gir";return;}
+  var b64=_oPending.split(",")[1];var prof=get("profil",{});var hedefKcal=prof.kalori||2226;
+  var prompt="Bu bir YEMEK/ÖĞÜN fotoğrafı. Görseli EN İNCE AYRINTISINA KADAR analiz et ve TÜRKÇE tam olarak şu formatta yaz:\n\n🍽️ TESPİT EDİLEN YİYECEKLER (her biri için tahmini porsiyon + kalori):\n- yiyecek — porsiyon — ~XXX kcal\n\n📊 TOPLAM TAHMİNİ KALORİ: ~XXXX kcal\n🥗 MAKROLAR: Protein ~Xg · Karbonhidrat ~Xg · Yağ ~Xg\n💡 YORUM: Kişinin günlük "+hedefKcal+" kcal (kas kazan + yağ ver / recomp) hedefine göre kısa değerlendirme ve 1 pratik öneri.\n\nGerçekçi tahminler ver, emin olmadığın yerde makul aralık belirt. Sadece bu formatta, net ve kısa yaz.";
+  $("o-status").textContent="🔍 analiz ediliyor (en ince ayrıntı)...";_oa.disabled=true;$("o-out").style.display="none";$("o-add").style.display="none";
+  try{
+    var r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:$("o-model").value,max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},{type:"text",text:prompt}]}]})});
+    var j=await r.json();$("o-out").style.display="block";
+    if(j.content&&j.content[0]){var txt=j.content.map(function(c){return c.text||"";}).join("\n");$("o-out").textContent=txt;$("o-status").textContent="✓ tamam";
+      var m=txt.match(/TOPLAM[^0-9]*([0-9]{2,5})/i)||txt.match(/~\s*([0-9]{2,5})\s*kcal/i);
+      $("o-add").style.display="flex";$("o-kcal").value=m?m[1]:"";
+    }else{$("o-out").textContent="Hata: "+(j.error?j.error.message:JSON.stringify(j));$("o-status").textContent="";}
+  }catch(e){$("o-out").style.display="block";$("o-out").textContent="Bağlantı hatası: "+e.message+"\n(İnternet ve API anahtarını kontrol et.)";$("o-status").textContent="";}
+  _oa.disabled=false;
+};
+function oMeals(){return get("meals",{});}
+var _oab=$("o-addbtn");
+if(_oab)_oab.onclick=function(){var k=parseInt($("o-kcal").value,10);if(!k)return;var m=oMeals();var d=todayStr();m[d]=m[d]||[];m[d].push(k);set("meals",m);$("o-kcal").value="";$("o-add").style.display="none";renderOgun();};
+function oDelMeal(i){var m=oMeals();var d=todayStr();if(m[d]){m[d].splice(i,1);set("meals",m);renderOgun();}}
+function renderOgun(){
+  refreshOgunBtn();
+  var prof=get("profil",{});var hedef=prof.kalori||2226;var m=oMeals();var d=todayStr();var list=m[d]||[];
+  var tot=list.reduce(function(a,b){return a+b;},0);var pct=Math.min(100,Math.round(tot/hedef*100));
+  $("o-today").innerHTML='<div class="row spread"><b>Bugün toplam</b><b style="color:var(--acc)">'+tot+' / '+hedef+' kcal (%'+pct+')</b></div>'+
+    '<div class="bar" style="margin:6px 0 10px"><i style="width:'+pct+'%"></i></div>'+
+    (list.length?list.map(function(k,i){return '<div class="row spread" style="padding:3px 0"><span>🍽️ Öğün '+(i+1)+'</span><span>'+k+' kcal &nbsp;<button class="btn ghost" style="padding:2px 8px;font-size:12px" onclick="oDelMeal('+i+')">✕</button></span></div>';}).join(""):'<span class="mut">Bugün henüz öğün eklenmedi.</span>');
+}
+/* ================= VÜCUT ANALİZİ ================= */
+var B_FIELDS=["date","kilo","yag","kas","su","kemik","vis","bmr","vyas","bel","gogus","kol","kalca","bacak"];
+function bGet(){return get("vucut",[]);}
+function bSet(v){try{set("vucut",v);return true;}catch(e){alert("Depolama hatası");return false;}}
+var B_METRICS=[
+  {k:"kilo",ad:"⚖️ Kilo",u:"kg",iyi:"az"},
+  {k:"yag",ad:"🔥 Yağ",u:"%",iyi:"az"},
+  {k:"kas",ad:"💪 Kas",u:"kg",iyi:"art"},
+  {k:"su",ad:"💧 Su",u:"%",iyi:"art"},
+  {k:"vis",ad:"🎯 İç yağ",u:"",iyi:"az"},
+  {k:"bmr",ad:"⚡ Bazal",u:"kcal",iyi:"art"},
+  {k:"vyas",ad:"🧬 Vücut yaşı",u:"",iyi:"az"},
+  {k:"bel",ad:"📏 Bel",u:"cm",iyi:"az"},
+  {k:"kol",ad:"💪 Kol",u:"cm",iyi:"art"},
+];
+var _bs=$("b-save");
+if(_bs)_bs.onclick=function(){
+  var rec={};var any=false;
+  B_FIELDS.forEach(function(f){var el=$("b-"+f);if(!el)return;var v=el.value;rec[f]=v;if(f!=="date"&&v)any=true;});
+  if(!rec.date)rec.date=todayStr();
+  if(!any){$("b-status").textContent="En az kilo veya bir değer gir";return;}
+  var arr=bGet();
+  var ix=arr.findIndex(function(x){return x.date===rec.date;});
+  if(ix>=0)arr[ix]=rec; else arr.push(rec);
+  arr.sort(function(a,b){return a.date<b.date?-1:1;});
+  if(bSet(arr)){$("b-status").textContent="✓ "+rec.date+" kaydedildi";setTimeout(function(){$("b-status").textContent="";},2200);renderVucut();}
+};
+function bNum(x){var n=parseFloat(x);return isNaN(n)?null:n;}
+function bTrend(arr,key,unit){
+  var pts=arr.map(function(r){return [r.date,bNum(r[key])];}).filter(function(p){return p[1]!==null;});
+  if(pts.length<1)return "";
+  var max=Math.max.apply(null,pts.map(function(p){return p[1];}))||1;
+  var min=Math.min.apply(null,pts.map(function(p){return p[1];}));
+  var rng=(max-min)||1;
+  return '<div class="row" style="align-items:flex-end;gap:4px;height:80px;margin:4px 0 14px">'+pts.map(function(p){
+    var h=Math.round(((p[1]-min)/rng)*60)+8;
+    return '<div title="'+p[0]+': '+p[1]+' '+unit+'" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
+      '<span style="font-size:9px;color:var(--mut)">'+p[1]+'</span>'+
+      '<div style="width:100%;height:'+h+'px;background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:4px 4px 0 0"></div>'+
+      '<span style="font-size:9px;color:var(--mut)">'+p[0].slice(5)+'</span></div>';
+  }).join("")+'</div>';
+}
+function renderVucut(){
+  if($("b-date")&&!$("b-date").value)$("b-date").value=todayStr();
+  var prof=get("profil",{});if($("b-kilo")&&!$("b-kilo").value&&prof.kilo)$("b-kilo").value=prof.kilo;
+  var arr=bGet();
+  if(!arr.length){$("b-sum-card").style.display="none";$("b-trend-card").style.display="none";$("b-table").innerHTML='<tr><td class="mut">Henüz ölçüm yok. Yukarıdan ekle.</td></tr>';return;}
+  var first=arr[0],last=arr[arr.length-1];
+  // kartlar
+  var cards=B_METRICS.filter(function(m){return bNum(last[m.k])!==null;}).map(function(m){
+    var cur=bNum(last[m.k]);var f0=bNum(first[m.k]);var d=(f0!==null)?(cur-f0):null;
+    var col="var(--acc)";var ok="";
+    if(d!==null&&arr.length>1){var good=(m.iyi==="az"&&d<0)||(m.iyi==="art"&&d>0);var bad=(m.iyi==="az"&&d>0)||(m.iyi==="art"&&d<0);
+      col=good?"var(--ok)":(bad?"var(--bad)":"var(--mut)");ok=(d>0?"▲ +":"▼ ")+d.toFixed(1);}
+    return '<div class="stat"><div class="n" style="font-size:24px">'+cur+'<span style="font-size:12px;color:var(--mut)"> '+m.u+'</span></div>'+
+      '<div class="l">'+m.ad+'</div>'+(ok?'<div style="font-size:12px;font-weight:700;color:'+col+';margin-top:3px">'+ok+' '+m.u+'</div>':'')+'</div>';
+  });
+  // türetilmiş: yağ kütlesi / yağsız kütle
+  var k=bNum(last.kilo),y=bNum(last.yag);
+  if(k!==null&&y!==null){var yk=k*y/100;var yyk=k-yk;
+    var k0=bNum(first.kilo),y0=bNum(first.yag);var dyk=(k0!==null&&y0!==null)?(yk-(k0*y0/100)):null;var dyyk=(k0!==null&&y0!==null)?(yyk-(k0-k0*y0/100)):null;
+    cards.push('<div class="stat"><div class="n" style="font-size:24px">'+yk.toFixed(1)+'<span style="font-size:12px;color:var(--mut)"> kg</span></div><div class="l">🔥 Yağ kütlesi</div>'+(dyk!==null&&arr.length>1?'<div style="font-size:12px;font-weight:700;color:'+(dyk<0?"var(--ok)":"var(--bad)")+';margin-top:3px">'+(dyk>0?"▲ +":"▼ ")+dyk.toFixed(1)+' kg</div>':'')+'</div>');
+    cards.push('<div class="stat"><div class="n" style="font-size:24px">'+yyk.toFixed(1)+'<span style="font-size:12px;color:var(--mut)"> kg</span></div><div class="l">💎 Yağsız kütle</div>'+(dyyk!==null&&arr.length>1?'<div style="font-size:12px;font-weight:700;color:'+(dyyk>=0?"var(--ok)":"var(--bad)")+';margin-top:3px">'+(dyyk>0?"▲ +":"▼ ")+dyyk.toFixed(1)+' kg</div>':'')+'</div>');
+  }
+  $("b-cards").innerHTML=cards.join("");
+  $("b-sum-card").style.display="block";
+  // form değerlendirmesi
+  var f="";
+  if(arr.length<2){f="İlk ölçümün kaydedildi 👍 Bir hafta sonra tekrar ölçüp gir; değişimini ve trendini göstereyim.";}
+  else{
+    var dk=(bNum(last.kilo)!==null&&bNum(first.kilo)!==null)?bNum(last.kilo)-bNum(first.kilo):null;
+    var dy=(bNum(last.yag)!==null&&bNum(first.yag)!==null)?bNum(last.yag)-bNum(first.yag):null;
+    var dkas=(bNum(last.kas)!==null&&bNum(first.kas)!==null)?bNum(last.kas)-bNum(first.kas):null;
+    var p=[];
+    if(dy!==null)p.push(dy<0?("Yağ oranın %"+Math.abs(dy).toFixed(1)+" düştü 🎉"):("Yağ oranın %"+dy.toFixed(1)+" arttı ⚠️"));
+    if(dkas!==null)p.push(dkas>=-0.3?("kasını korudun/geliştirdin ("+(dkas>=0?"+":"")+dkas.toFixed(1)+" kg) 💪"):("kasında "+dkas.toFixed(1)+" kg kayıp var, protein+ağırlık şart ⚠️"));
+    if(dk!==null)p.push((dk<0?"kilo "+dk.toFixed(1)+" kg ":"kilo +"+dk.toFixed(1)+" kg ")+"değişti");
+    var verdict="";
+    if(dy!==null&&dy<0&&dkas!==null&&dkas>=-0.3)verdict=" → 🏆 MÜKEMMEL RECOMP: yağ gidiyor, kas duruyor!";
+    else if(dy!==null&&dy<0)verdict=" → ✅ İyi yoldasın.";
+    f=p.join(", ")+"."+verdict+" 5 gün antrenman + protein hedefiyle devam et.";
+  }
+  $("b-form").textContent=f;
+  // trendler
+  $("b-trend-card").style.display=arr.length>=2?"block":"none";
+  if(arr.length>=2){
+    $("b-trends").innerHTML=["kilo|⚖️ Kilo (kg)","yag|🔥 Yağ (%)","kas|💪 Kas (kg)","bel|📏 Bel (cm)"].map(function(s){
+      var k=s.split("|")[0],lbl=s.split("|")[1];var ch=bTrend(arr,k,"");
+      return ch?'<h3>'+lbl+'</h3>'+ch:"";
+    }).join("");
+  }
+  // tablo
+  var cols=[["date","Tarih"],["kilo","Kilo"],["yag","Yağ%"],["kas","Kas"],["su","Su%"],["vis","İçyağ"],["bel","Bel"]];
+  var head="<tr>"+cols.map(function(c){return "<th>"+c[1]+"</th>";}).join("")+"</tr>";
+  var body=arr.slice().reverse().map(function(r){return "<tr>"+cols.map(function(c){return "<td>"+(r[c[0]]||"–")+"</td>";}).join("")+"</tr>";}).join("");
+  $("b-table").innerHTML=head+body;
+}
+loadDay();loadN();renderDiyet();renderFoto();renderOgun();renderVucut();
+</script>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v10.0</div></body>
+</html>

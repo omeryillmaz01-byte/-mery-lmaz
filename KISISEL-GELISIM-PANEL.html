@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🟡 Kişisel Gelişim Paneli</title>
+<style>
+:root{--bg:#0f1419;--panel:#1a2230;--panel2:#222d3d;--line:#2d3a4d;--txt:#e6edf3;--mut:#8b9bb0;--acc:#ffca28;--acc2:#22d3a0;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;--shadow:0 4px 18px rgba(0,0,0,.35)}
+[data-theme="light"]{--bg:#eef2f7;--panel:#fff;--panel2:#f4f7fb;--line:#dde5ef;--txt:#15202b;--mut:#5d6b7d;--acc:#f9a825;--acc2:#0aa97a;--shadow:0 4px 16px rgba(60,90,130,.12)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Arial,sans-serif;line-height:1.5}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--panel),var(--panel2));border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow)}
+header h1{margin:0;font-size:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.tab{background:transparent;border:1px solid var(--line);color:var(--mut);padding:7px 12px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600}
+.tab.active{background:var(--acc);color:#3a2c00;border-color:var(--acc)}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
+main{max-width:960px;margin:0 auto;padding:18px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 12px;font-size:16px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.spread{justify-content:space-between}
+.grid{display:grid;gap:12px}.g3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+label{font-size:12.5px;color:var(--mut);font-weight:600}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 11px;border-radius:9px;font-size:14px;width:100%}
+.btn{background:var(--acc);color:#3a2c00;border:none;padding:9px 15px;border-radius:9px;cursor:pointer;font-weight:700;font-size:14px}
+.btn.alt{background:var(--acc2);color:#04140a}.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.namaz{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.vakit{text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 4px;cursor:pointer;font-weight:700;font-size:13px;transition:.12s}
+.vakit.on{background:var(--ok);color:#04140a;border-color:var(--ok)}
+.hbox{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;background:var(--panel2);margin-bottom:7px;cursor:pointer;user-select:none}
+.hbox .ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto}
+.hbox.on .ck{background:var(--ok);border-color:var(--ok);color:#04140a}
+.hbox.on{border:1px solid var(--ok)}
+.bar{height:10px;border-radius:6px;background:var(--panel2);overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.big{font-size:40px;font-weight:800;line-height:1}
+.zikir{font-size:64px;font-weight:800;text-align:center;color:var(--acc);margin:10px 0}
+.ztap{width:100%;padding:26px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#1a1000;font-size:22px;font-weight:800;cursor:pointer}
+.mut{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mut)}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}.stat .n{font-size:24px;font-weight:800;color:var(--acc)}.stat .l{font-size:12px;color:var(--mut)}
+.rutbe{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-weight:800;font-size:13px;color:#04140a}
+.moti{background:linear-gradient(135deg,rgba(255,202,40,.13),rgba(34,211,160,.10));border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:14px;line-height:1.6}
+.moti .src{display:block;margin-top:6px;font-size:12px;color:var(--mut);font-weight:600}
+/* heatmap */
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto;padding:4px 0}
+.heat .d{width:13px;height:13px;border-radius:3px;background:var(--panel2)}
+.heat .d[data-l="1"]{background:#0e4429}.heat .d[data-l="2"]{background:#006d32}.heat .d[data-l="3"]{background:#26a641}.heat .d[data-l="4"]{background:#39d353}
+/* hedef */
+.hedef{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px}
+/* rozet */
+.rozetler{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.rozet{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;opacity:.4;filter:grayscale(1)}
+.rozet.on{opacity:1;filter:none;border-color:var(--acc)}
+.rozet .ic{font-size:30px}.rozet .t{font-weight:700;font-size:13px;margin-top:6px}.rozet .d{font-size:11px;color:var(--mut);margin-top:3px}
+@media print{
+  header,.tab,#tarih,#themeBtn,.iconbtn{display:none!important}
+  body{background:#fff;color:#000}
+  .view{display:none!important}#v-basari{display:block!important}
+  .card,.stat,.rozet{break-inside:avoid;border-color:#ccc;box-shadow:none}
+  .rozet{opacity:1!important;filter:none!important}
+}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>🟡 Kişisel Gelişim</h1>
+  <div class="tabs">
+    <button class="tab active" data-v="bugun">📅 Bugün</button>
+    <button class="tab" data-v="zikir">📿 Zikir</button>
+    <button class="tab" data-v="butce">💰 Bütçe</button>
+    <button class="tab" data-v="hedef">🎯 Hedefler</button>
+    <button class="tab" data-v="analiz">📊 Analiz</button>
+    <button class="tab" data-v="basari">🏅 Başarım</button>
+    <button class="tab" data-v="not">📝 Notlar</button>
+    <button class="tab" data-v="ayar">⚙️ Ayarlar</button>
+  </div>
+  <input id="tarih" type="date" style="width:auto">
+  <button class="iconbtn" id="themeBtn">🌙</button>
+</header>
+<main>
+  <!-- BUGÜN -->
+  <section class="view active" id="v-bugun">
+    <div class="moti" id="moti"></div>
+    <div class="card" id="vakitBar" style="display:none"><div class="row spread"><b>🕌 Sıradaki Namaz</b><b id="vakitNext" style="color:var(--acc2)">–</b></div><div class="row" id="vakitList" style="gap:6px;margin-top:8px;font-size:12px;flex-wrap:wrap"></div></div>
+    <div class="card"><div class="row spread"><b>🎯 Bugünkü Skor (formüllü)</b><span><span class="rutbe" id="rutbe">–</span> &nbsp; <b id="skor" style="color:var(--acc);font-size:20px">0%</b></span></div>
+      <div class="bar" style="margin-top:8px"><i id="skorBar" style="width:0%"></i></div>
+      <div class="mut" id="skorDetay" style="margin-top:8px;font-size:11.5px"></div>
+    </div>
+    <div class="card"><h2>🕌 5 Vakit Namaz <span class="mut" id="namazStreak" style="float:right;font-weight:700"></span></h2>
+      <div class="namaz" id="namaz"></div>
+      <div class="row" style="margin-top:10px"><label>Kaza kıldım:</label><div class="counter"><button class="btn ghost" onclick="kaza(-1)">−</button> <b id="kazaN" style="font-size:18px;margin:0 8px">0</b> <button class="btn ghost" onclick="kaza(1)">+</button></div></div>
+    </div>
+    <div class="card"><h2>📋 Kaza Namazı Borcum</h2>
+      <div id="kazaBorcList"></div>
+      <div class="row spread" style="margin-top:10px"><span class="mut" style="font-size:12px">＋ borç ekle · − kıldım (borçtan düş)</span><b>Toplam: <span id="kazaBorcTop" style="color:var(--acc);font-size:18px">0</span></b></div>
+      <div class="row" style="margin-top:8px;background:var(--panel2);border-radius:9px;padding:8px 10px"><span style="font-size:13px">🗓️ Projeksiyon:</span><b id="kazaProj" style="color:var(--acc2)">–</b></div>
+    </div>
+    <div class="card"><h2>✅ Günlük Alışkanlıklar</h2><div id="habits"></div>
+      <div class="row" style="margin-top:10px;gap:8px"><input id="yeniHabit" placeholder="Yeni alışkanlık ekle" style="flex:1" onkeydown="if(event.key==='Enter')habitEkle()"><button class="btn alt" onclick="habitEkle()">➕ Ekle</button></div>
+    </div>
+    <div class="card"><h2>💧 Sayaçlar</h2>
+      <div class="grid g3">
+        <div><label>Kur'an (sayfa)</label><div class="row"><button class="btn ghost" onclick="cnt('kuran',-1)">−</button><b id="c-kuran" style="margin:0 8px">0</b><button class="btn ghost" onclick="cnt('kuran',1)">+</button></div></div>
+        <div><label>Su (bardak)</label><div class="row"><button class="btn ghost" onclick="cnt('su',-1)">−</button><b id="c-su" style="margin:0 8px">0</b><button class="btn ghost" onclick="cnt('su',1)">+</button></div></div>
+        <div><label>Kitap (sayfa)</label><div class="row"><button class="btn ghost" onclick="cnt('kitap',-1)">−</button><b id="c-kitap" style="margin:0 8px">0</b><button class="btn ghost" onclick="cnt('kitap',1)">+</button></div></div>
+      </div>
+      <div class="row spread" style="margin-top:10px;background:var(--panel2);border-radius:9px;padding:8px 10px"><span style="font-size:13px">📖 Hatim ilerlemesi:</span><b id="hatimMini" style="color:var(--acc2)">–</b></div>
+    </div>
+    <div class="card"><h2>😊 Ruh Halim</h2><div class="row" id="moodRow" style="gap:8px"></div></div>
+    <div class="card"><h2>😴 Uyku Takibi</h2>
+      <div class="grid g3">
+        <div><label>🌙 Yattım</label><input id="uyYat" type="time" onchange="uykuKaydet()"></div>
+        <div><label>🌅 Kalktım</label><input id="uyKalk" type="time" onchange="uykuKaydet()"></div>
+        <div class="stat"><div class="n" id="uySure">–</div><div class="l">Uyku süresi</div></div>
+      </div>
+      <div class="mut" id="uyYorum" style="margin-top:8px;font-size:12px"></div>
+    </div>
+    <div class="card"><h2>📌 Günün 3 Önceliği</h2><div id="oncelikList"></div>
+      <div class="row spread" style="margin-top:8px"><span class="mut" style="font-size:12px">Bugün en önemli 3 iş</span><b id="oncelikDurum" style="color:var(--acc2)"></b></div>
+    </div>
+    <div class="card"><h2>🙏 Bugün Şükrettiğim 3 Şey</h2><div id="sukurList"></div></div>
+    <div class="card"><h2>⚖️ Kilo & VKİ</h2>
+      <div class="grid g3">
+        <div><label>Kilo (kg)</label><input id="kiloIn" type="number" step="0.1" onchange="kiloKaydet()"></div>
+        <div class="stat"><div class="n" id="vkiN">–</div><div class="l">VKİ</div></div>
+        <div class="stat"><div class="n" id="vkiKat" style="font-size:15px">–</div><div class="l">Kategori</div></div>
+      </div>
+      <div class="mut" id="kiloNot" style="margin-top:6px;font-size:11px"></div>
+    </div>
+    <div class="card"><h2>⏱️ Odak (Pomodoro)</h2>
+      <div class="row spread"><div class="big" id="pomoSaat" style="font-size:46px;font-variant-numeric:tabular-nums">25:00</div>
+        <div class="row" style="gap:8px"><button class="btn" id="pomoBtn" onclick="pomoToggle()">▶ Başlat</button><button class="btn ghost" onclick="pomoSifir()">⟲</button></div></div>
+      <div class="row spread" style="margin-top:8px"><span class="mut">Bugün tamamlanan</span><b id="pomoSay" style="color:var(--acc)">0 🍅</b></div>
+      <div class="bar" style="margin-top:6px"><i id="pomoBar" style="width:0%"></i></div>
+    </div>
+  </section>
+  <!-- ZİKİR -->
+  <section class="view" id="v-zikir">
+    <div class="card"><h2>📿 Zikirmatik</h2>
+      <select id="zikirSec" style="margin-bottom:10px"><option value="Sübhanallah">Sübhanallah (33)</option><option value="Elhamdülillah">Elhamdülillah (33)</option><option value="Allahuekber">Allahuekber (34)</option><option value="Estağfirullah">Estağfirullah</option><option value="Salavat">Salavat</option><option value="Lâ ilâhe illallah">Lâ ilâhe illallah</option></select>
+      <div class="zikir" id="zikirN">0</div>
+      <button class="ztap" id="zikirTap">ÇEK 📿</button>
+      <div class="row spread" style="margin-top:10px"><button class="btn ghost" onclick="zikirReset()">Sıfırla</button><span class="mut" id="zikirGun">Bugün toplam: 0</span></div>
+    </div>
+  </section>
+  <!-- BÜTÇE -->
+  <section class="view" id="v-butce">
+    <div class="card"><h2>💰 Harcama Ekle</h2>
+      <div class="grid g3"><div><label>Açıklama</label><input id="h-ad" placeholder="örn. market"></div><div><label>Tutar (₺)</label><input id="h-tut" type="number" step="0.01"></div><div><label>Kategori</label><select id="h-kat"><option>Market</option><option>Yemek</option><option>Ulaşım</option><option>Fatura</option><option>Eğlence</option><option>Sağlık</option><option>Diğer</option></select></div></div>
+      <div class="row" style="margin-top:10px"><button class="btn alt" onclick="harcamaEkle()">➕ Ekle</button><span class="mut" id="h-durum"></span></div>
+    </div>
+    <div class="card"><div class="row spread"><h2 style="margin:0">📋 Bugün</h2><b id="h-gun" style="color:var(--acc)">0 ₺</b></div><div id="h-liste" style="margin-top:8px"></div></div>
+    <div class="card"><h2>📊 Bu Ay Analizi (formüllü)</h2>
+      <div class="row spread"><label style="margin:0">Aylık bütçe (₺)</label><input id="butce" type="number" step="0.01" style="width:150px" onchange="butceSet()"></div>
+      <div class="row spread" style="margin-top:10px"><b>Harcanan / Bütçe</b><b id="butceTxt">0 / 0 ₺</b></div>
+      <div class="bar" style="margin-top:6px"><i id="butceBar" style="width:0%"></i></div>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="stat"><div class="n" id="butceKalan">–</div><div class="l">Kalan bütçe (₺)</div></div>
+        <div class="stat"><div class="n" id="gunlukHarc">–</div><div class="l">Günlük harcanabilir (₺)</div></div>
+        <div class="stat"><div class="n" id="tasarrufP">–</div><div class="l">Tasarruf oranı</div></div>
+      </div>
+      <h2 style="font-size:14px;margin:16px 0 8px">📂 Kategori Dağılımı</h2>
+      <div id="katDagilim"></div>
+    </div>
+  </section>
+  <!-- HEDEFLER -->
+  <section class="view" id="v-hedef">
+    <div class="card"><h2>🎯 Yeni Hedef (SMART)</h2>
+      <div class="grid g2">
+        <div><label>Hedef adı</label><input id="hd-ad" placeholder="örn. 12 kitap oku"></div>
+        <div><label>Birim</label><input id="hd-birim" placeholder="kitap / kg / sayfa / ₺"></div>
+        <div><label>Hedef değer</label><input id="hd-hedef" type="number" step="any"></div>
+        <div><label>Mevcut</label><input id="hd-mevcut" type="number" step="any" value="0"></div>
+        <div><label>Bitiş tarihi</label><input id="hd-bitis" type="date"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn alt" onclick="hedefEkle()">➕ Hedef Ekle</button></div>
+    </div>
+    <div id="hedefList"></div>
+  </section>
+  <!-- ANALİZ -->
+  <section class="view" id="v-analiz">
+    <div class="card"><h2>📊 Bu Ay Özet</h2><div class="grid g3" id="ozetStat"></div></div>
+    <div class="card"><h2>📈 Haftalık Trend</h2><div class="grid g3" id="trendStat"></div></div>
+    <div class="card"><h2>🗓️ Isı Haritası (son 90 gün · skor)</h2><div class="heat" id="heat"></div><div class="mut" style="margin-top:6px;font-size:11px">Koyu = düşük · açık yeşil = yüksek skor</div></div>
+    <div class="card"><h2>🔥 Süreklilik (Streak)</h2><div id="streakList"></div></div>
+    <div class="card"><h2>📋 Kaza & 📖 Hatim Projeksiyonu</h2><div id="projDetay"></div></div>
+    <div class="card"><h2>📉 Son 14 Gün Skor</h2><div id="ozetTrend"></div></div>
+  </section>
+  <!-- BAŞARIM -->
+  <section class="view" id="v-basari">
+    <div class="row spread" style="margin-bottom:12px"><b>🏆 Başarım & Karne</b><button class="btn ghost" onclick="window.print()">🖨️ Yazdır / PDF</button></div>
+    <div class="card"><h2>🏅 Rozetler</h2><div class="rozetler" id="rozetGrid"></div></div>
+    <div class="card"><h2>🗓️ Yıllık Karne (<span id="karneYil"></span>)</h2><div class="grid g3" id="karneStat"></div></div>
+  </section>
+  <!-- NOTLAR -->
+  <section class="view" id="v-not">
+    <div class="card"><h2>📝 Bugünün Notu</h2><textarea id="notArea" rows="8" placeholder="Bugün aklında ne var?"></textarea><div class="row" style="margin-top:10px"><button class="btn alt" onclick="notKaydet()">💾 Kaydet</button><span class="mut" id="notDurum"></span></div></div>
+  </section>
+  <!-- AYARLAR -->
+  <section class="view" id="v-ayar">
+    <div class="card"><h2>📐 Profil & Hedefler</h2>
+      <div class="grid g3">
+        <div><label>Boy (cm)</label><input id="boyIn" type="number" onchange="boySet()"></div>
+        <div><label>Günlük pomodoro hedefi</label><input id="pomoHedefIn" type="number" onchange="pomoHedefSet()"></div>
+        <div><label>❄️ Streak dondurma hakkı (gün)</label><input id="freezeIn" type="number" onchange="freezeSet()"></div>
+      </div>
+      <div class="mut" style="margin-top:6px;font-size:11px">Streak dondurma: bir gün kaçırırsan serin bu kadar gün korunur.</div>
+    </div>
+    <div class="card"><h2>🕌 Namaz Vakitleri (manuel)</h2><div class="grid g3" id="vakitAyar"></div>
+      <div class="mut" style="margin-top:6px;font-size:11px">Şehrinin vakitlerini bir kez gir → Bugün'de sıradaki vakte geri sayım çıkar.</div>
+    </div>
+    <div class="card"><h2>💾 Veri Yedekleme</h2>
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="yedekIndir()">📤 Yedek İndir (JSON)</button>
+        <label class="btn ghost" style="cursor:pointer">📥 Yedek Yükle<input type="file" accept=".json,application/json" style="display:none" onchange="yedekYukle(this)"></label>
+        <button class="btn ghost" style="border-color:var(--bad);color:var(--bad)" onclick="hepsiniSifirla()">🗑️ Tümünü Sıfırla</button>
+      </div>
+      <div class="mut" id="yedekDurum" style="margin-top:8px"></div>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function fmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmtTR(d){return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();}
+const todayStr=()=>fmt(new Date());
+function get(k,d){try{var v=JSON.parse(localStorage.getItem("kg_"+k));return v===null?d:v}catch(e){return d}}
+function set(k,v){try{localStorage.setItem("kg_"+k,JSON.stringify(v))}catch(e){}}
+let cur=todayStr();
+const VAKIT=["Sabah","Öğle","İkindi","Akşam","Yatsı"];
+const VAKIT_IC={"Sabah":"🌅","Öğle":"☀️","İkindi":"🌤️","Akşam":"🌆","Yatsı":"🌙"};
+const ZIKIRLER=["Sübhanallah","Elhamdülillah","Allahuekber","Estağfirullah","Salavat","Lâ ilâhe illallah"];
+const HATIM_SAYFA=604;
+function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
+
+/* ---- MOTİVASYON (deterministik, internetsiz) ---- */
+const MOTI=[
+ ["İnsan için ancak çalıştığının karşılığı vardır.","Necm 39"],
+ ["Muhakkak ki güçlükle beraber bir kolaylık vardır.","İnşirah 6"],
+ ["Allah hiçbir kimseye gücünün üstünde bir şey yüklemez.","Bakara 286"],
+ ["Sabredenlere mükâfatları hesapsız ödenecektir.","Zümer 10"],
+ ["Rabbinizin hangi nimetini yalanlarsınız?","Rahmân 13"],
+ ["İşlerin en hayırlısı, az da olsa devamlı olanıdır.","Hadis-i Şerif"],
+ ["Kolaylaştırın, zorlaştırmayın; müjdeleyin, nefret ettirmeyin.","Hadis-i Şerif"],
+ ["İki günü eşit olan ziyandadır.","Hadis-i Şerif"],
+ ["Temizlik imanın yarısıdır.","Hadis-i Şerif"],
+ ["Güçlü kişi, öfke anında kendine hâkim olandır.","Hadis-i Şerif"],
+ ["Bugün yapabileceğini yarına bırakma.","Atasöz"],
+ ["Damlaya damlaya göl olur.","Atasöz"],
+ ["Az ye, az uyu, çok çalış.","Söz"],
+ ["Disiplin, hedef ile başarı arasındaki köprüdür.","Söz"],
+ ["Bir ağaç dikmenin en iyi zamanı 20 yıl önceydi; ikincisi bugün.","Atasöz"],
+ ["Niyet hayır, akıbet hayır.","Söz"],
+ ["Başlamak, işin yarısıdır.","Söz"],
+ ["Küçük adımlar büyük yolları aşar.","Söz"],
+ ["Vakit nakittir, israf etme.","Söz"],
+ ["Sağlık en büyük servettir.","Söz"],
+ ["Sözünde dur, emanete riayet et.","Söz"],
+ ["Bilgi güçtür; her gün biraz öğren.","Söz"],
+ ["Şükreden çoğalır.","Söz"],
+ ["Bugün dünden daha iyi ol, yarın bugünden.","Söz"]
+];
+function gunNo(){var d=new Date();return Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);}
+function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 "'+m[0]+'"<span class="src">— '+m[1]+'</span>';}
+
+/* ---- tema + tabs ---- */
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+$("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
+
+/* ---- GÜN ---- */
+function habitList(){return get("habitList",["Erken kalktım","Spor/yürüyüş yaptım","Sağlıklı beslendim","Erken yattım","Ekran süresini kontrol ettim","Birine iyilik yaptım","Diş fırçaladım","Yüz yıkadım"]);}
+function habitEkle(){var v=$("yeniHabit").value.trim();if(!v)return;var l=habitList();if(l.indexOf(v)<0){l.push(v);set("habitList",l);}$("yeniHabit").value="";loadGun();}
+function habitSil(name){if(!confirm('"'+name+'" alışkanlığını sil?'))return;set("habitList",habitList().filter(function(h){return h!==name;}));loadGun();}
+function freezeHak(){return Math.max(0,get("freeze",1));}
+function streakHesap(test){var d=new Date();var skip=freezeHak();if(!test(fmt(d)))d.setDate(d.getDate()-1);var s=0,guard=0;for(;;){if(++guard>3000)break;var ds=fmt(d);if(test(ds)){s++;}else{if(skip>0&&s>0){skip--;}else break;}d.setDate(d.getDate()-1);}return s;}
+function habitStreak(name){return streakHesap(function(ds){var g=get("gun_"+ds,null);return !!(g&&g.habits&&g.habits[name]);});}
+function gun(){return get("gun_"+cur,{namaz:{},kaza:0,kuran:0,su:0,kitap:0,habits:{},not:""})}
+function gunSet(g){set("gun_"+cur,g)}
+function zikirToplam(ds){var t=0;ZIKIRLER.forEach(function(z){t+=get("zikir_"+ds+"_"+z,0);});return t;}
+
+/* ---- FORMÜL: ağırlıklı skor + rütbe ---- */
+function skorHesap(ds){var g=get("gun_"+ds,null)||{namaz:{},habits:{}};
+ var nm=0;VAKIT.forEach(function(v){if(g.namaz&&g.namaz[v])nm++;});
+ var hl=habitList(),hy=0;hl.forEach(function(h){if(g.habits&&g.habits[h])hy++;});
+ var zk=zikirToplam(ds);
+ var pN=nm/5*40, pH=hl.length?hy/hl.length*30:0, pZ=Math.min(1,zk/100)*15, pS=(Math.min(1,(g.su||0)/8)+Math.min(1,(g.kitap||0)/20))/2*15;
+ return{s:Math.round(pN+pH+pZ+pS),d:{namaz:Math.round(pN),habit:Math.round(pH),zikir:Math.round(pZ),sayac:Math.round(pS),nm:nm,hy:hy,ht:hl.length}};}
+function rutbe(s){if(s>=95)return["Üstad","#d4af37"];if(s>=80)return["Usta","#22d3a0"];if(s>=60)return["Disiplinli","#3b82f6"];if(s>=40)return["Düzenli","#a855f7"];return["Acemi","#8b9bb0"];}
+
+function namazStreak(){return streakHesap(function(ds){var g=get("gun_"+ds,null);return !!(g&&VAKIT.every(function(v){return g.namaz&&g.namaz[v];}));});}
+
+/* ---- KAZA projeksiyon ---- */
+const KAZA_VAKIT=["Sabah","Öğle","İkindi","Akşam","Yatsı","Vitir"];
+function kazaBorcGet(){return get("kazaBorc",{})}
+function kazaBorc(v,d){const o=kazaBorcGet();o[v]=Math.max(0,(o[v]||0)+d);set("kazaBorc",o);renderKazaBorc();}
+function kazaBorcTop(){var o=kazaBorcGet(),t=0;for(var k in o)t+=o[k]||0;return t;}
+function kazaGunlukOrt(){var top=0,n=0,d=new Date();for(var i=0;i<30;i++){var g=get("gun_"+fmt(d),null);if(g){top+=g.kaza||0;n++;}d.setDate(d.getDate()-1);}return n?top/n:0;}
+function kazaProjeksiyon(){var borc=kazaBorcTop(),ort=kazaGunlukOrt();if(borc<=0)return"Borç yok 🎉";if(ort<=0)return borc+" borç · henüz kaza kılınmadı";var g=Math.ceil(borc/ort);var d=new Date();d.setDate(d.getDate()+g);return "günde ~"+ort.toFixed(1)+" → "+g+" günde, "+fmtTR(d)+"'de biter";}
+function renderKazaBorc(){var o=kazaBorcGet(),tot=0;$("kazaBorcList").innerHTML=KAZA_VAKIT.map(function(v){var n=o[v]||0;tot+=n;return '<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>'+v+'</span><div class="counter"><button class="btn ghost" onclick="kazaBorc(\''+v+'\',-1)">−</button><b style="margin:0 12px;min-width:30px;display:inline-block;text-align:center;font-size:16px">'+n+'</b><button class="btn ghost" onclick="kazaBorc(\''+v+'\',1)">+</button></div></div>';}).join("");$("kazaBorcTop").textContent=tot;if($("kazaProj"))$("kazaProj").textContent=kazaProjeksiyon();}
+
+/* ---- HATİM ---- */
+function tumGunler(){var a=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("kg_gun_")===0)a.push(k.slice(7));}return a;}
+function kuranToplam(){var t=0;tumGunler().forEach(function(ds){var g=get("gun_"+ds,null);if(g)t+=g.kuran||0;});return t;}
+function kuranGunlukOrt(){var top=0,n=0,d=new Date();for(var i=0;i<30;i++){var g=get("gun_"+fmt(d),null);if(g){top+=g.kuran||0;n++;}d.setDate(d.getDate()-1);}return n?top/n:0;}
+function hatimBilgi(){var tot=kuranToplam();var hatim=Math.floor(tot/HATIM_SAYFA);var mevcut=tot%HATIM_SAYFA;var pct=Math.round(mevcut/HATIM_SAYFA*100);var ort=kuranGunlukOrt();var tahmin="—";if(ort>0){var kalan=HATIM_SAYFA-mevcut;var g=Math.ceil(kalan/ort);var d=new Date();d.setDate(d.getDate()+g);tahmin=g+" gün (~"+fmtTR(d)+")";}return{tot:tot,hatim:hatim,mevcut:mevcut,pct:pct,ort:ort,tahmin:tahmin};}
+
+function loadGun(){
+ $("tarih").value=cur;const g=gun();
+ $("namaz").innerHTML=VAKIT.map(v=>`<div class="vakit ${g.namaz[v]?'on':''}" data-v="${v}"><div style="font-size:20px;line-height:1.3">${VAKIT_IC[v]}</div>${v}${g.namaz[v]?' ✓':''}</div>`).join("");
+ document.querySelectorAll("#namaz .vakit").forEach(el=>el.onclick=()=>{const v=el.dataset.v;const gg=gun();gg.namaz[v]=!gg.namaz[v];gunSet(gg);loadGun();});
+ $("kazaN").textContent=g.kaza||0;
+ ["kuran","su","kitap"].forEach(k=>$("c-"+k).textContent=g[k]||0);
+ $("habits").innerHTML=habitList().map(function(h){var on=g.habits&&g.habits[h];var st=habitStreak(h);return '<div class="hbox '+(on?'on':'')+'" data-h="'+esc(h)+'"><span class="ck">'+(on?'✓':'')+'</span><span style="flex:1">'+esc(h)+'</span>'+(st>0?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);border:1px solid var(--line)">🔥'+st+'</span>':'')+'<span class="hdel" data-h="'+esc(h)+'" title="sil" style="color:var(--mut);cursor:pointer;font-size:15px">✕</span></div>';}).join("");
+ document.querySelectorAll("#habits .hbox").forEach(function(el){el.onclick=function(e){if(e.target.classList.contains("hdel")){habitSil(el.dataset.h);return;}var h=el.dataset.h;var gg=gun();if(!gg.habits)gg.habits={};gg.habits[h]=!gg.habits[h];gunSet(gg);loadGun();};});
+ $("notArea").value=g.not||"";
+ var sk=skorHesap(cur);$("skor").textContent=sk.s+"%";$("skorBar").style.width=sk.s+"%";
+ var r=rutbe(sk.s);$("rutbe").textContent="🏅 "+r[0];$("rutbe").style.background=r[1];
+ $("skorDetay").textContent="Namaz "+sk.d.namaz+"/40 · Alışkanlık "+sk.d.habit+"/30 · Zikir "+sk.d.zikir+"/15 · Su+Kitap "+sk.d.sayac+"/15";
+ var ns=namazStreak();$("namazStreak").textContent=ns>0?("🔥 "+ns+" gün seri"):"";
+ var hb=hatimBilgi();$("hatimMini").textContent=hb.hatim+" hatim + %"+hb.pct;
+ // ruh hali
+ $("moodRow").innerHTML=MOODS.map(function(m){var on=g.mood===m[1];return '<button class="btn ghost" title="'+m[2]+'" style="flex:1;font-size:24px;padding:8px 0;'+(on?'background:var(--acc);border-color:var(--acc)':'')+'" onclick="moodSec('+m[1]+')">'+m[0]+'</button>';}).join("");
+ // uyku
+ $("uyYat").value=(g.uyku&&g.uyku.yat)||"";$("uyKalk").value=(g.uyku&&g.uyku.kalk)||"";
+ var us=uykuSure(g.uyku);$("uySure").textContent=us?(Math.floor(us/60)+"s "+(us%60)+"d"):"–";
+ $("uyYorum").textContent=us?(us>=420&&us<=540?"✅ İdeal uyku (7-9 saat)":(us<420?"⚠️ Az uyumuşsun":"💤 Fazla uyku")):"";
+ // öncelikler
+ var onc=g.oncelik||[{t:"",d:false},{t:"",d:false},{t:"",d:false}];var bitti=0;
+ $("oncelikList").innerHTML=[0,1,2].map(function(i){var o=onc[i]||{t:"",d:false};if(o.d&&o.t)bitti++;return '<div class="row" style="gap:8px;margin-bottom:7px"><span style="cursor:pointer;font-size:20px" onclick="oncelikSet('+i+',\'d\','+(!o.d)+')">'+(o.d?'✅':'⬜')+'</span><input value="'+esc(o.t)+'" placeholder="Öncelik '+(i+1)+'" style="flex:1'+(o.d?';text-decoration:line-through;opacity:.6':'')+'" onchange="oncelikSet('+i+',\'t\',this.value)"></div>';}).join("");
+ $("oncelikDurum").textContent=bitti+"/3 tamam";
+ // şükür
+ var sk2=g.sukur||["","",""];
+ $("sukurList").innerHTML=[0,1,2].map(function(i){return '<div class="row" style="gap:8px;margin-bottom:6px"><span style="font-size:18px">🙏</span><input value="'+esc(sk2[i]||"")+'" placeholder="Şükür '+(i+1)+'" style="flex:1" onchange="sukurSet('+i+',this.value)"></div>';}).join("");
+ // kilo / vkı
+ $("kiloIn").value=g.kilo||"";renderVKI(g.kilo);
+ // pomodoro sayaç
+ $("pomoSay").textContent=(g.pomo||0)+" 🍅"+(pomoHedef()?(" / "+pomoHedef()):"");
+ // namaz vakit barı
+ renderVakitBar();
+ renderKazaBorc();renderMoti();
+}
+function kaza(d){const g=gun();g.kaza=Math.max(0,(g.kaza||0)+d);gunSet(g);loadGun();}
+function cnt(k,d){const g=gun();g[k]=Math.max(0,(g[k]||0)+d);gunSet(g);loadGun();}
+/* ruh hali / uyku / öncelik */
+const MOODS=[["😞",1,"Kötü"],["😐",2,"İdare eder"],["🙂",3,"Normal"],["😊",4,"İyi"],["🤩",5,"Harika"]];
+function moodSec(v){const g=gun();g.mood=(g.mood===v?0:v);gunSet(g);loadGun();}
+function uykuKaydet(){const g=gun();g.uyku={yat:$("uyYat").value,kalk:$("uyKalk").value};gunSet(g);loadGun();}
+function uykuSure(u){if(!u||!u.yat||!u.kalk)return null;var a=u.yat.split(":"),b=u.kalk.split(":");var dk=(+b[0]*60+ +b[1])-(+a[0]*60+ +a[1]);if(dk<0)dk+=1440;return dk;}
+function oncelikSet(i,f,val){const g=gun();if(!g.oncelik)g.oncelik=[{t:"",d:false},{t:"",d:false},{t:"",d:false}];g.oncelik[i][f]=val;gunSet(g);if(f==='d')loadGun();}
+function notKaydet(){const g=gun();g.not=$("notArea").value;gunSet(g);$("notDurum").textContent="✓ kaydedildi";setTimeout(()=>$("notDurum").textContent="",1800);}
+
+/* ---- ZİKİR ---- */
+function zikirReset(){set("zikir_"+cur+"_"+$("zikirSec").value,0);renderZikir();}
+$("zikirSec").onchange=renderZikir;
+$("zikirTap").onclick=()=>{const k="zikir_"+cur+"_"+$("zikirSec").value;set(k,(get(k,0)+1));renderZikir();try{navigator.vibrate&&navigator.vibrate(20)}catch(e){}};
+function renderZikir(){const k="zikir_"+cur+"_"+$("zikirSec").value;$("zikirN").textContent=get(k,0);$("zikirGun").textContent="Bugün toplam: "+zikirToplam(cur);}
+
+/* ---- HARCAMA / BÜTÇE ---- */
+function harcamalar(){return get("harcama_"+cur,[])}
+function harcamaEkle(){const t=parseFloat($("h-tut").value);if(!t){return;}const arr=harcamalar();arr.push({ad:$("h-ad").value||"-",tut:t,kat:$("h-kat").value});set("harcama_"+cur,arr);$("h-ad").value="";$("h-tut").value="";renderHarcama();$("h-durum").textContent="✓ eklendi";setTimeout(()=>$("h-durum").textContent="",1500);}
+function harcamaSil(i){const arr=harcamalar();arr.splice(i,1);set("harcama_"+cur,arr);renderHarcama();}
+function ayHarcamalari(){var ay=cur.slice(0,7),items=[];for(var i=0;i<localStorage.length;i++){var key=localStorage.key(i);if(key&&key.indexOf("kg_harcama_"+ay)===0){try{JSON.parse(localStorage.getItem(key)).forEach(function(x){items.push(x);});}catch(e){}}}return items;}
+function butceSet(){set("butce_"+cur.slice(0,7),parseFloat($("butce").value)||0);renderHarcama();}
+function renderHarcama(){const arr=harcamalar();const tg=arr.reduce((a,b)=>a+b.tut,0);$("h-gun").textContent=tg.toFixed(2)+" ₺";
+ $("h-liste").innerHTML=arr.length?arr.map((h,i)=>`<div class="row spread" style="padding:5px 0;border-bottom:1px solid var(--line)"><span>${esc(h.kat)} · ${esc(h.ad)}</span><span><b>${h.tut.toFixed(2)} ₺</b> <button class="btn ghost" style="padding:2px 7px;font-size:12px" onclick="harcamaSil(${i})">✕</button></span></div>`).join(""):'<span class="mut">Bugün harcama yok.</span>';
+ var items=ayHarcamalari();var top=items.reduce(function(a,b){return a+b.tut;},0);var b=get("butce_"+cur.slice(0,7),0);
+ if(document.activeElement!==$("butce"))$("butce").value=b||"";
+ $("butceTxt").textContent=top.toFixed(0)+" / "+(b?b.toFixed(0):"0")+" ₺";
+ var pct=b?Math.min(100,Math.round(top/b*100)):0;var bar=$("butceBar");bar.style.width=pct+"%";bar.style.background=pct>=100?"var(--bad)":(pct>=80?"var(--warn)":"linear-gradient(90deg,var(--acc),var(--acc2))");
+ var ayD=cur.slice(0,7).split("-");var gunSay=new Date(ayD[0],ayD[1],0).getDate();var bugun=new Date().getDate();var kalanGun=Math.max(1,gunSay-bugun+1);
+ var kalan=b?(b-top):0;
+ $("butceKalan").textContent=b?kalan.toFixed(0):"–";
+ $("gunlukHarc").textContent=b?Math.max(0,kalan/kalanGun).toFixed(0):"–";
+ $("tasarrufP").textContent=b?("%"+Math.round(Math.max(0,kalan)/b*100)):"–";
+ var kat={};items.forEach(function(x){kat[x.kat]=(kat[x.kat]||0)+x.tut;});var keys=Object.keys(kat).sort(function(a,b){return kat[b]-kat[a];});
+ $("katDagilim").innerHTML=keys.length?keys.map(function(k){var p=top?Math.round(kat[k]/top*100):0;return '<div style="margin-bottom:9px"><div class="row spread" style="font-size:13px"><span>'+esc(k)+'</span><span><b>'+kat[k].toFixed(0)+' ₺</b> <span class="mut">%'+p+'</span></span></div><div class="bar" style="height:8px;margin-top:3px"><i style="width:'+p+'%"></i></div></div>';}).join(""):'<span class="mut">Bu ay harcama yok.</span>';}
+
+/* ---- HEDEFLER (SMART) ---- */
+function hedefler(){return get("hedefler",[])}
+function hedefEkle(){var ad=$("hd-ad").value.trim();var hedef=parseFloat($("hd-hedef").value);if(!ad||!hedef){alert("Hedef adı ve değer gir.");return;}var arr=hedefler();arr.push({id:Date.now(),ad:ad,birim:$("hd-birim").value||"",hedef:hedef,mevcut:parseFloat($("hd-mevcut").value)||0,bas:todayStr(),bitis:$("hd-bitis").value||""});set("hedefler",arr);$("hd-ad").value="";$("hd-hedef").value="";$("hd-mevcut").value="0";$("hd-birim").value="";$("hd-bitis").value="";renderHedefler();}
+function hedefGuncelle(id,v){var arr=hedefler();var h=arr.find(x=>x.id===id);if(h){h.mevcut=Math.max(0,parseFloat(v)||0);set("hedefler",arr);renderHedefler();}}
+function hedefSil(id){if(!confirm("Hedefi sil?"))return;set("hedefler",hedefler().filter(x=>x.id!==id));renderHedefler();}
+function renderHedefler(){var arr=hedefler();if(!arr.length){$("hedefList").innerHTML='<div class="card mut">Henüz hedef yok. Yukarıdan ekle 🎯</div>';return;}
+ $("hedefList").innerHTML=arr.map(function(h){
+  var p=h.hedef?Math.min(100,Math.round(h.mevcut/h.hedef*100)):0;
+  var kalanGun="—",gerekli="—";
+  if(h.bitis){var kg=Math.ceil((new Date(h.bitis)-new Date())/864e5);kalanGun=kg>0?kg+" gün":"süre doldu";if(kg>0){gerekli=((h.hedef-h.mevcut)/kg).toFixed(2)+" "+h.birim+"/gün";}}
+  return '<div class="hedef"><div class="row spread"><b>'+esc(h.ad)+'</b><span><button class="btn ghost" style="padding:3px 8px;font-size:12px" onclick="hedefSil('+h.id+')">✕</button></span></div>'+
+   '<div class="bar" style="margin:8px 0 6px"><i style="width:'+p+'%"></i></div>'+
+   '<div class="row spread" style="font-size:12.5px"><span class="mut">'+h.mevcut+' / '+h.hedef+' '+esc(h.birim)+' (%'+p+')</span><span class="mut">⏳ '+kalanGun+'</span></div>'+
+   '<div class="row" style="margin-top:8px;gap:8px"><label style="margin:0">Güncelle:</label><input type="number" step="any" value="'+h.mevcut+'" style="width:120px" onchange="hedefGuncelle('+h.id+',this.value)"><span class="mut">📈 gereken: <b>'+gerekli+'</b></span></div></div>';
+ }).join("");}
+
+/* ---- ANALİZ ---- */
+function shiftStr(n){var d=new Date();d.setDate(d.getDate()+n);return fmt(d);}
+function donemOrt(gunBasla,gunBitis){var top=0,n=0;for(var i=gunBasla;i<gunBitis;i++){var ds=shiftStr(-i);var g=get("gun_"+ds,null);if(g){top+=skorHesap(ds).s;n++;}}return n?Math.round(top/n):0;}
+function renderAnaliz(){
+ var ay=cur.slice(0,7);let namazGun=0,toplamSkor=0,gunSay=0,harcamaAy=0;
+ for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(!key)continue;
+  if(key.indexOf("kg_gun_"+ay)===0){try{const g=JSON.parse(localStorage.getItem(key));const ds=key.slice(7);gunSay++;toplamSkor+=skorHesap(ds).s;if(VAKIT.every(v=>g.namaz&&g.namaz[v]))namazGun++;}catch(e){}}
+  if(key.indexOf("kg_harcama_"+ay)===0){try{JSON.parse(localStorage.getItem(key)).forEach(x=>harcamaAy+=x.tut)}catch(e){}}}
+ $("ozetStat").innerHTML=[["📅 Takipli gün",gunSay],["🕌 Tam namaz günü",namazGun],["🎯 Ort. skor",(gunSay?Math.round(toplamSkor/gunSay):0)+"%"],["💰 Ay harcama",harcamaAy.toFixed(0)+" ₺"]].map(s=>`<div class="stat"><div class="n">${s[1]}</div><div class="l">${s[0]}</div></div>`).join("");
+ // haftalık trend
+ var buHafta=donemOrt(0,7),gecenHafta=donemOrt(7,14),son30=donemOrt(0,30);
+ var fark=gecenHafta?Math.round((buHafta-gecenHafta)):buHafta;var ok=fark>0?"↑":(fark<0?"↓":"→");var rk=fark>0?"var(--ok)":(fark<0?"var(--bad)":"var(--mut)");
+ $("trendStat").innerHTML='<div class="stat"><div class="n">'+buHafta+'%</div><div class="l">Bu hafta ort.</div></div><div class="stat"><div class="n">'+gecenHafta+'%</div><div class="l">Geçen hafta</div></div><div class="stat"><div class="n" style="color:'+rk+'">'+ok+' '+Math.abs(fark)+'%</div><div class="l">Değişim · 30g ort %'+son30+'</div></div>';
+ // heatmap (90 gün)
+ var hh="";for(var i=90;i>=0;i--){var ds=shiftStr(-i);var s=skorHesap(ds).s;var lvl=s===0?0:(s<40?1:(s<60?2:(s<85?3:4)));hh+='<div class="d" data-l="'+lvl+'" title="'+ds+': %'+s+'"></div>';}$("heat").innerHTML=hh;
+ // streak listesi
+ var sl='<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>🕌 Tam namaz serisi</span><b>🔥 '+namazStreak()+' gün</b></div>';
+ habitList().forEach(function(h){var st=habitStreak(h);if(st>0)sl+='<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>'+esc(h)+'</span><b>🔥 '+st+' gün</b></div>';});
+ $("streakList").innerHTML=sl;
+ // kaza + hatim
+ var hb=hatimBilgi();
+ $("projDetay").innerHTML='<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>📋 Kaza borcu</span><b>'+kazaBorcTop()+'</b></div>'+
+  '<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>🗓️ Kaza biter</span><b style="color:var(--acc2)">'+kazaProjeksiyon()+'</b></div>'+
+  '<div class="row spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>📖 Toplam okunan</span><b>'+hb.tot+' sayfa · '+hb.hatim+' hatim</b></div>'+
+  '<div class="row spread" style="padding:6px 0"><span>📖 Bu hatim ilerleme</span><b style="color:var(--acc2)">%'+hb.pct+' · tahmini bitiş '+hb.tahmin+'</b></div>';
+ // son 14 gün bar
+ let html='<div class="row" style="align-items:flex-end;gap:4px;height:90px">';
+ for(let i=13;i>=0;i--){const ds=shiftStr(-i);const s=skorHesap(ds).s;const h=Math.round(s/100*78)+2;html+=`<div title="${ds}: ${s}%" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:100%;height:${h}px;background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:4px 4px 0 0"></div><span style="font-size:9px;color:var(--mut)">${ds.slice(8)}</span></div>`;}
+ $("ozetTrend").innerHTML=html+"</div>";
+}
+
+/* ---- BAŞARIM: rozet + karne ---- */
+function enUzunNamazStreak(){var en=0,cur=0,gunler=tumGunler().sort();var prev=null;gunler.forEach(function(ds){var g=get("gun_"+ds,null);var full=g&&VAKIT.every(function(v){return g.namaz&&g.namaz[v];});if(full){if(prev&&(new Date(ds)-new Date(prev))===864e5)cur++;else cur=1;en=Math.max(en,cur);prev=ds;}else{prev=null;cur=0;}});return en;}
+function toplamZikir(){var t=0;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("kg_zikir_")===0){t+=get(k.slice(3),0)||0;}}return t;}
+function renderBasari(){
+ var hb=hatimBilgi();var enNs=enUzunNamazStreak();var tz=toplamZikir();
+ var enHabit=0;habitList().forEach(function(h){enHabit=Math.max(enHabit,habitStreak(h));});
+ var R=[
+  ["🌙","7 gün namaz serisi",enNs>=7,"7 gün üst üste 5 vakit"],
+  ["🌟","30 gün namaz serisi",enNs>=30,"30 gün üst üste"],
+  ["👑","100 gün namaz serisi",enNs>=100,"100 gün üst üste"],
+  ["📖","İlk hatim",hb.hatim>=1,"604 sayfa Kur'an"],
+  ["📚","5 hatim",hb.hatim>=5,"3020 sayfa"],
+  ["🔥","Alışkanlık 7 gün",enHabit>=7,"bir alışkanlık 7 gün"],
+  ["💪","Alışkanlık 30 gün",enHabit>=30,"bir alışkanlık 30 gün"],
+  ["📿","1.000 zikir",tz>=1000,"toplam zikir"],
+  ["🕋","10.000 zikir",tz>=10000,"toplam zikir"]
+ ];
+ $("rozetGrid").innerHTML=R.map(function(r){return '<div class="rozet '+(r[2]?'on':'')+'"><div class="ic">'+r[0]+'</div><div class="t">'+r[1]+'</div><div class="d">'+r[3]+(r[2]?' ✓':'')+'</div></div>';}).join("");
+ // yıllık karne
+ var yil=new Date().getFullYear();$("karneYil").textContent=yil;
+ var toplamNamaz=0,tamGun=0,kitap=0,skorTop=0,skorN=0;
+ tumGunler().forEach(function(ds){if(ds.slice(0,4)!=String(yil))return;var g=get("gun_"+ds,null);if(!g)return;VAKIT.forEach(function(v){if(g.namaz&&g.namaz[v])toplamNamaz++;});if(VAKIT.every(function(v){return g.namaz&&g.namaz[v];}))tamGun++;kitap+=g.kitap||0;skorTop+=skorHesap(ds).s;skorN++;});
+ $("karneStat").innerHTML=[
+  ["🕌 Kılınan vakit",toplamNamaz],["✅ Tam namaz günü",tamGun],["📖 Hatim",hb.hatim],
+  ["📚 Kitap (sayfa)",kitap],["🔥 En uzun seri",enNs+" gün"],["🎯 Ort. skor",(skorN?Math.round(skorTop/skorN):0)+"%"],
+  ["📿 Toplam zikir",tz],["🏅 Rozet",R.filter(r=>r[2]).length+"/"+R.length]
+ ].map(s=>`<div class="stat"><div class="n">${s[1]}</div><div class="l">${s[0]}</div></div>`).join("");
+}
+
+loadGun();renderZikir();
+</script>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v12.0</div></body>
+</html>

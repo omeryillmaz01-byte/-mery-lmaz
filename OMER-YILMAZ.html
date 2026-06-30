@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👤 ÖMER YILMAZ — Kişisel Merkez · v20</title>
+<style>
+:root{
+  --bg0:#070b14;--bg1:#0c1322;--glass:rgba(22,30,48,.55);--glass2:rgba(30,40,64,.5);
+  --line:rgba(120,150,200,.16);--txt:#eef3fb;--mut:#92a3bd;
+  --acc:#5cc8ff;--acc2:#22e3b0;--p1:#7c4dff;--p2:#ff5a8a;
+  --ring:0 0 0 1px rgba(120,150,200,.14);--shadow:0 22px 60px -22px rgba(0,0,0,.75);
+}
+[data-theme="light"]{
+  --bg0:#e7edf6;--bg1:#f4f8ff;--glass:rgba(255,255,255,.7);--glass2:rgba(255,255,255,.6);
+  --line:rgba(40,70,120,.14);--txt:#16202e;--mut:#5b6c84;--acc:#1f8fff;--acc2:#08b389;
+  --shadow:0 20px 50px -20px rgba(60,90,140,.4);
+}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;color:var(--txt);font-family:'Segoe UI',-apple-system,system-ui,'Inter',Arial,sans-serif;
+  background:var(--bg0);overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+/* canlı arka plan blobları */
+.bgfx{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(1100px 700px at 12% -8%, rgba(124,77,255,.30), transparent 60%),
+  radial-gradient(900px 650px at 105% 8%, rgba(34,227,176,.22), transparent 60%),
+  radial-gradient(900px 800px at 50% 120%, rgba(255,90,138,.20), transparent 60%),
+  linear-gradient(180deg,var(--bg0),var(--bg1));}
+.blob{position:fixed;z-index:-1;border-radius:50%;filter:blur(60px);opacity:.5;animation:float 16s ease-in-out infinite}
+.b1{width:340px;height:340px;background:#7c4dff;top:-80px;left:-60px}
+.b2{width:300px;height:300px;background:#22e3b0;bottom:-90px;right:-40px;animation-delay:-6s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.12)}}
+/* header */
+header{display:flex;align-items:center;gap:14px;padding:16px 26px;
+  background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line)}
+.logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:20px;
+  background:linear-gradient(135deg,var(--p1),var(--p2));box-shadow:0 8px 24px -6px var(--p1)}
+header h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.2px}
+header .tag{font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px}
+.spacer{flex:1}
+.iconbtn{background:var(--glass2);border:1px solid var(--line);color:var(--txt);height:42px;min-width:42px;padding:0 14px;
+  border-radius:13px;cursor:pointer;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:7px;
+  transition:.18s;backdrop-filter:blur(8px)}
+.iconbtn:hover{transform:translateY(-2px);border-color:var(--acc);color:var(--acc)}
+.ver{font-size:11px;font-weight:800;color:#04222f;background:linear-gradient(135deg,var(--acc),var(--acc2));
+  padding:6px 11px;border-radius:20px;letter-spacing:.5px;box-shadow:0 6px 18px -6px var(--acc)}
+#home{flex:1;overflow:auto;padding:30px 26px 50px}
+.wrap{max-width:1040px;margin:0 auto}
+/* hero */
+.hero{position:relative;border-radius:26px;padding:34px;text-align:center;overflow:hidden;margin-bottom:28px;
+  background:linear-gradient(135deg,var(--p1),var(--p2));box-shadow:var(--shadow);color:#fff}
+.hero:before{content:"";position:absolute;inset:0;background:
+  radial-gradient(600px 200px at 50% -40%,rgba(255,255,255,.35),transparent 70%);mix-blend-mode:overlay}
+.hero:after{content:"";position:absolute;top:-60%;left:-30%;width:60%;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);transform:rotate(18deg);
+  animation:shine 6s linear infinite}
+@keyframes shine{0%{left:-40%}100%{left:130%}}
+.hero .sub{opacity:.92;font-size:13px;font-weight:700;letter-spacing:2px;position:relative}
+.hero .big{font-size:74px;font-weight:900;line-height:1;margin:8px 0;position:relative;
+  text-shadow:0 8px 30px rgba(0,0,0,.3)}
+/* kartlar */
+.grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-bottom:28px}
+.card{position:relative;cursor:pointer;border:1px solid var(--line);border-radius:24px;padding:30px 18px 26px;text-align:center;
+  background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:var(--shadow);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s;
+  font-family:inherit;color:var(--txt);overflow:hidden}
+.card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;border-radius:24px 24px 0 0;background:var(--cg,linear-gradient(90deg,var(--acc),var(--acc2)))}
+.card:hover{transform:translateY(-8px) scale(1.025);border-color:transparent;box-shadow:0 30px 70px -24px var(--gl,rgba(92,200,255,.5))}
+.card .em{font-size:46px;display:inline-grid;place-items:center;width:84px;height:84px;border-radius:22px;margin-bottom:14px;
+  background:var(--cg,linear-gradient(135deg,var(--acc),var(--acc2)));box-shadow:0 14px 30px -10px var(--gl,rgba(92,200,255,.6))}
+.card .nm{font-size:17px;font-weight:800}.card .ds{font-size:12px;color:var(--mut);margin-top:6px;font-weight:600}
+.card .go{margin-top:14px;font-size:12px;font-weight:800;color:var(--acc);opacity:0;transform:translateY(6px);transition:.2s}
+.card:hover .go{opacity:1;transform:none}
+.c1{--cg:linear-gradient(135deg,#5b8def,#2c5fd6);--gl:rgba(91,141,239,.55)}
+.c2{--cg:linear-gradient(135deg,#2ec5b6,#149e91);--gl:rgba(46,197,182,.55)}
+.c3{--cg:linear-gradient(135deg,#ff7a59,#e0492b);--gl:rgba(255,122,89,.55)}
+.c4{--cg:linear-gradient(135deg,#ffca28,#f9a825);--gl:rgba(255,202,40,.55)}
+.c5{--cg:linear-gradient(135deg,#7c4dff,#5e35b1);--gl:rgba(124,77,255,.55)}
+/* hatırlatma */
+.info{background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+.info h2{margin:0 0 14px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+.rem{display:flex;gap:13px;align-items:flex-start;padding:11px 12px;border-radius:14px;transition:.16s}
+.rem:hover{background:var(--glass2)}
+.rem .ic{font-size:20px;width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:var(--glass2);border:1px solid var(--line);flex:none}
+.rem span:last-child{font-size:14px;line-height:1.5;padding-top:7px}
+/* viewer */
+#viewer{flex:1;display:none;flex-direction:column}
+.vbar{display:flex;align-items:center;gap:14px;padding:12px 18px;background:var(--glass);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.vbar b{font-size:15px;font-weight:800}
+#frame{flex:1;width:100%;border:none;background:var(--bg1)}
+.mut{color:var(--mut)}
+::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-thumb{background:var(--glass2);border-radius:20px;border:2px solid transparent;background-clip:padding-box}
+</style>
+</head>
+<body data-theme="dark">
+<div class="bgfx"></div><div class="blob b1"></div><div class="blob b2"></div>
+<header>
+  <div class="logo">👤</div>
+  <div><h1>ÖMER YILMAZ</h1><div class="tag">KİŞİSEL MERKEZ</div></div>
+  <span class="spacer"></span>
+  <span class="ver">v20</span>
+  <button class="iconbtn" id="themeBtn">🌙</button>
+</header>
+<div id="home"><div class="wrap">
+  <div class="hero"><div class="sub">KGK SINAVINA</div><div class="big" id="kalanGun">–</div><div class="sub">GÜN KALDI · 21 KASIM 2026</div></div>
+  <div class="grid" id="grid"></div>
+  <div class="info"><h2>📌 Bugünün Hatırlatmaları</h2><div id="remList"></div></div>
+</div></div>
+<div id="viewer">
+  <div class="vbar"><button class="iconbtn" id="back">← Geri</button><b id="vtitle"></b></div>
+  <iframe id="frame" allow="clipboard-write; clipboard-read; fullscreen"></iframe>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("komuta_theme",t)}catch(e){}}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");try{theme(localStorage.getItem("komuta_theme")||"dark")}catch(e){theme("dark")}
+const CARDS=[
+ {em:"🎓",nm:"KGK Sınav",ds:"çalışma + koç",cls:"c1",src:"KGK-Sinav-Paneli.html"},
+ {em:"📚",nm:"Genel Kültür / Soru-Cevap",ds:"genel test",cls:"c2",src:"Soru-Paneli.html"},
+ {em:"💪",nm:"Spor & Sağlık",ds:"VKİ · spor · diyet · vücut",cls:"c3",src:"SAGLIK-SPOR-DIYET-PANEL_v3.html"},
+ {em:"🟡",nm:"Kişisel Gelişim",ds:"namaz · kaza · alışkanlık · zikir",cls:"c4",src:"KISISEL-GELISIM-PANEL.html"},
+ {em:"📖",nm:"İngilizce Öğreniyorum",ds:"kelime · flashcard · pratik",cls:"c5",src:"INGILIZCE-OGRENIYORUM.html"},
+];
+$("grid").innerHTML=CARDS.map((c,i)=>`<button class="card ${c.cls}" data-i="${i}"><span class="em">${c.em}</span><span class="nm">${c.nm}</span><div class="ds">${c.ds}</div><div class="go">Aç →</div></button>`).join("");
+document.querySelectorAll(".card").forEach(b=>b.onclick=()=>ac(+b.dataset.i));
+function ac(i){const c=CARDS[i];$("vtitle").textContent=c.em+" "+c.nm;$("frame").src=c.src;$("home").style.display="none";$("viewer").style.display="flex";}
+$("back").onclick=()=>{$("viewer").style.display="none";$("home").style.display="block";$("frame").src="about:blank";};
+const SINAV=new Date(2026,10,21);(function(){const t=new Date();t.setHours(0,0,0,0);$("kalanGun").textContent=Math.ceil((SINAV-t)/86400000);})();
+const dow=new Date().getDay();
+const split=["Dinlenme/serbest","1. Gün: Göğüs+Arka Kol","2. Gün: Omuz+Bacak+Karın","3. Gün: Sırt+Ön Kol","1. Gün: Göğüs+Arka Kol","2. Gün: Omuz+Bacak+Karın","Dinlenme"][dow];
+const rem=[{ic:"🎓",t:"<b>KGK:</b> kartına tıkla → Çalışma Takvimim → Koç → 1-2-3 → Günü Bitir"},{ic:"💪",t:"<b>Bugün spor:</b> "+split+" (videolu anlatımla)"},{ic:"🟡",t:"<b>Kişisel gelişim:</b> namaz, kaza, alışkanlık ve zikir takibini işaretle"},{ic:"📖",t:"<b>İngilizce:</b> bugün yeni kelime ekle + flashcard pratik yap"},{ic:"💧",t:"<b>Sağlık:</b> ~3.5 L su · ~2200 kcal"}];
+$("remList").innerHTML=rem.map(r=>`<div class="rem"><span class="ic">${r.ic}</span><span>${r.t}</span></div>`).join("");
+</script>
+</body>
+</html>

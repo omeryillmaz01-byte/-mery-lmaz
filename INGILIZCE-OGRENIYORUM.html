@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 İngilizce Öğreniyorum</title>
+<style>
+:root{--bg:#0f1419;--panel:#1a2230;--panel2:#222d3d;--line:#2d3a4d;--txt:#e6edf3;--mut:#8b9bb0;--acc:#4cc2ff;--acc2:#22d3a0;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;--shadow:0 8px 26px rgba(0,0,0,.4)}
+[data-theme="light"]{--bg:#eef2f7;--panel:#fff;--panel2:#f4f7fb;--line:#dde5ef;--txt:#15202b;--mut:#5d6b7d;--acc:#1273e6;--acc2:#0aa97a;--shadow:0 8px 24px rgba(60,90,130,.15)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:linear-gradient(135deg,var(--panel),var(--panel2));border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:20px}.spacer{flex:1}
+.tabs{display:flex;gap:8px;padding:12px 20px 0;flex-wrap:wrap}
+.tab{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 16px;border-radius:11px 11px 0 0;cursor:pointer;font-weight:700;font-size:14px}
+.tab.active{background:var(--acc);color:#04222f;border-color:var(--acc)}
+main{max-width:880px;margin:0 auto;padding:18px 20px 40px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:16px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font-family:inherit;font-size:14px}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.row{display:flex;align-items:center;gap:10px}.spread{justify-content:space-between}
+.btn{background:var(--acc);color:#04222f;border:none;border-radius:10px;padding:10px 18px;font-weight:800;cursor:pointer;font-size:14px}
+.btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn.ok{background:var(--ok);color:#04210f}.btn.bad{background:var(--bad);color:#fff}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);height:38px;min-width:38px;border-radius:11px;cursor:pointer;font-size:15px;font-weight:700}
+.mut{color:var(--mut)}
+.wrow{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--panel2)}
+.wrow.learned{opacity:.55}
+.wrow .en{font-weight:800;font-size:15px}.wrow .tr{color:var(--mut);font-size:13px}
+.wrow .ex{font-size:12px;color:var(--mut);font-style:italic;margin-top:3px}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);border:1px solid var(--line)}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.stat .n{font-size:30px;font-weight:800;color:var(--acc)}.stat .l{font-size:12px;color:var(--mut)}
+.flash{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px;background:var(--panel2);border:1px solid var(--line);border-radius:16px;cursor:pointer}
+.flash .big{font-size:34px;font-weight:800}
+.bar{height:10px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.filterbtn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);cursor:pointer}
+.filterbtn.on{background:var(--acc);color:#04222f;border-color:var(--acc)}
+.konuGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px}
+.kitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);font-size:14px}
+.kitem b{font-weight:800}.kitem span{color:var(--mut);font-size:13px}
+.wrow.s .tr{color:var(--acc2);font-weight:600}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>📖 İngilizce Öğreniyorum</h1><span class="spacer"></span>
+  <span class="pill" id="streak">🔥 0 gün</span>
+  <button class="iconbtn" id="themeBtn">🌙</button>
+</header>
+<div class="tabs">
+  <div class="tab active" data-v="kelime">📝 Kelimeler</div>
+  <div class="tab" data-v="pratik">🎯 Pratik</div>
+  <div class="tab" data-v="cumle">💬 Cümleler</div>
+  <div class="tab" data-v="konu">🌍 Konular</div>
+  <div class="tab" data-v="istat">📊 İstatistik</div>
+</div>
+<main>
+  <!-- KELİMELER -->
+  <section class="view active" id="v-kelime">
+    <div class="card"><div class="row spread"><div><h2 style="margin:0">📦 Hazır Kelime Paketi</h2><p class="mut" style="margin:4px 0 0;font-size:13px">En sık kullanılan İngilizce kelimeler + basit Türkçe karşılığı. Tek tık listene ekler.</p></div><button class="btn" onclick="loadPack()">⬇ Yükle</button></div><div class="mut" id="packDurum" style="margin-top:8px"></div></div>
+    <div class="card"><h2>➕ Kelime Ekle</h2>
+      <div class="grid">
+        <div><label>İngilizce</label><input id="i-en" placeholder="apple"></div>
+        <div><label>Türkçe</label><input id="i-tr" placeholder="elma"></div>
+      </div>
+      <div style="margin-top:10px"><label>Örnek cümle (opsiyonel)</label><input id="i-ex" placeholder="I eat an apple every day."></div>
+      <div class="row" style="margin-top:12px"><button class="btn" onclick="kelimeEkle()">➕ Ekle</button><span class="mut" id="ekleDurum"></span></div>
+    </div>
+    <div class="card">
+      <div class="row spread" style="margin-bottom:10px"><h2 style="margin:0">📚 Kelime Listem (<span id="kCount">0</span>)</h2>
+        <div class="row"><button class="filterbtn on" data-f="all" onclick="setFilter('all')">Hepsi</button><button class="filterbtn" data-f="new" onclick="setFilter('new')">Öğrenilmemiş</button><button class="filterbtn" data-f="done" onclick="setFilter('done')">Öğrenilen</button></div>
+      </div>
+      <div id="liste"></div>
+    </div>
+  </section>
+  <!-- PRATİK -->
+  <section class="view" id="v-pratik">
+    <div class="card"><h2>🎯 Flashcard Pratik</h2>
+      <p class="mut" style="margin:0 0 12px">Öğrenilmemiş kelimelerden rastgele. Karta tıkla → çeviriyi gör. Bildiysen "Biliyorum ✓" işaretle.</p>
+      <div class="flash" id="flash" onclick="flashCevir()"><div class="big" id="fEn">Başla 👇</div><div class="mut" id="fTr" style="display:none"></div><div class="ex mut" id="fEx" style="display:none"></div></div>
+      <div class="row spread" style="margin-top:14px">
+        <button class="btn ghost" onclick="flashNext()">⏭ Sonraki</button>
+        <button class="btn ok" onclick="flashBildim()">Biliyorum ✓</button>
+      </div>
+    </div>
+  </section>
+  <!-- İSTATİSTİK -->
+  <section class="view" id="v-istat">
+    <div class="card"><h2>📊 İlerleme</h2>
+      <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="stat"><div class="n" id="sTop">0</div><div class="l">Toplam kelime</div></div>
+        <div class="stat"><div class="n" id="sOgr">0</div><div class="l">Öğrenilen</div></div>
+        <div class="stat"><div class="n" id="sBug">0</div><div class="l">Bugün eklenen</div></div>
+      </div>
+      <div style="margin-top:16px"><div class="row spread" style="margin-bottom:6px"><b>Öğrenme oranı</b><b id="oranTxt" style="color:var(--acc)">0%</b></div><div class="bar"><i id="oranBar" style="width:0%"></i></div></div>
+      <div class="row spread" style="margin-top:16px"><label style="margin:0">Günlük hedef (kelime)</label><div class="counter row"><button class="btn ghost" onclick="hedef(-1)">−</button><b id="hedefN" style="margin:0 10px;font-size:18px">5</b><button class="btn ghost" onclick="hedef(1)">+</button></div></div>
+      <div class="mut" id="bugunHedef" style="margin-top:8px"></div>
+    </div>
+  </section>
+  <!-- CÜMLELER -->
+  <section class="view" id="v-cumle">
+    <div class="card">
+      <div class="row spread" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">💬 Günlük Cümleler (<span id="cCount">0</span>)</h2>
+        <label class="row" style="font-size:13px;gap:6px;cursor:pointer"><input type="checkbox" id="hideTr" onchange="renderCumle()"> Türkçeyi gizle (pratik)</label></div>
+      <input id="cSearch" placeholder="🔍 Cümlelerde ara (İng/Tr)..." style="margin:12px 0" oninput="renderCumle()">
+      <div id="cumleListe"></div>
+    </div>
+  </section>
+  <!-- KONULAR -->
+  <section class="view" id="v-konu">
+    <div class="card"><h2>🌍 Ülkeler</h2><div id="konuUlke" class="konuGrid"></div></div>
+    <div class="card"><h2>🔢 Sayılar</h2><div id="konuSayi" class="konuGrid"></div></div>
+    <div class="card"><h2>🍂 Mevsimler & Aylar</h2><div id="konuMevsim" class="konuGrid"></div></div>
+  </section>
+</main>
+<script src="INGILIZCE-1000-KELIME.js"></script>
+<script src="INGILIZCE-CUMLELER.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+function get(k,d){try{return JSON.parse(localStorage.getItem("eng_"+k))??d}catch(e){return d}}
+function set(k,v){try{localStorage.setItem("eng_"+k,JSON.stringify(v))}catch(e){}}
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();});
+/* veri */
+function words(){return get("words",[])}
+function saveWords(w){set("words",w)}
+function loadPack(){
+  if(!window.WORDPACK){$("packDurum").textContent="⚠ Paket dosyası (INGILIZCE-1000-KELIME.js) yüklenemedi.";return;}
+  var w=words(),have={};w.forEach(function(k){have[(k.en||"").toLowerCase()]=1;});
+  var added=0,base=Date.now();
+  window.WORDPACK.forEach(function(p,idx){var en=p[0],tr=p[1];if(en&&!have[en.toLowerCase()]){w.push({en:en,tr:tr,ex:"",learned:false,date:today(),id:base+idx});have[en.toLowerCase()]=1;added++;}});
+  saveWords(w);renderListe();renderIstat();streakGuncelle();
+  $("packDurum").textContent=added?("✓ "+added+" kelime eklendi. Toplam liste: "+w.length+"."):("Zaten yüklü — yeni kelime eklenmedi.");
+}
+let filter="all";
+function kelimeEkle(){
+  const en=$("i-en").value.trim(),tr=$("i-tr").value.trim(),ex=$("i-ex").value.trim();
+  if(!en||!tr){$("ekleDurum").textContent="İngilizce + Türkçe gerekli";return;}
+  const w=words();w.unshift({en,tr,ex,learned:false,date:today(),id:Date.now()});saveWords(w);
+  $("i-en").value="";$("i-tr").value="";$("i-ex").value="";$("i-en").focus();
+  $("ekleDurum").textContent="✓ eklendi";setTimeout(()=>$("ekleDurum").textContent="",1400);
+  renderListe();streakGuncelle();
+}
+function toggleLearned(id){const w=words();const x=w.find(k=>k.id===id);if(x)x.learned=!x.learned;saveWords(w);renderListe();}
+function sil(id){const w=words().filter(k=>k.id!==id);saveWords(w);renderListe();}
+function setFilter(f){filter=f;document.querySelectorAll(".filterbtn").forEach(b=>b.classList.toggle("on",b.dataset.f===f));renderListe();}
+function renderListe(){
+  const all=words();let w=all;
+  if(filter==="new")w=all.filter(k=>!k.learned);if(filter==="done")w=all.filter(k=>k.learned);
+  $("kCount").textContent=all.length;
+  $("liste").innerHTML=w.length?w.map(k=>'<div class="wrow '+(k.learned?'learned':'')+'"><div style="flex:1"><div class="en">'+esc(k.en)+'</div><div class="tr">'+esc(k.tr)+'</div>'+(k.ex?'<div class="ex">'+esc(k.ex)+'</div>':'')+'</div><button class="iconbtn" title="öğrendim" onclick="toggleLearned('+k.id+')">'+(k.learned?'✓':'○')+'</button><button class="iconbtn" title="sil" onclick="sil('+k.id+')">🗑</button></div>').join(""):'<p class="mut">Henüz kelime yok. Yukarıdan ekle.</p>';
+}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+/* flashcard */
+let fCur=null,fShown=false;
+function flashNext(){const pool=words().filter(k=>!k.learned);if(!pool.length){$("fEn").textContent="🎉 Tüm kelimeler öğrenildi!";$("fTr").style.display="none";$("fEx").style.display="none";fCur=null;return;}fCur=pool[Math.floor(Math.random()*pool.length)];fShown=false;$("fEn").textContent=fCur.en;$("fTr").style.display="none";$("fEx").style.display="none";}
+function flashCevir(){if(!fCur)return;fShown=!fShown;$("fTr").textContent=fCur.tr;$("fTr").style.display=fShown?"block":"none";if(fCur.ex){$("fEx").textContent=fCur.ex;$("fEx").style.display=fShown?"block":"none";}}
+function flashBildim(){if(!fCur)return;toggleLearned(fCur.id);flashNext();}
+/* istatistik */
+function hedef(d){let h=Math.max(1,(get("hedef",5))+d);set("hedef",h);renderIstat();}
+function renderIstat(){const w=words();const ogr=w.filter(k=>k.learned).length;const bug=w.filter(k=>k.date===today()).length;
+  $("sTop").textContent=w.length;$("sOgr").textContent=ogr;$("sBug").textContent=bug;
+  const oran=w.length?Math.round(ogr/w.length*100):0;$("oranTxt").textContent=oran+"%";$("oranBar").style.width=oran+"%";
+  const h=get("hedef",5);$("hedefN").textContent=h;$("bugunHedef").textContent="Bugün "+bug+" / "+h+" kelime "+(bug>=h?"✓ hedef tamam!":"");}
+/* streak */
+function streakGuncelle(){const w=words();const days=[...new Set(w.map(k=>k.date))].sort();let s=0;let d=new Date();for(;;){const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");if(days.includes(ds)){s++;d.setDate(d.getDate()-1);}else break;}$("streak").textContent="🔥 "+s+" gün";}
+/* cümleler */
+function renderCumle(){var sp=window.SENTENCEPACK||[];if(!$("cumleListe"))return;var q=($("cSearch").value||"").toLowerCase();var hide=$("hideTr").checked;$("cCount").textContent=sp.length;var list=sp.filter(function(p){return !q||p[0].toLowerCase().indexOf(q)>=0||p[1].toLowerCase().indexOf(q)>=0;});$("cumleListe").innerHTML=list.length?list.map(function(p){return '<div class="wrow" style="display:block;cursor:pointer" onclick="this.classList.add(\'s\');this.querySelector(\'.tr\').style.display=\'block\'"><div class="en">'+esc(p[0])+'</div><div class="tr"'+(hide?' style="display:none"':'')+'>'+esc(p[1])+'</div></div>';}).join(""):'<span class="mut">Sonuç yok.</span>';}
+/* konular */
+var ULKELER=[["Turkey","Türkiye"],["England","İngiltere"],["United Kingdom","Birleşik Krallık"],["Germany","Almanya"],["France","Fransa"],["Italy","İtalya"],["Spain","İspanya"],["Greece","Yunanistan"],["Russia","Rusya"],["China","Çin"],["Japan","Japonya"],["India","Hindistan"],["America (USA)","Amerika (ABD)"],["Canada","Kanada"],["Brazil","Brezilya"],["Mexico","Meksika"],["Egypt","Mısır"],["Iran","İran"],["Iraq","Irak"],["Syria","Suriye"],["Saudi Arabia","Suudi Arabistan"],["Netherlands","Hollanda"],["Belgium","Belçika"],["Switzerland","İsviçre"],["Austria","Avusturya"],["Sweden","İsveç"],["Norway","Norveç"],["Denmark","Danimarka"],["Finland","Finlandiya"],["Poland","Polonya"],["Portugal","Portekiz"],["Ireland","İrlanda"],["Scotland","İskoçya"],["Australia","Avustralya"],["South Korea","Güney Kore"],["Argentina","Arjantin"],["Ukraine","Ukrayna"],["Azerbaijan","Azerbaycan"],["Georgia","Gürcistan"],["Bulgaria","Bulgaristan"]];
+var SAYILAR=[["one","bir"],["two","iki"],["three","üç"],["four","dört"],["five","beş"],["six","altı"],["seven","yedi"],["eight","sekiz"],["nine","dokuz"],["ten","on"],["eleven","on bir"],["twelve","on iki"],["thirteen","on üç"],["fourteen","on dört"],["fifteen","on beş"],["sixteen","on altı"],["seventeen","on yedi"],["eighteen","on sekiz"],["nineteen","on dokuz"],["twenty","yirmi"],["thirty","otuz"],["forty","kırk"],["fifty","elli"],["sixty","altmış"],["seventy","yetmiş"],["eighty","seksen"],["ninety","doksan"],["hundred","yüz"],["thousand","bin"],["million","milyon"],["billion","milyar"],["first","birinci"],["second","ikinci"],["third","üçüncü"],["fourth","dördüncü"],["fifth","beşinci"],["tenth","onuncu"]];
+var MEVSIMLER=[["spring","ilkbahar"],["summer","yaz"],["autumn / fall","sonbahar"],["winter","kış"],["January","Ocak"],["February","Şubat"],["March","Mart"],["April","Nisan"],["May","Mayıs"],["June","Haziran"],["July","Temmuz"],["August","Ağustos"],["September","Eylül"],["October","Ekim"],["November","Kasım"],["December","Aralık"]];
+function konuRow(arr){return arr.map(function(p){return '<div class="kitem"><b>'+esc(p[0])+'</b><span>'+esc(p[1])+'</span></div>';}).join("");}
+function renderKonu(){if($("konuUlke"))$("konuUlke").innerHTML=konuRow(ULKELER);if($("konuSayi"))$("konuSayi").innerHTML=konuRow(SAYILAR);if($("konuMevsim"))$("konuMevsim").innerHTML=konuRow(MEVSIMLER);}
+/* init */
+renderListe();renderIstat();streakGuncelle();renderKonu();
+</script>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v10.0</div>
+</body>
+</html>
