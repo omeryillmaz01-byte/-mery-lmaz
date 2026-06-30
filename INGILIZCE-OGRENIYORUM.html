@@ -42,6 +42,27 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
 .kitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);font-size:14px}
 .kitem b{font-weight:800}.kitem span{color:var(--mut);font-size:13px}
 .wrow.s .tr{color:var(--acc2);font-weight:600}
+/* Dersler */
+.ders{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.ders-bas{display:flex;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;transition:.15s}
+.ders-bas:hover{background:var(--panel2)}
+.ders-ic{width:44px;height:44px;flex:none;display:grid;place-items:center;font-size:22px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.ders-bas .t{flex:1}
+.ders-bas .t b{font-size:15px}.ders-bas .t span{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.ders-tag{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.5px}
+.tag-g{background:rgba(76,194,255,.16);color:var(--acc)}
+.tag-m{background:rgba(34,211,160,.16);color:var(--acc2)}
+.ders-ok{font-size:18px;color:var(--mut);transition:.2s}
+.ders.acik .ders-ok{transform:rotate(90deg)}
+.ders-govde{display:none;padding:0 18px 18px;border-top:1px solid var(--line)}
+.ders.acik .ders-govde{display:block}
+.ders-h{font-size:12px;font-weight:800;color:var(--acc);letter-spacing:1px;margin:16px 0 8px;text-transform:uppercase}
+.ders-anlatim{font-size:14px;line-height:1.7;color:var(--txt)}
+.ders-anlatim b{color:var(--acc2)}
+.kalip{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:var(--panel2)}
+.kalip .en{font-weight:700;font-size:14px}.kalip .tr{font-size:12.5px;color:var(--mut);margin-top:2px}
+.ders-video{display:inline-flex;align-items:center;gap:8px;background:#ff0000;color:#fff;border:none;border-radius:11px;padding:11px 18px;font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;box-shadow:0 4px 14px rgba(255,0,0,.3)}
+.ders-video:hover{filter:brightness(1.08);transform:translateY(-1px)}
 </style>
 </head>
 <body data-theme="dark">
@@ -57,6 +78,7 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
   <div class="tab" data-v="cumle">💬 Cümleler</div>
   <div class="tab" data-v="konu">🌍 Konular</div>
   <div class="tab" data-v="ileri">🎓 C1 İleri</div>
+  <div class="tab" data-v="dersler">📚 Dersler</div>
   <div class="tab" data-v="test">✍️ Test & Quiz</div>
   <div class="tab" data-v="sinav">📝 Sınav</div>
   <div class="tab" data-v="istat">📊 İstatistik</div>
@@ -92,6 +114,19 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
       </div>
       <label class="row" style="margin-top:12px;font-size:13px;gap:6px;cursor:pointer"><input type="checkbox" id="fAutoSpk" checked> 🔈 Kart açılınca otomatik sesli oku</label>
     </div>
+  </section>
+  <!-- DERSLER -->
+  <section class="view" id="v-dersler">
+    <div class="card" style="background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04222f">
+      <h2 style="margin:0 0 4px;color:#04222f">📚 Konu Konu Dersler</h2>
+      <p style="margin:0;font-size:13px;font-weight:600">Dilbilgisi + Mesleki Muhasebe İngilizcesi. Her derste: konu anlatımı, cümle yapıları (🔊 sesli), kelimeler ve videolu hoca anlatımı.</p>
+    </div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:14px" id="dersFiltre">
+      <button class="filterbtn on" data-k="hepsi" onclick="dersFiltrele('hepsi')">Tümü</button>
+      <button class="filterbtn" data-k="dilbilgisi" onclick="dersFiltrele('dilbilgisi')">🔤 Dilbilgisi</button>
+      <button class="filterbtn" data-k="muhasebe" onclick="dersFiltrele('muhasebe')">💼 Muhasebe İng.</button>
+    </div>
+    <div id="dersListe"></div>
   </section>
   <!-- SINAV -->
   <section class="view" id="v-sinav">
@@ -232,6 +267,7 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
     <div class="card"><h2>🌍 Ülkeler</h2><div id="konuUlke" class="konuGrid"></div></div>
     <div class="card"><h2>🔢 Sayılar</h2><div id="konuSayi" class="konuGrid"></div></div>
     <div class="card"><h2>🍂 Mevsimler & Aylar</h2><div id="konuMevsim" class="konuGrid"></div></div>
+    <div class="card"><h2>💼 Mesleki Muhasebe İngilizcesi</h2><div id="konuMuhasebe" class="konuGrid"></div></div>
   </section>
 </main>
 <script src="INGILIZCE-1000-KELIME.js"></script>
@@ -264,7 +300,7 @@ $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"da
 const HIZLAR=[{r:.6,t:"🐢 Yavaş"},{r:1,t:"🚶 Normal"},{r:1.3,t:"🐇 Hızlı"}];
 let hizIdx=get("seshiz",0);function hizUygula(){const h=HIZLAR[hizIdx];SES_HIZ=h.r;$("hizBtn").textContent=h.t;set("seshiz",hizIdx);}
 $("hizBtn").onclick=()=>{hizIdx=(hizIdx+1)%HIZLAR.length;hizUygula();};hizUygula();
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();if(t.dataset.v==="test"){quizYeni();telYeni();srsNext();}if(t.dataset.v==="sinav")sinavReset();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();if(t.dataset.v==="test"){quizYeni();telYeni();srsNext();}if(t.dataset.v==="sinav")sinavReset();if(t.dataset.v==="dersler")renderDersler("hepsi");});
 /* veri */
 function words(){return get("words",[])}
 function saveWords(w){set("words",w)}
@@ -337,8 +373,9 @@ var ILERI_SIFAT=[["meticulous","titiz/ince eleyip sık dokuyan"],["resilient","d
 var BAGLAC=[["in spite of","-e rağmen"],["due to","-den dolayı"],["as long as","-dığı sürece"],["even though","-e rağmen/her ne kadar"],["as if","sanki"],["provided that","şu şartla ki"],["in order to","-mek için"],["so that","-sın diye"],["unless","-medikçe"],["whereas","oysa ki"],["meanwhile","bu arada"],["otherwise","aksi takdirde"],["regardless of","-e bakmaksızın"],["with regard to","-e ilişkin"],["on the other hand","öte yandan"],["for the sake of","-in hatırı için"],["by means of","vasıtasıyla"],["in terms of","açısından"],["as a result of","-in sonucu olarak"],["in contrast to","-in aksine"]];
 
 function konuRow(arr){return arr.map(function(p){return '<div class="kitem" onclick="konus(this.dataset.t)" data-t="'+esc(p[0]).replace(/'/g,"&#39;")+'" style="cursor:pointer"><b>'+esc(p[0])+' 🔊</b><span>'+esc(p[1])+'</span></div>';}).join("");}
-var KONU_MAP=[["konuHayvan",HAYVANLAR],["konuMeslek",MESLEKLER],["konuFiil",FIILLER],["konuSifat",SIFATLAR],["konuRenk",RENKLER],["konuYiyecek",YIYECEK],["konuVucut",VUCUT],["konuAile",AILE],["konuGiyim",GIYIM],["konuEv",EVESYA],["konuUlasim",ULASIM],["konuDoga",DOGA],["konuUlke",ULKELER],["konuSayi",SAYILAR],["konuMevsim",MEVSIMLER]];
-var KONU_NAV=[["konuHayvan","🐶 Hayvanlar"],["konuMeslek","💼 Meslekler"],["konuFiil","🏃 Fiiller"],["konuSifat","📐 Sıfatlar"],["konuRenk","🎨 Renkler"],["konuYiyecek","🍎 Yiyecek"],["konuVucut","👤 Vücut"],["konuAile","👨‍👩‍👧 Aile"],["konuGiyim","👕 Giyim"],["konuEv","🏠 Ev"],["konuUlasim","🚗 Ulaşım"],["konuDoga","🌳 Doğa"],["konuUlke","🌍 Ülkeler"],["konuSayi","🔢 Sayılar"],["konuMevsim","🍂 Mevsim/Ay"]];
+var MUHASEBE_ING=[["accounting","muhasebe"],["accountant","muhasebeci"],["bookkeeping","defter tutma"],["ledger","büyük defter"],["journal entry","yevmiye kaydı"],["balance sheet","bilanço"],["income statement","gelir tablosu"],["cash flow statement","nakit akış tablosu"],["asset","varlık"],["liability","yükümlülük/borç"],["equity","özkaynak"],["revenue","gelir/hasılat"],["expense","gider"],["profit","kâr"],["loss","zarar"],["net income","net kâr"],["gross profit","brüt kâr"],["depreciation","amortisman"],["accrual","tahakkuk"],["accounts receivable","alacaklar"],["accounts payable","borçlar"],["invoice","fatura"],["receipt","makbuz"],["audit","denetim"],["auditor","denetçi"],["tax","vergi"],["VAT","KDV"],["payroll","bordro"],["budget","bütçe"],["trial balance","mizan"],["debit","borç (kayıt)"],["credit","alacak (kayıt)"],["fiscal year","mali yıl"],["retained earnings","dağıtılmamış kârlar"],["inventory","stok/envanter"],["amortization","itfa payı"],["cost of goods sold","satılan malın maliyeti"],["financial statement","finansal tablo"],["GAAP","genel kabul görmüş muhasebe ilkeleri"],["IFRS","uluslararası finansal raporlama standartları"]];
+var KONU_MAP=[["konuHayvan",HAYVANLAR],["konuMeslek",MESLEKLER],["konuFiil",FIILLER],["konuSifat",SIFATLAR],["konuRenk",RENKLER],["konuYiyecek",YIYECEK],["konuVucut",VUCUT],["konuAile",AILE],["konuGiyim",GIYIM],["konuEv",EVESYA],["konuUlasim",ULASIM],["konuDoga",DOGA],["konuUlke",ULKELER],["konuSayi",SAYILAR],["konuMevsim",MEVSIMLER],["konuMuhasebe",MUHASEBE_ING]];
+var KONU_NAV=[["konuHayvan","🐶 Hayvanlar"],["konuMeslek","💼 Meslekler"],["konuFiil","🏃 Fiiller"],["konuSifat","📐 Sıfatlar"],["konuRenk","🎨 Renkler"],["konuYiyecek","🍎 Yiyecek"],["konuVucut","👤 Vücut"],["konuAile","👨‍👩‍👧 Aile"],["konuGiyim","👕 Giyim"],["konuEv","🏠 Ev"],["konuUlasim","🚗 Ulaşım"],["konuDoga","🌳 Doğa"],["konuUlke","🌍 Ülkeler"],["konuSayi","🔢 Sayılar"],["konuMevsim","🍂 Mevsim/Ay"],["konuMuhasebe","💼 Muhasebe"]];
 function renderKonu(){
   KONU_MAP.forEach(function(m){if($(m[0]))$(m[0]).innerHTML=konuRow(m[1]);});
   if($("konuNav"))$("konuNav").innerHTML=KONU_NAV.map(function(n){return '<button class="filterbtn" onclick="document.getElementById(\''+n[0]+'\').closest(\'.card\').scrollIntoView({behavior:\'smooth\'})">'+n[1]+'</button>';}).join("");
@@ -352,7 +389,7 @@ function renderIleri(){
 }
 /* ============ TEST & QUIZ ============ */
 /* Havuzlar: [en, tr] çiftleri */
-function konuHavuz(){return [].concat(HAYVANLAR,MESLEKLER,FIILLER,SIFATLAR,RENKLER,YIYECEK,VUCUT,AILE,GIYIM,EVESYA,ULASIM,DOGA,ULKELER,SAYILAR,MEVSIMLER);}
+function konuHavuz(){return [].concat(HAYVANLAR,MESLEKLER,FIILLER,SIFATLAR,RENKLER,YIYECEK,VUCUT,AILE,GIYIM,EVESYA,ULASIM,DOGA,ULKELER,SAYILAR,MEVSIMLER,MUHASEBE_ING);}
 function ileriHavuz(){return [].concat(PHRASAL,IDIOMS,AKADEMIK,IS_ING,ILERI_SIFAT,BAGLAC);}
 function wordHavuz(){return words().map(function(k){return [k.en,k.tr];});}
 function havuz(src){
@@ -534,6 +571,93 @@ function sinavBitir(){
 }
 function sinavTekrar(){$("sinavSonuc").style.display="none";$("sinavAyar").style.display="block";$("snvUyari").textContent="";}
 function sinavReset(){clearInterval(snv.timer);$("sinavSoru").style.display="none";$("sinavSonuc").style.display="none";$("sinavAyar").style.display="block";$("snvUyari").textContent="";}
+
+/* ============ KONU KONU DERSLER ============ */
+var DERSLER=[
+ {k:'dilbilgisi',ic:'⏱️',baslik:'Present Simple (Geniş Zaman)',ozet:'Alışkanlık, genel gerçek ve rutinler',
+  anlatim:'<b>Present Simple</b> tekrar eden eylemleri, alışkanlıkları ve genel gerçekleri anlatır. Olumlu cümlede özneden sonra fiilin yalın hâli gelir; <b>he/she/it</b> öznelerinde fiile <b>-s/-es</b> eklenir. Olumsuz ve soruda <b>do/does</b> yardımcı fiili kullanılır.',
+  kaliplar:[["I work at a company.","Bir şirkette çalışırım."],["She works as an accountant.","O bir muhasebeci olarak çalışır."],["They do not (don't) prepare reports.","Onlar rapor hazırlamaz."],["Does he check the invoices?","O faturaları kontrol eder mi?"]],
+  kelimeler:[["always","her zaman"],["usually","genellikle"],["every day","her gün"],["report","rapor"]],
+  video:'present simple tense konu anlatımı'},
+ {k:'dilbilgisi',ic:'🔄',baslik:'Present Continuous (Şimdiki Zaman)',ozet:'Şu an olan eylemler',
+  anlatim:'<b>Present Continuous</b> konuşma anında devam eden eylemleri anlatır. Yapı: <b>am/is/are + fiil-ing</b>. Geçici durumlar ve gelecek planlar için de kullanılır.',
+  kaliplar:[["I am preparing the balance sheet.","Bilançoyu hazırlıyorum."],["She is auditing the accounts.","O hesapları denetliyor."],["We are not working today.","Bugün çalışmıyoruz."],["Are you calculating the tax?","Vergiyi hesaplıyor musun?"]],
+  kelimeler:[["now","şimdi"],["at the moment","şu anda"],["currently","şu sıralar"]],
+  video:'present continuous tense ingilizce anlatım'},
+ {k:'dilbilgisi',ic:'⏮️',baslik:'Past Simple (Geçmiş Zaman)',ozet:'Bitmiş geçmiş eylemler',
+  anlatim:'<b>Past Simple</b> geçmişte olup bitmiş eylemleri anlatır. Düzenli fiillere <b>-ed</b> eklenir; düzensiz fiillerin 2. hâli ezberlenir. Olumsuz/soruda <b>did</b> kullanılır ve fiil yalın hâle döner.',
+  kaliplar:[["I recorded the transaction.","İşlemi kaydettim."],["The company made a profit last year.","Şirket geçen yıl kâr etti."],["They did not pay the invoice.","Faturayı ödemediler."],["Did you submit the report?","Raporu teslim ettin mi?"]],
+  kelimeler:[["yesterday","dün"],["last year","geçen yıl"],["ago","önce"]],
+  video:'past simple tense konu anlatımı türkçe'},
+ {k:'dilbilgisi',ic:'⏭️',baslik:'Future (will / going to)',ozet:'Gelecek planları ve tahminler',
+  anlatim:'Gelecek için iki ana yapı vardır: <b>will</b> (anlık karar, tahmin, söz) ve <b>be going to</b> (önceden yapılmış plan, kanıta dayalı tahmin).',
+  kaliplar:[["I will send the invoice tomorrow.","Faturayı yarın göndereceğim."],["We are going to hire a new accountant.","Yeni bir muhasebeci işe alacağız."],["The market will probably grow.","Piyasa muhtemelen büyüyecek."]],
+  kelimeler:[["tomorrow","yarın"],["next week","gelecek hafta"],["soon","yakında"]],
+  video:'will going to future tense anlatım'},
+ {k:'dilbilgisi',ic:'🔧',baslik:'Modals (can, should, must)',ozet:'Yetenek, tavsiye, zorunluluk',
+  anlatim:'<b>Modal</b> fiiller yardımcı fiillerdir; yanlarına fiilin yalın hâli gelir. <b>can</b> yetenek/izin, <b>should</b> tavsiye, <b>must/have to</b> zorunluluk, <b>may/might</b> olasılık belirtir.',
+  kaliplar:[["You should check the figures.","Rakamları kontrol etmelisin."],["We must submit the tax return.","Vergi beyannamesini vermeliyiz."],["Can you explain this entry?","Bu kaydı açıklayabilir misin?"]],
+  kelimeler:[["should","-meli/-malı"],["must","zorunda"],["can","-ebilmek"]],
+  video:'modals can should must konu anlatımı'},
+ {k:'dilbilgisi',ic:'🔁',baslik:'Passive Voice (Edilgen Çatı)',ozet:'Eylemi yapan değil, etkilenen önemli',
+  anlatim:'<b>Edilgen çatı</b> eylemi yapanın bilinmediği veya önemli olmadığı durumlarda kullanılır. Yapı: <b>be + fiilin 3. hâli (past participle)</b>. Muhasebe/rapor dilinde çok yaygındır.',
+  kaliplar:[["The report was prepared by the accountant.","Rapor muhasebeci tarafından hazırlandı."],["Taxes are calculated annually.","Vergiler yıllık hesaplanır."],["The invoices have been paid.","Faturalar ödendi."]],
+  kelimeler:[["be prepared","hazırlanmak"],["be calculated","hesaplanmak"],["be recorded","kaydedilmek"]],
+  video:'passive voice edilgen çatı ingilizce anlatım'},
+ {k:'muhasebe',ic:'📊',baslik:'Financial Statements (Finansal Tablolar)',ozet:'Bilanço, gelir tablosu, nakit akışı',
+  anlatim:'Üç temel finansal tablo: <b>Balance Sheet</b> (bilanço — belirli bir andaki varlık, borç ve özkaynak), <b>Income Statement</b> (gelir tablosu — dönemin gelir ve giderleri), <b>Cash Flow Statement</b> (nakit akış tablosu). Bunlar bir işletmenin mali sağlığını gösterir.',
+  kaliplar:[["The balance sheet shows assets and liabilities.","Bilanço varlıkları ve borçları gösterir."],["Revenue minus expenses equals net income.","Gelir eksi gider net kâra eşittir."],["We prepare financial statements quarterly.","Finansal tabloları çeyrek dönemlik hazırlarız."]],
+  kelimeler:[["balance sheet","bilanço"],["income statement","gelir tablosu"],["assets","varlıklar"],["liabilities","borçlar"]],
+  video:'financial statements explained english accounting'},
+ {k:'muhasebe',ic:'📒',baslik:'Bookkeeping Basics (Defter Tutma)',ozet:'Borç-alacak, yevmiye, büyük defter',
+  anlatim:'<b>Double-entry bookkeeping</b> (çift taraflı kayıt) her işlemin en az iki hesaba kaydedildiği sistemdir: bir tarafa <b>debit</b> (borç), diğerine <b>credit</b> (alacak). Kayıtlar önce <b>journal</b>’a (yevmiye), sonra <b>ledger</b>’a (büyük defter) geçer.',
+  kaliplar:[["Every transaction has a debit and a credit.","Her işlemin bir borcu ve bir alacağı vardır."],["We post journal entries to the ledger.","Yevmiye kayıtlarını büyük deftere geçiririz."],["The trial balance must balance.","Mizan denk gelmelidir."]],
+  kelimeler:[["debit","borç (kayıt)"],["credit","alacak (kayıt)"],["journal entry","yevmiye kaydı"],["ledger","büyük defter"]],
+  video:'double entry bookkeeping debit credit explained'},
+ {k:'muhasebe',ic:'🧾',baslik:'Invoicing & Payments (Fatura ve Ödeme)',ozet:'Fatura, alacak, borç, vade',
+  anlatim:'<b>Accounts receivable</b> (alacaklar) müşterilerden tahsil edilecek tutarlar, <b>accounts payable</b> (borçlar) tedarikçilere ödenecek tutarlardır. Bir <b>invoice</b> (fatura) düzenlenir, vadesinde (<b>due date</b>) ödeme yapılır.',
+  kaliplar:[["Please issue an invoice for the order.","Lütfen sipariş için fatura kesin."],["The payment is due on the 30th.","Ödeme ayın 30’unda yapılacak."],["We need to follow up on overdue accounts.","Vadesi geçmiş hesapları takip etmeliyiz."]],
+  kelimeler:[["invoice","fatura"],["due date","vade tarihi"],["overdue","vadesi geçmiş"],["payment","ödeme"]],
+  video:'accounts receivable payable invoicing english'},
+ {k:'muhasebe',ic:'🔍',baslik:'Audit & Tax (Denetim ve Vergi)',ozet:'Denetim, vergi, uyum',
+  anlatim:'<b>Auditing</b> (denetim) finansal tabloların doğruluğunun bağımsız incelenmesidir. <b>Tax</b> (vergi) konularında <b>VAT</b> (KDV), <b>income tax</b> (gelir vergisi) ve <b>tax return</b> (vergi beyannamesi) sık geçen terimlerdir. <b>Compliance</b> (uyum) mevzuata uygunluktur.',
+  kaliplar:[["The auditor reviewed our records.","Denetçi kayıtlarımızı inceledi."],["We must file the tax return by the deadline.","Beyannameyi son tarihe kadar vermeliyiz."],["The company is in full compliance.","Şirket mevzuata tam uyumlu."]],
+  kelimeler:[["audit","denetim"],["tax return","vergi beyannamesi"],["compliance","uyum"],["deadline","son tarih"]],
+  video:'audit and tax vocabulary business english'},
+ {k:'muhasebe',ic:'💬',baslik:'Office & Meeting English (Ofis İngilizcesi)',ozet:'Toplantı, e-posta, görüşme kalıpları',
+  anlatim:'İş ortamında sık kullanılan kalıplar: toplantı açma, fikir belirtme, rica etme, e-posta dili. Bu kalıplar mesleki iletişimi akıcılaştırır.',
+  kaliplar:[["Let's go over the figures.","Rakamları gözden geçirelim."],["Could you send me the report by Friday?","Raporu Cuma'ya kadar gönderebilir misin?"],["I'd like to point out an issue in the ledger.","Defterdeki bir konuya dikkat çekmek istiyorum."],["Please find attached the invoice.","Faturayı ekte bulabilirsiniz."]],
+  kelimeler:[["agenda","gündem"],["deadline","son teslim"],["attached","ekli"],["follow up","takip etmek"]],
+  video:'business english meeting phrases'}
+];
+function dersFiltrele(k){
+  document.querySelectorAll("#dersFiltre .filterbtn").forEach(b=>b.classList.toggle("on",b.dataset.k===k));
+  renderDersler(k);
+}
+function renderDersler(k){
+  k=k||"hepsi";
+  var list=k==="hepsi"?DERSLER:DERSLER.filter(d=>d.k===k);
+  $("dersListe").innerHTML=list.map(function(d,i){
+    var idx=DERSLER.indexOf(d);
+    var tag=d.k==="muhasebe"?'<span class="ders-tag tag-m">💼 MUHASEBE</span>':'<span class="ders-tag tag-g">🔤 DİLBİLGİSİ</span>';
+    var kaliplar=d.kaliplar.map(function(p){return '<div class="kalip"><div style="flex:1"><div class="en">'+esc(p[0])+'</div><div class="tr">'+esc(p[1])+'</div></div>'+sesBtn(p[0])+'</div>';}).join("");
+    var kelimeler=d.kelimeler.map(function(p){return '<div class="kitem" onclick="konus(this.dataset.t)" data-t="'+esc(p[0]).replace(/\x27/g,"&#39;")+'" style="cursor:pointer"><b>'+esc(p[0])+' 🔊</b><span>'+esc(p[1])+'</span></div>';}).join("");
+    var vidUrl="https://www.youtube.com/results?search_query="+encodeURIComponent(d.video);
+    return '<div class="ders" id="ders-'+idx+'">'
+      +'<div class="ders-bas" onclick="document.getElementById(\'ders-'+idx+'\').classList.toggle(\'acik\')">'
+        +'<span class="ders-ic">'+d.ic+'</span>'
+        +'<div class="t"><b>'+esc(d.baslik)+'</b><span>'+esc(d.ozet)+'</span></div>'
+        +tag+'<span class="ders-ok">›</span></div>'
+      +'<div class="ders-govde">'
+        +'<div class="ders-h">📖 Konu Anlatımı</div><div class="ders-anlatim">'+d.anlatim+'</div>'
+        +'<div class="ders-h">🗣️ Cümle Yapıları</div>'+kaliplar
+        +'<div class="ders-h">🔑 Kelimeler</div><div class="konuGrid">'+kelimeler+'</div>'
+        +'<div class="ders-h">🎥 Videolu Anlatım</div>'
+        +'<a class="ders-video" href="'+vidUrl+'" target="_blank" rel="noopener">▶ Hocaların ders videolarını izle (YouTube)</a>'
+        +'<div class="mut" style="font-size:11px;margin-top:6px">İnternet bağlantısı gerekir · ilgili güncel ders videoları açılır</div>'
+      +'</div></div>';
+  }).join("");
+}
 
 renderListe();renderIstat();streakGuncelle();renderKonu();
 </script>
