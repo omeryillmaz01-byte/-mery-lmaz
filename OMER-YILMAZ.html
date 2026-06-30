@@ -6657,17 +6657,34 @@ header h1{margin:0;font-size:18px}
 .iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px}
 main{max-width:960px;margin:0 auto;padding:18px}
 .view{display:none}.view.active{display:block}
-/* Kuran */
-.ayet{background:var(--panel,#fff);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px;transition:.2s;position:relative}
-.ayet.calar{border-color:var(--acc,#22c08a);box-shadow:0 0 0 2px rgba(34,192,138,.18)}
-.ayet-bas{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.ayet-no{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;background:linear-gradient(135deg,#22c08a,#0e9f6e);color:#fff}
-.ayet-oynat{margin-left:auto;cursor:pointer;background:var(--panel2,#f4f7fb);border:1px solid var(--line);border-radius:10px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--txt)}
-.ayet-oynat:hover{border-color:#22c08a;color:#0e9f6e}
-.ayet-ar{font-size:27px;line-height:2.05;text-align:right;direction:rtl;font-family:"Traditional Arabic","Amiri","Scheherazade",serif;color:var(--txt);margin-bottom:14px;letter-spacing:.5px}
-.ayet-tr{font-size:15px;line-height:1.7;color:var(--txt);padding-top:12px;border-top:1px dashed var(--line)}
-.ayet-tr b{color:#0e9f6e}
-.besmele{text-align:center;font-size:24px;direction:rtl;font-family:"Traditional Arabic","Amiri",serif;padding:14px;color:var(--txt);opacity:.9}
+/* Kuran — mushaf düzeni */
+.kuran-iki{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.kuran-iki{grid-template-columns:1fr}}
+/* sol: gerçek kuran sayfası (parşömen) */
+.mushaf{background:linear-gradient(180deg,#fbf6e9,#f5edd8);border:1px solid #e3d4ad;border-radius:14px;
+  padding:30px 28px;box-shadow:0 8px 30px rgba(120,90,30,.14),inset 0 0 0 6px rgba(196,160,90,.18),inset 0 0 60px rgba(196,160,90,.08);
+  position:relative}
+.mushaf::before{content:"";position:absolute;inset:9px;border:1.5px solid rgba(176,138,66,.35);border-radius:9px;pointer-events:none}
+.mushaf-ic{position:relative;direction:rtl;text-align:justify;text-align-last:center;
+  font-family:"Traditional Arabic","Amiri","Scheherazade New",serif;font-size:30px;line-height:2.35;color:#3a2c12;letter-spacing:.3px}
+.m-ayet{cursor:pointer;transition:background .2s;border-radius:6px;padding:0 2px}
+.m-ayet:hover{background:rgba(196,160,90,.22)}
+.m-ayet.calar{background:rgba(34,160,110,.22);box-shadow:0 0 0 1px rgba(14,159,110,.35)}
+.durak{display:inline-grid;place-items:center;min-width:30px;height:30px;margin:0 4px;font-family:system-ui,sans-serif;
+  font-size:12px;font-weight:800;color:#0e7c4a;vertical-align:middle;
+  background:radial-gradient(circle,#fff,#f0e6c8);border:2px solid #c9a24a;border-radius:50%;box-shadow:0 1px 3px rgba(120,90,30,.3)}
+.besmele-mushaf{text-align:center;font-size:28px;direction:rtl;font-family:"Traditional Arabic","Amiri",serif;color:#3a2c12;margin-bottom:18px;padding-bottom:14px;border-bottom:1.5px solid rgba(176,138,66,.3)}
+.mushaf-bas{text-align:center;font-weight:800;color:#8a6a2a;font-size:13px;letter-spacing:1px;margin-bottom:16px;font-family:system-ui}
+/* sağ: meal paneli */
+.meal-panel{background:var(--panel,#fff);border:1px solid var(--line);border-radius:14px;padding:8px;max-height:72vh;overflow:auto;position:sticky;top:10px}
+.meal-baslik{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:1px;padding:10px 12px 8px}
+.m-row{display:flex;gap:11px;align-items:flex-start;padding:12px 13px;border-radius:11px;cursor:pointer;transition:.18s}
+.m-row:hover{background:var(--panel2,#f4f7fb)}
+.m-row.calar{background:rgba(34,160,110,.12);box-shadow:inset 0 0 0 1px rgba(14,159,110,.3)}
+.m-no{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;background:linear-gradient(135deg,#22c08a,#0e9f6e);color:#fff}
+.m-tr{font-size:14px;line-height:1.62;color:var(--txt)}
+.m-play{margin-left:auto;flex:none;font-size:15px;opacity:.5}
+.m-row:hover .m-play{opacity:1}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
 .card h2{margin:0 0 12px;font-size:16px}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.spread{justify-content:space-between}
@@ -7051,55 +7068,62 @@ function kuranInit(){
   $("kuranSure").value=get("kuranSonSure",1);
   $("kuranKari").value=get("kuranSonKari",0);
 }
-function kuranDur(){if(kuranAudio){kuranAudio.pause();kuranAudio=null;}document.querySelectorAll(".ayet.calar").forEach(e=>e.classList.remove("calar"));}
+var kuranSureNo=1;
+function kuranVurgu(no){
+  document.querySelectorAll(".m-ayet.calar,.m-row.calar").forEach(e=>e.classList.remove("calar"));
+  if(no==null)return;
+  var a=document.querySelector('.m-ayet[data-ayet="'+no+'"]');if(a)a.classList.add("calar");
+  var r=document.getElementById("meal-"+no);if(r){r.classList.add("calar");r.scrollIntoView({behavior:"smooth",block:"center"});}
+}
+function kuranDur(){if(kuranAudio){kuranAudio.pause();kuranAudio=null;}kuranVurgu(null);}
 function ayetSes(sure,ayet){var n=String(sure).padStart(3,"0")+String(ayet).padStart(3,"0");return "https://everyayah.com/data/"+KARILER[+$("kuranKari").value][0]+"/"+n+".mp3";}
-function kuranAyetOynat(sureNo,ayetNo,el){
+function kuranAyetOynat(sureNo,ayetNo){
   kuranDur();
   kuranAudio=new Audio(ayetSes(sureNo,ayetNo));
-  if(el){el.classList.add("calar");el.scrollIntoView({behavior:"smooth",block:"center"});}
-  kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir). Meal ve metin çevrimdışı da okunur.</span>';};
+  kuranVurgu(ayetNo);
+  kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir).</span>';};
   kuranAudio.play().catch(()=>{});
 }
 function kuranTumunuOynat(){
-  var rows=document.querySelectorAll("#kuranAyetler .ayet");if(!rows.length){$("kuranDurum").textContent="Önce '📥 Getir' ile sureyi yükle.";return;}
+  if(!kuranAyetCache.length){$("kuranDurum").textContent="Önce '📥 Getir' ile sureyi yükle.";return;}
   var i=0;
   function sonraki(){
-    if(i>=rows.length){kuranDur();return;}
-    var el=rows[i];var sNo=el.dataset.sure,aNo=el.dataset.ayet;
-    kuranDur();kuranAudio=new Audio(ayetSes(sNo,aNo));el.classList.add("calar");el.scrollIntoView({behavior:"smooth",block:"center"});
-    kuranAudio.onended=()=>{el.classList.remove("calar");i++;sonraki();};
+    if(i>=kuranAyetCache.length){kuranDur();return;}
+    var no=kuranAyetCache[i];
+    if(kuranAudio)kuranAudio.pause();
+    kuranAudio=new Audio(ayetSes(kuranSureNo,no));kuranVurgu(no);
+    kuranAudio.onended=()=>{i++;sonraki();};
     kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir).</span>';};
     kuranAudio.play().catch(()=>{});
   }
   sonraki();
 }
 function kuranToggle(){
-  document.querySelectorAll(".ayet-ar").forEach(e=>e.style.display=$("kuranArapGizle").checked?"none":"");
-  document.querySelectorAll(".ayet-tr").forEach(e=>e.style.display=$("kuranMealGizle").checked?"none":"");
+  if($("mushafKutu"))$("mushafKutu").style.display=$("kuranArapGizle").checked?"none":"";
+  if($("mealKutu"))$("mealKutu").style.display=$("kuranMealGizle").checked?"none":"";
 }
 function kuranYukle(){
-  var sureNo=+$("kuranSure").value;
-  set("kuranSonSure",sureNo);set("kuranSonKari",+$("kuranKari").value);
-  $("kuranDurum").innerHTML="⏳ Yükleniyor…";$("kuranAyetler").innerHTML="";
-  // Arapça (Osmani) + Türkçe (Diyanet) meali tek istekte
-  fetch("https://api.alquran.cloud/v1/surah/"+sureNo+"/editions/quran-uthmani,tr.diyanet")
+  kuranSureNo=+$("kuranSure").value;
+  set("kuranSonSure",kuranSureNo);set("kuranSonKari",+$("kuranKari").value);
+  $("kuranDurum").innerHTML="⏳ Yükleniyor…";$("kuranAyetler").innerHTML="";kuranAyetCache=[];
+  fetch("https://api.alquran.cloud/v1/surah/"+kuranSureNo+"/editions/quran-uthmani,tr.diyanet")
     .then(r=>r.json())
     .then(d=>{
       if(!d.data||!d.data[0]){throw new Error("veri yok");}
-      var ar=d.data[0].ayahs, tr=d.data[1].ayahs;
-      var sure=SURELER[sureNo-1];
-      var html="";
-      if(sureNo!==1 && sureNo!==9){html+='<div class="besmele">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';}
+      var ar=d.data[0].ayahs, tr=d.data[1].ayahs, sure=SURELER[kuranSureNo-1];
+      // SOL: mushaf sayfası (akıcı arapça + durak işaretleri)
+      var mushaf='<div class="mushaf-bas">۞ '+sure[2].toUpperCase()+' SÛRESİ ۞</div><div class="mushaf-ic">';
+      if(kuranSureNo!==1 && kuranSureNo!==9){mushaf+='<div class="besmele-mushaf">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';}
+      // SAĞ: meal listesi
+      var meal='<div class="meal-baslik">📖 '+sure[2].toUpperCase()+' SÛRESİ · MEAL (DİYANET)</div>';
       for(var i=0;i<ar.length;i++){
-        var no=ar[i].numberInSurah;
-        html+='<div class="ayet" data-sure="'+sureNo+'" data-ayet="'+no+'">'
-          +'<div class="ayet-bas"><span class="ayet-no">'+no+'</span><b style="font-size:13px;color:var(--mut)">'+sure[2]+' Suresi</b>'
-          +'<span class="ayet-oynat" onclick="kuranAyetOynat('+sureNo+','+no+',this.closest(\\'.ayet\\'))">🔊 Dinle</span></div>'
-          +'<div class="ayet-ar">'+ar[i].text+'</div>'
-          +'<div class="ayet-tr"><b>Meal:</b> '+tr[i].text+'</div></div>';
+        var no=ar[i].numberInSurah;kuranAyetCache.push(no);
+        mushaf+='<span class="m-ayet" data-ayet="'+no+'" onclick="kuranAyetOynat('+kuranSureNo+','+no+')">'+ar[i].text+' <span class="durak">'+no+'</span></span> ';
+        meal+='<div class="m-row" id="meal-'+no+'" data-ayet="'+no+'" onclick="kuranAyetOynat('+kuranSureNo+','+no+')"><span class="m-no">'+no+'</span><span class="m-tr">'+tr[i].text+'</span><span class="m-play">🔊</span></div>';
       }
-      $("kuranAyetler").innerHTML=html;
-      $("kuranDurum").innerHTML="✅ "+sure[2]+" Suresi · "+ar.length+" ayet · "+KARILER[+$("kuranKari").value][1];
+      mushaf+='</div>';
+      $("kuranAyetler").innerHTML='<div class="kuran-iki"><div class="mushaf" id="mushafKutu">'+mushaf+'</div><div class="meal-panel" id="mealKutu">'+meal+'</div></div>';
+      $("kuranDurum").innerHTML="✅ "+sure[2]+" Sûresi · "+ar.length+" ayet · "+KARILER[+$("kuranKari").value][1];
       kuranToggle();
     })
     .catch(e=>{$("kuranDurum").innerHTML='<span style="color:#e74c3c">⚠ İnternet gerekiyor (metin & meal çevrimiçi yüklenir). Bağlantını kontrol et.</span>';});
