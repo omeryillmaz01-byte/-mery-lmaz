@@ -42,9 +42,9 @@ main{max-width:960px;margin:0 auto;padding:18px}
 .m-row:hover{background:var(--panel2,#f4f7fb)}
 .m-row{position:relative}
 .m-row.calar{background:rgba(34,160,110,.14);box-shadow:inset 4px 0 0 #0e9f6e,inset 0 0 0 1px rgba(14,159,110,.3)}
-.m-ok{display:none;color:#0e9f6e;font-weight:900;font-size:16px;flex:none;align-self:center}
+.m-ok{display:none;color:#e53935;font-weight:900;font-size:20px;flex:none;align-self:center;text-shadow:0 1px 3px rgba(229,57,53,.4)}
 .m-row.calar .m-ok{display:inline-block;animation:okkay 1s ease-in-out infinite}
-@keyframes okkay{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes okkay{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
 .m-no{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;background:linear-gradient(135deg,#22c08a,#0e9f6e);color:#fff;transition:.2s}
 .m-row.calar .m-no{box-shadow:0 0 0 4px rgba(14,159,110,.25);animation:nabiz 1.1s ease-in-out infinite}
 @keyframes nabiz{0%,100%{box-shadow:0 0 0 3px rgba(14,159,110,.22)}50%{box-shadow:0 0 0 7px rgba(14,159,110,.05)}}
@@ -52,7 +52,8 @@ main{max-width:960px;margin:0 auto;padding:18px}
 .m-ayet.calar{background:rgba(34,160,110,.22);box-shadow:0 0 0 1px rgba(14,159,110,.4)}
 .m-ayet.calar .durak{animation:durakNabiz 1.1s ease-in-out infinite;border-color:#0e9f6e;color:#0e7c4a}
 @keyframes durakNabiz{0%,100%{box-shadow:0 0 0 2px rgba(14,159,110,.25)}50%{box-shadow:0 0 0 6px rgba(14,159,110,.04)}}
-.okisaret{display:inline-block;color:#0e9f6e;font-weight:900;animation:okkay 1s ease-in-out infinite}
+.okisaret{display:inline-block;color:#e53935;font-weight:900;font-size:.85em;animation:okkayR 1s ease-in-out infinite;text-shadow:0 1px 3px rgba(229,57,53,.4)}
+@keyframes okkayR{0%,100%{transform:translateX(0)}50%{transform:translateX(-5px)}}
 .m-tr{font-size:14px;line-height:1.62;color:var(--txt)}
 .m-play{margin-left:auto;flex:none;font-size:15px;opacity:.5}
 .m-row:hover .m-play{opacity:1}
