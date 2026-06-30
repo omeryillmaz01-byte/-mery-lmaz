@@ -56,6 +56,7 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
   <div class="tab" data-v="pratik">🎯 Pratik</div>
   <div class="tab" data-v="cumle">💬 Cümleler</div>
   <div class="tab" data-v="konu">🌍 Konular</div>
+  <div class="tab" data-v="ileri">🎓 C1 İleri</div>
   <div class="tab" data-v="istat">📊 İstatistik</div>
 </div>
 <main>
@@ -112,6 +113,20 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
       <div id="cumleListe"></div>
     </div>
   </section>
+  <!-- C1 İLERİ SEVİYE -->
+  <section class="view" id="v-ileri">
+    <div class="card" style="background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04222f">
+      <h2 style="margin:0 0 4px;color:#04222f">🎓 C1 İleri Seviye Modülü</h2>
+      <p style="margin:0;font-size:13px;font-weight:600">Phrasal verbs, deyimler, akademik & iş İngilizcesi, ileri sıfatlar ve bağlaçlar. Hepsi 🔊 sesli. C1'e giden yol burada!</p>
+    </div>
+    <div class="konuNav row" style="flex-wrap:wrap;gap:6px;margin-bottom:14px" id="ileriNav"></div>
+    <div class="card"><h2>🔗 Phrasal Verbs (Öbek Fiiller)</h2><div id="ilPhrasal" class="konuGrid"></div></div>
+    <div class="card"><h2>💎 Idioms (Deyimler)</h2><div id="ilIdiom" class="konuGrid"></div></div>
+    <div class="card"><h2>📚 Akademik Kelimeler</h2><div id="ilAkademik" class="konuGrid"></div></div>
+    <div class="card"><h2>💼 İş İngilizcesi</h2><div id="ilIs" class="konuGrid"></div></div>
+    <div class="card"><h2>✨ İleri Sıfatlar</h2><div id="ilSifat" class="konuGrid"></div></div>
+    <div class="card"><h2>🔀 Bağlaçlar & Kalıplar</h2><div id="ilBaglac" class="konuGrid"></div></div>
+  </section>
   <!-- KONULAR -->
   <section class="view" id="v-konu">
     <p class="mut" style="margin:0 0 14px;font-size:13px">💡 Herhangi bir kelimeye tıkla → İngilizce telaffuzunu sesli dinle 🔊</p>
@@ -163,7 +178,7 @@ $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"da
 const HIZLAR=[{r:.6,t:"🐢 Yavaş"},{r:1,t:"🚶 Normal"},{r:1.3,t:"🐇 Hızlı"}];
 let hizIdx=get("seshiz",0);function hizUygula(){const h=HIZLAR[hizIdx];SES_HIZ=h.r;$("hizBtn").textContent=h.t;set("seshiz",hizIdx);}
 $("hizBtn").onclick=()=>{hizIdx=(hizIdx+1)%HIZLAR.length;hizUygula();};hizUygula();
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();});
 /* veri */
 function words(){return get("words",[])}
 function saveWords(w){set("words",w)}
@@ -227,6 +242,14 @@ var DOGA=[["sun","güneş"],["moon","ay"],["star","yıldız"],["sky","gökyüzü
 var FIILLER=[["go","gitmek"],["come","gelmek"],["eat","yemek"],["drink","içmek"],["sleep","uyumak"],["wake up","uyanmak"],["walk","yürümek"],["run","koşmak"],["sit","oturmak"],["stand","ayakta durmak"],["speak / talk","konuşmak"],["listen","dinlemek"],["read","okumak"],["write","yazmak"],["see / look","görmek/bakmak"],["watch","izlemek"],["work","çalışmak"],["play","oynamak"],["buy","satın almak"],["sell","satmak"],["open","açmak"],["close","kapatmak"],["start","başlamak"],["finish","bitirmek"],["love","sevmek"],["like","hoşlanmak"],["want","istemek"],["need","ihtiyaç duymak"],["help","yardım etmek"],["give","vermek"],["take","almak"],["make / do","yapmak"],["think","düşünmek"],["know","bilmek"],["understand","anlamak"],["learn","öğrenmek"],["teach","öğretmek"],["ask","sormak"],["answer","cevaplamak"],["wait","beklemek"]];
 var SIFATLAR=[["big","büyük"],["small","küçük"],["tall","uzun (boy)"],["short","kısa"],["long","uzun"],["good","iyi"],["bad","kötü"],["new","yeni"],["old","eski/yaşlı"],["young","genç"],["happy","mutlu"],["sad","üzgün"],["hot","sıcak"],["cold","soğuk"],["fast","hızlı"],["slow","yavaş"],["easy","kolay"],["hard / difficult","zor"],["beautiful","güzel"],["ugly","çirkin"],["clean","temiz"],["dirty","kirli"],["full","dolu"],["empty","boş"],["rich","zengin"],["poor","fakir"],["strong","güçlü"],["weak","zayıf"],["expensive","pahalı"],["cheap","ucuz"],["right","doğru"],["wrong","yanlış"],["open","açık"],["closed","kapalı"],["near","yakın"],["far","uzak"],["early","erken"],["late","geç"],["light","aydınlık/hafif"],["dark","karanlık"]];
 
+/* ===== C1 İLERİ SEVİYE İÇERİK ===== */
+var PHRASAL=[["bring up","(konu) açmak / yetiştirmek"],["carry out","gerçekleştirmek/yürütmek"],["come across","rastlamak / izlenim vermek"],["put off","ertelemek"],["look into","araştırmak/incelemek"],["take over","devralmak"],["figure out","çözmek/anlamak"],["point out","işaret etmek/belirtmek"],["turn down","reddetmek"],["give up","vazgeçmek"],["set up","kurmak"],["work out","çözmek/antrenman yapmak"],["come up with","ortaya atmak/bulmak"],["get over","atlatmak"],["run out of","tükenmek"],["look forward to","dört gözle beklemek"],["put up with","katlanmak/tahammül etmek"],["back up","desteklemek/yedeklemek"],["call off","iptal etmek"],["cut down on","azaltmak"],["break down","bozulmak/çökmek"],["sort out","halletmek/düzenlemek"],["stand out","öne çıkmak"],["account for","açıklamak/oranını oluşturmak"],["catch up","yetişmek"],["wind up","sonu ... olmak"],["draw up","hazırlamak/taslak çizmek"],["rule out","ihtimal dışı bırakmak"],["live up to","beklentiyi karşılamak"],["get away with","yanına kâr kalmak"]];
+var IDIOMS=[["a blessing in disguise","kılık değiştirmiş nimet"],["the ball is in your court","top sende / karar senin"],["bite the bullet","dişini sıkmak/zoru göğüslemek"],["break the ice","buzları eritmek"],["cut corners","kestirmeden gitmek/üstünkörü yapmak"],["hit the nail on the head","tam isabet/turnayı gözünden vurmak"],["once in a blue moon","kırk yılda bir"],["the last straw","bardağı taşıran son damla"],["piece of cake","çocuk oyuncağı"],["under the weather","keyifsiz/hasta gibi"],["cost an arm and a leg","çok pahalı olmak"],["beat around the bush","lafı dolandırmak"],["get cold feet","cayacak gibi olmak/korkmak"],["pull someone's leg","birine takılmak/dalga geçmek"],["a piece of one's mind","ağzının payını vermek"],["on the same page","aynı fikirde olmak"],["call it a day","paydos etmek"],["go the extra mile","fazladan çaba göstermek"],["sit on the fence","tarafsız kalmak/kararsız olmak"],["speak of the devil","iti an çomağı hazırla"],["burn the midnight oil","gece geç saatlere kadar çalışmak"],["jump on the bandwagon","modaya/akıma uymak"],["the tip of the iceberg","buzdağının görünen kısmı"],["a storm in a teacup","bir bardak suda fırtına"],["bend over backwards","elinden geleni yapmak"]];
+var AKADEMIK=[["furthermore","ayrıca/dahası"],["nevertheless","yine de/buna rağmen"],["consequently","sonuç olarak/bu yüzden"],["moreover","üstelik/ayrıca"],["therefore","bu nedenle"],["hence","dolayısıyla"],["whereas","oysa/halbuki"],["albeit","her ne kadar...ise de"],["notwithstanding","-e rağmen"],["henceforth","bundan böyle"],["subsequently","sonrasında"],["predominantly","ağırlıklı olarak"],["inevitably","kaçınılmaz olarak"],["substantially","önemli ölçüde"],["comprehensive","kapsamlı"],["significant","önemli/dikkate değer"],["fundamental","temel/esas"],["preliminary","ön/başlangıç"],["empirical","deneysel/gözleme dayalı"],["coherent","tutarlı/uyumlu"],["explicit","açık/net"],["implicit","örtük/dolaylı"],["ambiguous","belirsiz/iki anlamlı"],["arbitrary","keyfi/rastgele"],["plausible","makul/akla yatkın"],["paradigm","paradigma/model"],["criterion","ölçüt/kriter"],["hypothesis","hipotez/varsayım"],["phenomenon","olgu/fenomen"],["nuance","ince ayrım/nüans"]];
+var IS_ING=[["deadline","son teslim tarihi"],["revenue","gelir/hasılat"],["profit margin","kâr marjı"],["stakeholder","paydaş"],["leverage","kaldıraç/değerlendirmek"],["outsource","dış kaynak kullanmak"],["benchmark","ölçüt/kıyaslama"],["turnover","ciro/personel devri"],["procurement","tedarik/satın alma"],["liability","yükümlülük/borç"],["asset","varlık/kıymet"],["merger","birleşme"],["acquisition","satın alma/devralma"],["negotiate","müzakere etmek"],["incentive","teşvik"],["overhead","genel giderler"],["forecast","tahmin/öngörü"],["agenda","gündem"],["compliance","uyum/mevzuata uyma"],["entrepreneur","girişimci"],["feasibility","yapılabilirlik/fizibilite"],["scalable","ölçeklenebilir"],["streamline","kolaylaştırmak/verimli hale getirmek"],["downsize","küçülmek/personel azaltmak"],["retention","elde tutma/sadakat"],["disruptive","yıkıcı/sektör değiştiren"],["proposal","teklif/öneri"],["quarter","çeyrek (dönem)"],["audit","denetim"],["portfolio","portföy"]];
+var ILERI_SIFAT=[["meticulous","titiz/ince eleyip sık dokuyan"],["resilient","dayanıklı/çabuk toparlanan"],["ambiguous","muğlak/belirsiz"],["profound","derin/köklü"],["versatile","çok yönlü"],["inevitable","kaçınılmaz"],["compelling","ikna edici/çarpıcı"],["pragmatic","pragmatik/işe yarayanı seçen"],["arbitrary","keyfi"],["redundant","gereksiz/fazlalık"],["intricate","karmaşık/girift"],["lucrative","kârlı/kazançlı"],["tedious","sıkıcı/usandırıcı"],["candid","içten/açık sözlü"],["eloquent","güzel konuşan/etkili"],["notorious","kötü şöhretli"],["prudent","tedbirli/sağgörülü"],["vigilant","tetikte/uyanık"],["scrupulous","vicdanlı/titiz"],["inherent","doğasında olan/içsel"],["paramount","çok önemli/baş"],["mundane","sıradan/bayağı"],["robust","sağlam/güçlü"],["sophisticated","gelişmiş/sofistike"],["arbitrary","keyfi/gelişigüzel"],["feasible","yapılabilir/uygulanabilir"],["obsolete","modası geçmiş/eskimiş"],["susceptible","duyarlı/eğilimli"],["coherent","tutarlı"],["ambivalent","kararsız/iki yönlü duygu"]];
+var BAGLAC=[["in spite of","-e rağmen"],["due to","-den dolayı"],["as long as","-dığı sürece"],["even though","-e rağmen/her ne kadar"],["as if","sanki"],["provided that","şu şartla ki"],["in order to","-mek için"],["so that","-sın diye"],["unless","-medikçe"],["whereas","oysa ki"],["meanwhile","bu arada"],["otherwise","aksi takdirde"],["regardless of","-e bakmaksızın"],["with regard to","-e ilişkin"],["on the other hand","öte yandan"],["for the sake of","-in hatırı için"],["by means of","vasıtasıyla"],["in terms of","açısından"],["as a result of","-in sonucu olarak"],["in contrast to","-in aksine"]];
+
 function konuRow(arr){return arr.map(function(p){return '<div class="kitem" onclick="konus(this.dataset.t)" data-t="'+esc(p[0]).replace(/'/g,"&#39;")+'" style="cursor:pointer"><b>'+esc(p[0])+' 🔊</b><span>'+esc(p[1])+'</span></div>';}).join("");}
 var KONU_MAP=[["konuHayvan",HAYVANLAR],["konuMeslek",MESLEKLER],["konuFiil",FIILLER],["konuSifat",SIFATLAR],["konuRenk",RENKLER],["konuYiyecek",YIYECEK],["konuVucut",VUCUT],["konuAile",AILE],["konuGiyim",GIYIM],["konuEv",EVESYA],["konuUlasim",ULASIM],["konuDoga",DOGA],["konuUlke",ULKELER],["konuSayi",SAYILAR],["konuMevsim",MEVSIMLER]];
 var KONU_NAV=[["konuHayvan","🐶 Hayvanlar"],["konuMeslek","💼 Meslekler"],["konuFiil","🏃 Fiiller"],["konuSifat","📐 Sıfatlar"],["konuRenk","🎨 Renkler"],["konuYiyecek","🍎 Yiyecek"],["konuVucut","👤 Vücut"],["konuAile","👨‍👩‍👧 Aile"],["konuGiyim","👕 Giyim"],["konuEv","🏠 Ev"],["konuUlasim","🚗 Ulaşım"],["konuDoga","🌳 Doğa"],["konuUlke","🌍 Ülkeler"],["konuSayi","🔢 Sayılar"],["konuMevsim","🍂 Mevsim/Ay"]];
@@ -234,9 +257,16 @@ function renderKonu(){
   KONU_MAP.forEach(function(m){if($(m[0]))$(m[0]).innerHTML=konuRow(m[1]);});
   if($("konuNav"))$("konuNav").innerHTML=KONU_NAV.map(function(n){return '<button class="filterbtn" onclick="document.getElementById(\''+n[0]+'\').closest(\'.card\').scrollIntoView({behavior:\'smooth\'})">'+n[1]+'</button>';}).join("");
 }
+/* C1 ileri seviye render */
+var ILERI_MAP=[["ilPhrasal",PHRASAL],["ilIdiom",IDIOMS],["ilAkademik",AKADEMIK],["ilIs",IS_ING],["ilSifat",ILERI_SIFAT],["ilBaglac",BAGLAC]];
+var ILERI_NAV=[["ilPhrasal","🔗 Phrasal Verbs"],["ilIdiom","💎 Deyimler"],["ilAkademik","📚 Akademik"],["ilIs","💼 İş İng."],["ilSifat","✨ İleri Sıfatlar"],["ilBaglac","🔀 Bağlaçlar"]];
+function renderIleri(){
+  ILERI_MAP.forEach(function(m){if($(m[0]))$(m[0]).innerHTML=konuRow(m[1]);});
+  if($("ileriNav"))$("ileriNav").innerHTML=ILERI_NAV.map(function(n){return '<button class="filterbtn" onclick="document.getElementById(\''+n[0]+'\').closest(\'.card\').scrollIntoView({behavior:\'smooth\'})">'+n[1]+'</button>';}).join("");
+}
 /* init */
 renderListe();renderIstat();streakGuncelle();renderKonu();
 </script>
-<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v11.0 🔊</div>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v200 🎓🔊</div>
 </body>
 </html>
