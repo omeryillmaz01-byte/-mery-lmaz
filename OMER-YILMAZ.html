@@ -3497,11 +3497,18 @@ body{background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;-w
 .topnav nav a.active{background:rgba(232,80,66,.1);color:var(--primary)}
 .topnav .actions{display:flex;gap:10px;align-items:center}
 .topnav .clock{padding:7px 14px;background:#f1f2f5;border-radius:8px;font-size:13px;color:var(--text-soft);font-variant-numeric:tabular-nums}
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s;text-decoration:none}
-.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(232,80,66,.3)}
-.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 18px rgba(232,80,66,.4)}
-.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
-.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:.13s cubic-bezier(.2,.8,.2,1);text-decoration:none;position:relative}
+/* 3 boyutlu derinlik: alt kenar + iç parlama */
+.btn-primary{background:linear-gradient(180deg,#f0594b,var(--primary));color:#fff;
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 4px 0 #b8352a, 0 7px 14px rgba(232,80,66,.35), inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-primary:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 5px 0 #b8352a, 0 9px 20px rgba(232,80,66,.45), inset 0 1px 0 rgba(255,255,255,.4)}
+.btn-primary:active{transform:translateY(3px);box-shadow:0 1px 0 #b8352a, 0 2px 6px rgba(232,80,66,.4), inset 0 1px 0 rgba(255,255,255,.25)}
+.btn-outline{background:linear-gradient(180deg,#fff,#f3f4f8);color:var(--text);
+  border:1.5px solid var(--border);
+  box-shadow:0 3px 0 rgba(0,0,0,.07), 0 5px 12px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.8)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px);box-shadow:0 4px 0 rgba(0,0,0,.08), 0 7px 16px rgba(0,0,0,.08), inset 0 1px 0 #fff}
+.btn-outline:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.07), inset 0 1px 0 rgba(255,255,255,.6)}
 .btn-ghost{background:transparent;color:var(--text-soft)}
 .btn-ghost:hover{background:#f1f2f5;color:var(--text)}
 .btn-success{background:var(--ok);color:#fff}
@@ -3928,6 +3935,62 @@ const HAZIR_SORULAR = {
  ]
 };
 
+// ── EK SORU PARTİSİ (banka genişletme) ──
+const HAZIR_SORULAR_EK = {
+ 'MUHASEBE':[
+  {q:'Stok değerleme yöntemlerinden FIFO neyi ifade eder?',a:'İlk giren ilk çıkar; ilk alınan stoklar ilk satılmış kabul edilir.',anahtar:'Enflasyonda FIFO daha düşük maliyet → daha yüksek kâr gösterir.',puf:'TMS 2 LIFO’yu yasaklar; FIFO ve ağırlıklı ortalama geçerlidir.'},
+  {q:'Şüpheli ticari alacak karşılığı hangi durumda ayrılır?',a:'Tahsili şüpheli hale gelen (dava/icra takibine düşen veya protesto edilen) alacaklar için ayrılır.',anahtar:'128 Şüpheli Ticari Alacaklar, 129 Şüpheli Tic. Alacak Karşılığı.',puf:'Karşılık gideri 654 Karşılık Giderleri hesabına yazılır.'},
+  {q:'Gelir tablosu hangi temel bölümlerden oluşur?',a:'Brüt satış kârı, faaliyet kârı, olağan kâr, dönem kârı ve net dönem kârı kademelerinden oluşur.',anahtar:'Brüt Satış − İndirimler = Net Satış.',puf:'Faaliyet kârı = Brüt kâr − faaliyet giderleri (pazarlama, genel yönetim).'},
+  {q:'Banka hesabındaki mevduat faizi nasıl muhasebeleştirilir?',a:'642 Faiz Gelirleri hesabına alacak, 102 Bankalar hesabına borç kaydedilir.',anahtar:'Faiz geliri olağan dışı değil, finansal gelirdir.',puf:'Stopaj kesintisi 193 Peşin Ödenen Vergiler ile izlenebilir.'},
+  {q:'Kıdem tazminatı karşılığı neden ayrılır?',a:'Çalışanların gelecekteki kıdem tazminatı yükümlülüğünü döneme yansıtmak için ayrılır.',anahtar:'472 Kıdem Tazminatı Karşılığı (uzun vadeli).',puf:'Tahakkuk esası gereği gider doğduğu dönemde tanınır.'},
+  {q:'Nazım hesaplar ne işe yarar?',a:'İşletmenin varlık/kaynak yapısını etkilemeyen ama takip edilmesi gereken işlemleri (teminat, emanet) izler.',anahtar:'9 ile başlayan hesaplar nazım hesaplardır.',puf:'Çift taraflı kayıt yapılır ama bilanço/gelir tablosunu etkilemez.'}
+ ],
+ 'DENETİM':[
+  {q:'Denetçinin "mesleki şüphecilik" göstermesi ne demektir?',a:'Kanıtları sorgulayıcı bir zihinle değerlendirmesi, hata/hile olabileceğini sürekli göz önünde tutmasıdır.',anahtar:'TDS 200.',puf:'Yönetime güven, kanıt toplamayı azaltmanın gerekçesi olamaz.'},
+  {q:'Denetim sürecinin ana aşamaları nelerdir?',a:'Müşteri kabulü → planlama → risk değerlendirme → kontrol testleri → tözel testler → görüş oluşturma → raporlama.',anahtar:'Planlama aşamasında önemlilik ve risk belirlenir.',puf:'Analitik prosedürler hem planlama hem sonuç aşamasında zorunludur.'},
+  {q:'Şartlı (sınırlı olumlu) görüş ne zaman verilir?',a:'Tespit edilen yanlışlık önemli ancak yaygın değilse veya yeterli kanıt bulunamadıysa.',anahtar:'Önemli + yaygın → olumsuz görüş / görüş bildirmekten kaçınma.',puf:'Yaygınlık (pervasiveness) görüş türünü belirleyen kilit ölçüttür.'},
+  {q:'Hata ile hile arasındaki fark nedir?',a:'Hata kasıtsız yanlışlık, hile ise kasıtlı ve aldatma amaçlı bir eylemdir.',anahtar:'TDS 240 hile ile ilgilidir.',puf:'Hile üçgeni: baskı, fırsat, haklı gösterme (rasyonalizasyon).'},
+  {q:'Çalışma kâğıtları (denetim dosyası) neden önemlidir?',a:'Yapılan işin kanıtı, görüşün dayanağı ve kalite kontrolün temelidir.',anahtar:'Denetim kanıtının saklanması zorunludur.',puf:'Çalışma kâğıtları denetçinin mülkiyetindedir.'}
+ ],
+ 'FİNANS':[
+  {q:'Bileşik faiz ile basit faiz arasındaki fark nedir?',a:'Basit faiz yalnızca anaparaya, bileşik faiz anapara + birikmiş faize işler.',anahtar:'Bileşik: GD = AD×(1+i)^n.',puf:'Uzun vadede bileşik faiz çok daha hızlı büyür.'},
+  {q:'İç verim oranı (IRR) nedir?',a:'Bir yatırımın net bugünkü değerini sıfıra eşitleyen iskonto oranıdır.',anahtar:'IRR > sermaye maliyeti ise proje kabul edilir.',puf:'NPV ve IRR bazı durumlarda çelişebilir; NPV önceliklidir.'},
+  {q:'Temettü (kâr payı) politikası neyi ifade eder?',a:'İşletmenin kârının ne kadarını dağıtıp ne kadarını bünyede tutacağına dair kararıdır.',anahtar:'Dağıtım oranı = Temettü / Net kâr.',puf:'Dağıtılmayan kâr özkaynağı (yedekleri) büyütür.'},
+  {q:'Faaliyet kaldıracı ile finansal kaldıraç farkı nedir?',a:'Faaliyet kaldıracı sabit faaliyet giderlerinden, finansal kaldıraç sabit finansman (faiz) giderlerinden doğar.',anahtar:'Toplam kaldıraç = Faaliyet × Finansal kaldıraç.',puf:'Yüksek kaldıraç kârdaki dalgalanmayı büyütür.'},
+  {q:'Tahvil ile hisse senedi arasındaki temel fark nedir?',a:'Tahvil borçlanma aracıdır (sabit getiri, alacak hakkı), hisse senedi ortaklık aracıdır (temettü, oy hakkı).',anahtar:'Tahvil sahibi alacaklı, hisse sahibi ortaktır.',puf:'Tasfiyede önce tahvil sahiplerine ödeme yapılır.'}
+ ],
+ 'TMS-TFRS':[
+  {q:'TMS 1 Finansal Tabloların Sunuluşu hangi tabloları zorunlu kılar?',a:'Finansal durum tablosu, kâr/zarar ve diğer kapsamlı gelir tablosu, özkaynak değişim tablosu, nakit akış tablosu ve dipnotlar.',anahtar:'Karşılaştırmalı (en az iki dönem) sunum esastır.',puf:'İşletmenin sürekliliği (going concern) varsayımı temeldir.'},
+  {q:'TMS 7 Nakit Akış Tablosu hangi 3 faaliyeti ayırır?',a:'İşletme faaliyetleri, yatırım faaliyetleri ve finansman faaliyetleri.',anahtar:'İşletme faaliyetleri doğrudan veya dolaylı yöntemle sunulabilir.',puf:'Amortisman dolaylı yöntemde net kâra geri eklenir (nakdi olmayan gider).'},
+  {q:'TMS 37 Karşılıklar ne zaman muhasebeleştirilir?',a:'Geçmiş olaydan doğan mevcut bir yükümlülük varsa, çıkış muhtemelse ve güvenilir tahmin yapılabiliyorsa.',anahtar:'Koşullu yükümlülük muhasebeleştirilmez, dipnotta açıklanır.',puf:'Muhtemel (%50 üstü) → karşılık; uzak ihtimal → açıklanmaz bile.'},
+  {q:'TFRS 9 finansal varlıkları nasıl sınıflandırır?',a:'İtfa edilmiş maliyet, gerçeğe uygun değer farkı diğer kapsamlı gelire (FVOCI) ve kâr/zarara (FVTPL) yansıtılan olarak.',anahtar:'Sınıflandırma; iş modeli + nakit akış özelliklerine göre yapılır.',puf:'TFRS 9 beklenen kredi zararı (ECL) modelini getirdi.'},
+  {q:'TMS 12 Ertelenmiş vergi neden doğar?',a:'Muhasebe kârı ile vergi matrahı arasındaki geçici farklardan doğar.',anahtar:'Geçici fark × vergi oranı = ertelenmiş vergi.',puf:'Kalıcı farklar ertelenmiş vergi yaratmaz.'}
+ ],
+ 'VERGİ MEVZUATI':[
+  {q:'Kurumlar vergisi oranı ve mükellefleri nelerdir?',a:'Sermaye şirketleri, kooperatifler, iktisadi kamu kuruluşları vb. kurum kazançları üzerinden alınır.',anahtar:'KVK md. 1-2.',puf:'Kurum kazancı, GVK’daki ticari kazanç hükümlerine göre tespit edilir.'},
+  {q:'KDV’nin konusu (verginin doğduğu işlemler) nedir?',a:'Türkiye’de yapılan ticari, sınai, zirai ve mesleki teslim ve hizmetler ile ithalat.',anahtar:'KDVK md. 1.',puf:'KDV harcama (tüketim) üzerinden alınan dolaylı bir vergidir.'},
+  {q:'Vergi hatası ve düzeltme yolu nedir?',a:'Hesap veya vergilendirme hatası nedeniyle fazla/eksik vergi alınmasıdır; düzeltme talebiyle giderilir.',anahtar:'VUK md. 116-126.',puf:'Düzeltme zamanaşımı 5 yıldır.'},
+  {q:'Amortismanda "azalan bakiyeler" yönteminin vergisel özelliği nedir?',a:'Sabit oran her yıl net defter değerine uygulanır; ilk yıllarda daha fazla gider yazılır.',anahtar:'Oran normal yöntemin 2 katı, en çok %50.',puf:'Son yıl kalan değerin tamamı gider yazılır.'},
+  {q:'Geçici vergi nedir?',a:'Gelir ve kurumlar vergisi mükelleflerinin yıllık vergiye mahsuben dönemsel olarak ödedikleri peşin vergidir.',anahtar:'Üçer aylık dönemler halinde beyan edilir.',puf:'Yıllık beyannamede mahsup edilir, fazlası iade/mahsup edilir.'}
+ ],
+ 'KGK MEVZUATI':[
+  {q:'Türkiye Denetim Standartları (TDS) neyi kapsar?',a:'Bağımsız denetim, sınırlı bağımsız denetim, güvence ve ilgili hizmet standartlarını kapsar.',anahtar:'TDS, uluslararası standartlarla (ISA) uyumludur.',puf:'KGK bu standartları Resmî Gazete’de yayımlar.'},
+  {q:'Bağımsız denetime tabi olma kriterleri neye göre belirlenir?',a:'Aktif büyüklüğü, net satış hasılatı ve çalışan sayısı eşiklerine göre Bakanlar Kurulu/Cumhurbaşkanı kararıyla belirlenir.',anahtar:'Üç ölçütten ikisini üst üste iki yıl aşmak.',puf:'Eşikler dönemsel olarak güncellenir.'},
+  {q:'Denetçinin bağımsızlığını tehdit eden durumlar nelerdir?',a:'Çıkar, kendi kendini denetleme, taraf tutma, yakınlık ve yıldırma tehditleri.',anahtar:'Her tehdide karşı önlem alınmalı veya iş reddedilmeli.',puf:'Bağımsızlık hem fiilen hem görünüşte korunmalıdır.'}
+ ],
+ 'KURUMSAL YÖNETİM':[
+  {q:'Denetim komitesinin görevi nedir?',a:'Finansal raporlamanın doğruluğunu, iç kontrol ve bağımsız denetim sürecini gözetmektir.',anahtar:'Bağımsız yönetim kurulu üyelerinden oluşur.',puf:'Bağımsız denetçiyi öneren ve gözeten yapıdır.'},
+  {q:'Kamuyu aydınlatma (şeffaflık) ilkesi neyi gerektirir?',a:'Şirketle ilgili önemli bilgilerin zamanında, doğru ve eksiksiz biçimde kamuya açıklanmasını gerektirir.',anahtar:'KAP (Kamuyu Aydınlatma Platformu) bu amaca hizmet eder.',puf:'İçeriden öğrenenlerin ticareti (insider trading) yasaktır.'},
+  {q:'"Tek kademeli" ve "çift kademeli" yönetim yapısı farkı nedir?',a:'Tek kademede yönetim ve gözetim aynı kurulda; çift kademede yönetim kurulu ile denetim/gözetim kurulu ayrıdır.',anahtar:'Türkiye’de genel olarak tek kademeli yapı kullanılır.',puf:'Çift kademe Almanya gibi ülkelerde yaygındır.'}
+ ],
+ 'GENEL HUKUK':[
+  {q:'Limited şirket ile anonim şirket arasındaki temel fark nedir?',a:'Ltd. ortak sayısı 50 ile sınırlı, pay senedi halka arz edilemez; AŞ’de pay devri daha kolay ve halka açılabilir.',anahtar:'İkisi de sermaye şirketidir, sorumluluk sermaye ile sınırlıdır.',puf:'Ltd. ortakları kamu borçlarından pay oranında sorumlu olabilir.'},
+  {q:'Kambiyo senetleri nelerdir?',a:'Bono (emre yazılı senet), poliçe ve çek.',anahtar:'Hepsi kıymetli evraktır; hak senede bağlıdır.',puf:'Çek bir ödeme aracı, bono bir kredi aracıdır.'},
+  {q:'Zamanaşımı nedir?',a:'Bir hakkın kanunda öngörülen süre içinde kullanılmaması nedeniyle dava/talep imkânının zayıflamasıdır.',anahtar:'Genel zamanaşımı TBK’da 10 yıldır.',puf:'Zamanaşımı hakkı sona erdirmez, def’i olarak ileri sürülür.'},
+  {q:'İcra ve iflas hukukunda "haciz" nedir?',a:'Borçlunun mallarına, borcun tahsili amacıyla devletçe el konulmasıdır.',anahtar:'Haciz cebri icranın bir aşamasıdır.',puf:'Bazı mallar (haline münasip ev eşyası vb.) haczedilemez.'}
+ ]
+};
+
 // Eski paneldeki veri yapısı: sheets[konuAdi].data = [{q, a}, ...]
 let SHEETS = {};        // {konuAdi: [{q,a,added}]}
 let GECMIS = [];        // [{yil, sinav, konu, sno, q, a, harf}]
@@ -3977,10 +4040,12 @@ const App = {
 
   hazirSorulariYukle(){
     SHEETS={};
-    Object.keys(HAZIR_SORULAR).forEach(konu=>{
-      SHEETS[konu]=HAZIR_SORULAR[konu].map(s=>({q:s.q, a:s.a, added:false}));
+    const konular=new Set([...Object.keys(HAZIR_SORULAR),...Object.keys(HAZIR_SORULAR_EK)]);
+    konular.forEach(konu=>{
+      const birlesik=[...(HAZIR_SORULAR[konu]||[]),...(HAZIR_SORULAR_EK[konu]||[])];
+      SHEETS[konu]=birlesik.map(s=>({q:s.q, a:s.a, added:false}));
       // anahtar kavram + püf noktası notlarını yaz
-      HAZIR_SORULAR[konu].forEach((s,idx)=>{
+      birlesik.forEach((s,idx)=>{
         const key=\`\${konu}-\${idx}\`;
         if(!NOTLAR[key]) NOTLAR[key]={};
         if(s.anahtar && !NOTLAR[key].anahtar) NOTLAR[key].anahtar=s.anahtar;
