@@ -57,6 +57,7 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
   <div class="tab" data-v="cumle">💬 Cümleler</div>
   <div class="tab" data-v="konu">🌍 Konular</div>
   <div class="tab" data-v="ileri">🎓 C1 İleri</div>
+  <div class="tab" data-v="test">✍️ Test & Quiz</div>
   <div class="tab" data-v="istat">📊 İstatistik</div>
 </div>
 <main>
@@ -127,6 +128,62 @@ input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(-
     <div class="card"><h2>✨ İleri Sıfatlar</h2><div id="ilSifat" class="konuGrid"></div></div>
     <div class="card"><h2>🔀 Bağlaçlar & Kalıplar</h2><div id="ilBaglac" class="konuGrid"></div></div>
   </section>
+  <!-- TEST & QUIZ -->
+  <section class="view" id="v-test">
+    <div class="card">
+      <h2>✍️ Yazma Quizi</h2>
+      <p class="mut" style="margin:0 0 12px">Türkçesi gösterilir, sen İngilizcesini yaz. Doğru/yanlış anında kontrol edilir.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="filterbtn on" data-qsrc="words" onclick="quizKaynak('words')">📚 Kelimelerim</button>
+        <button class="filterbtn" data-qsrc="konu" onclick="quizKaynak('konu')">🌍 Konular</button>
+        <button class="filterbtn" data-qsrc="ileri" onclick="quizKaynak('ileri')">🎓 C1 İleri</button>
+        <button class="filterbtn" data-qsrc="all" onclick="quizKaynak('all')">🔀 Karışık</button>
+      </div>
+      <div id="quizArea">
+        <div class="flash" style="cursor:default">
+          <div class="mut">Çevirisini yazacağın kelime:</div>
+          <div class="big" id="qSoru" style="font-size:26px">Başla 👇</div>
+          <input id="qCevap" placeholder="İngilizcesini yaz..." style="max-width:340px;text-align:center;font-size:18px" onkeydown="if(event.key==='Enter')quizKontrol()">
+          <div id="qSonuc" style="font-weight:800;min-height:24px"></div>
+        </div>
+        <div class="row spread" style="margin-top:14px">
+          <button class="btn ghost" onclick="quizYeni()">⏭ Atla</button>
+          <button class="btn" onclick="quizIpucu()">💡 İpucu</button>
+          <button class="btn ok" onclick="quizKontrol()">✓ Kontrol Et</button>
+        </div>
+        <div class="row spread" style="margin-top:12px;font-size:13px"><span class="mut">Doğru: <b id="qDogru" style="color:var(--ok)">0</b></span><span class="mut">Yanlış: <b id="qYanlis" style="color:var(--bad)">0</b></span><span class="mut">Başarı: <b id="qOran" style="color:var(--acc)">%0</b></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎤 Telaffuz Testi</h2>
+      <p class="mut" style="margin:0 0 12px">Ekrandaki kelimeyi mikrofona söyle, doğru telaffuz edip etmediğini değerlendirsin. (Chrome önerilir)</p>
+      <div class="flash" style="cursor:default">
+        <div class="mut">Şunu sesli söyle:</div>
+        <div class="big" id="tWord" style="font-size:30px">Hazır mısın? 🎙</div>
+        <button class="btn" onclick="konus($('tWord').dataset.t||'')" id="tDinle" style="display:none">🔊 Önce dinle</button>
+        <div id="tSonuc" style="font-weight:800;min-height:24px"></div>
+        <div class="mut" id="tDuydum" style="font-size:13px"></div>
+      </div>
+      <div class="row spread" style="margin-top:14px">
+        <button class="btn ghost" onclick="telYeni()">⏭ Yeni Kelime</button>
+        <button class="btn bad" id="micBtn" onclick="telKonus()">🎤 Konuş</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🧠 Akıllı Tekrar (SRS)</h2>
+      <p class="mut" style="margin:0 0 12px">Leitner sistemi: bildiğin kelimeyi seyrek, zorlandığını sık sorar. Kalıcı öğrenmenin en etkili yolu.</p>
+      <div class="flash" id="srsFlash" onclick="srsCevir()"><div class="big" id="srsEn">Başla 👇</div><div class="mut" id="srsTr" style="display:none"></div></div>
+      <div class="row spread" style="margin-top:14px">
+        <button class="btn bad" onclick="srsCevap(0)">😣 Zor</button>
+        <button class="btn ghost" onclick="srsCevap(1)">😐 Orta</button>
+        <button class="btn ok" onclick="srsCevap(2)">😎 Kolay</button>
+      </div>
+      <label class="row" style="margin-top:12px;font-size:13px;gap:6px;cursor:pointer"><input type="checkbox" id="srsAuto" checked> 🔈 Kelime gelince otomatik sesli oku</label>
+      <div class="mut" id="srsBilgi" style="margin-top:10px;font-size:13px"></div>
+    </div>
+  </section>
   <!-- KONULAR -->
   <section class="view" id="v-konu">
     <p class="mut" style="margin:0 0 14px;font-size:13px">💡 Herhangi bir kelimeye tıkla → İngilizce telaffuzunu sesli dinle 🔊</p>
@@ -178,7 +235,7 @@ $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"da
 const HIZLAR=[{r:.6,t:"🐢 Yavaş"},{r:1,t:"🚶 Normal"},{r:1.3,t:"🐇 Hızlı"}];
 let hizIdx=get("seshiz",0);function hizUygula(){const h=HIZLAR[hizIdx];SES_HIZ=h.r;$("hizBtn").textContent=h.t;set("seshiz",hizIdx);}
 $("hizBtn").onclick=()=>{hizIdx=(hizIdx+1)%HIZLAR.length;hizUygula();};hizUygula();
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");if(t.dataset.v==="istat")renderIstat();if(t.dataset.v==="pratik")flashNext();if(t.dataset.v==="cumle")renderCumle();if(t.dataset.v==="konu")renderKonu();if(t.dataset.v==="ileri")renderIleri();if(t.dataset.v==="test"){quizYeni();telYeni();srsNext();}});
 /* veri */
 function words(){return get("words",[])}
 function saveWords(w){set("words",w)}
@@ -264,9 +321,114 @@ function renderIleri(){
   ILERI_MAP.forEach(function(m){if($(m[0]))$(m[0]).innerHTML=konuRow(m[1]);});
   if($("ileriNav"))$("ileriNav").innerHTML=ILERI_NAV.map(function(n){return '<button class="filterbtn" onclick="document.getElementById(\''+n[0]+'\').closest(\'.card\').scrollIntoView({behavior:\'smooth\'})">'+n[1]+'</button>';}).join("");
 }
+/* ============ TEST & QUIZ ============ */
+/* Havuzlar: [en, tr] çiftleri */
+function konuHavuz(){return [].concat(HAYVANLAR,MESLEKLER,FIILLER,SIFATLAR,RENKLER,YIYECEK,VUCUT,AILE,GIYIM,EVESYA,ULASIM,DOGA,ULKELER,SAYILAR,MEVSIMLER);}
+function ileriHavuz(){return [].concat(PHRASAL,IDIOMS,AKADEMIK,IS_ING,ILERI_SIFAT,BAGLAC);}
+function wordHavuz(){return words().map(function(k){return [k.en,k.tr];});}
+function havuz(src){
+  if(src==="words")return wordHavuz();
+  if(src==="konu")return konuHavuz();
+  if(src==="ileri")return ileriHavuz();
+  return [].concat(wordHavuz(),konuHavuz(),ileriHavuz());
+}
+function norm(s){return (s||"").toLowerCase().trim().replace(/[.,!?;]/g,"").replace(/\s+/g," ");}
+
+/* --- Yazma Quizi --- */
+var qSrc="words",qCur=null,qStat={d:0,y:0};
+function quizKaynak(s){qSrc=s;document.querySelectorAll("[data-qsrc]").forEach(function(b){b.classList.toggle("on",b.dataset.qsrc===s);});quizYeni();}
+function quizYeni(){
+  var pool=havuz(qSrc);
+  if(!pool.length){$("qSoru").textContent="(Bu kaynakta kelime yok)";qCur=null;$("qCevap").value="";$("qSonuc").textContent="";return;}
+  qCur=pool[Math.floor(Math.random()*pool.length)];
+  $("qSoru").textContent=qCur[1];$("qCevap").value="";$("qSonuc").textContent="";$("qCevap").focus();
+}
+function quizKontrol(){
+  if(!qCur)return;
+  var dogru=norm(qCur[0]),verilen=norm($("qCevap").value);
+  if(!verilen){$("qSonuc").innerHTML='<span class="mut">Bir şeyler yaz 🙂</span>';return;}
+  // alternatifleri ayır: "go / went" gibi
+  var alt=dogru.split(/[\/]/).map(function(x){return x.trim();});
+  if(alt.indexOf(verilen)>=0||verilen===dogru){
+    qStat.d++;$("qSonuc").innerHTML='<span style="color:var(--ok)">✓ Doğru! 🎉</span>';konus(qCur[0]);
+    setTimeout(quizYeni,900);
+  }else{
+    qStat.y++;$("qSonuc").innerHTML='<span style="color:var(--bad)">✗ Yanlış.</span> Doğrusu: <b>'+esc(qCur[0])+'</b>';konus(qCur[0]);
+  }
+  $("qDogru").textContent=qStat.d;$("qYanlis").textContent=qStat.y;
+  var tot=qStat.d+qStat.y;$("qOran").textContent="%"+(tot?Math.round(qStat.d/tot*100):0);
+}
+function quizIpucu(){if(!qCur)return;var w=qCur[0];$("qSonuc").innerHTML='<span class="mut">İpucu: '+esc(w[0])+'…'+' ('+w.replace(/[a-zA-Z]/g,"_").slice(1)+')</span>';}
+
+/* --- Telaffuz Testi --- */
+var tCur=null,REC=null;
+function telHavuz(){var w=wordHavuz();return w.length?w:konuHavuz();}
+function telYeni(){
+  var pool=telHavuz();if(!pool.length){$("tWord").textContent="(kelime yok)";tCur=null;return;}
+  tCur=pool[Math.floor(Math.random()*pool.length)];
+  $("tWord").textContent=tCur[0];$("tWord").dataset.t=tCur[0];$("tDinle").style.display="inline-block";
+  $("tSonuc").textContent="";$("tDuydum").textContent="";
+}
+function telKonus(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$("tSonuc").innerHTML='<span style="color:var(--bad)">⚠ Tarayıcın mikrofon tanımayı desteklemiyor (Chrome dene).</span>';return;}
+  if(!tCur)return;
+  REC=new SR();REC.lang="en-US";REC.interimResults=false;REC.maxAlternatives=3;
+  $("micBtn").textContent="🔴 Dinleniyor...";$("tSonuc").textContent="";
+  REC.onresult=function(e){
+    var said="",alts=[];
+    for(var i=0;i<e.results[0].length;i++)alts.push(norm(e.results[0][i].transcript));
+    said=alts[0];
+    var hedef=norm(tCur[0]);
+    $("tDuydum").textContent="Duyduğum: \""+said+"\"";
+    if(alts.indexOf(hedef)>=0){$("tSonuc").innerHTML='<span style="color:var(--ok)">✓ Mükemmel telaffuz! 🎉</span>';}
+    else{
+      // benzerlik kontrolü
+      var benzer=alts.some(function(a){return a.indexOf(hedef)>=0||hedef.indexOf(a)>=0;});
+      $("tSonuc").innerHTML=benzer?'<span style="color:var(--warn)">≈ Yakın! Tekrar dene.</span>':'<span style="color:var(--bad)">✗ Olmadı. Doğrusu: <b>'+esc(tCur[0])+'</b></span>';
+    }
+  };
+  REC.onerror=function(){$("tSonuc").innerHTML='<span style="color:var(--bad)">🎤 Mikrofon hatası / izin verilmedi.</span>';$("micBtn").textContent="🎤 Konuş";};
+  REC.onend=function(){$("micBtn").textContent="🎤 Konuş";};
+  REC.start();
+}
+
+/* --- Akıllı Tekrar (SRS / Leitner) --- */
+function srsData(){return get("srs",{});}
+function srsSave(d){set("srs",d);}
+var srsCur=null,srsShown=false;
+function srsPool(){
+  // kullanıcı kelimeleri + C1 + konular birleşik; her birine kutu/zaman bilgisi srs map'inde
+  var all=[].concat(wordHavuz(),ileriHavuz());
+  if(all.length<5)all=all.concat(konuHavuz());
+  return all;
+}
+function srsNext(){
+  var pool=srsPool();if(!pool.length){$("srsEn").textContent="(içerik yok)";srsCur=null;return;}
+  var d=srsData(),now=Date.now();
+  // vadesi gelmiş veya hiç görülmemiş olanları önceliklendir
+  var due=pool.filter(function(p){var s=d[p[0]];return !s||s.next<=now;});
+  var seç=(due.length?due:pool);
+  srsCur=seç[Math.floor(Math.random()*seç.length)];
+  srsShown=false;$("srsEn").textContent=srsCur[0];$("srsTr").style.display="none";$("srsTr").textContent=srsCur[1];
+  var s=d[srsCur[0]];$("srsBilgi").textContent=s?("Kutu "+(s.box+1)+"/5 · "+pool.length+" kelime havuzda"):(pool.length+" kelime havuzda · yeni kelime");
+  if($("srsAuto")&&$("srsAuto").checked)konus(srsCur[0]);
+}
+function srsCevir(){if(!srsCur)return;srsShown=!srsShown;$("srsTr").style.display=srsShown?"block":"none";if(srsShown)konus(srsCur[0]);}
+function srsCevap(kalite){ // 0 zor,1 orta,2 kolay
+  if(!srsCur)return;
+  var d=srsData(),k=srsCur[0],s=d[k]||{box:0};
+  if(kalite===0)s.box=0;else if(kalite===1)s.box=Math.max(0,s.box);else s.box=Math.min(4,s.box+1);
+  if(kalite===2)s.box=Math.min(4,(d[k]?d[k].box:0)+1);
+  var gun=[0,1,3,7,15][s.box]; // kutuya göre gün sonra tekrar
+  s.next=Date.now()+gun*86400000;
+  d[k]=s;srsSave(d);
+  srsNext();
+}
+
 /* init */
 renderListe();renderIstat();streakGuncelle();renderKonu();
 </script>
-<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v200 🎓🔊</div>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v200 🎓🔊✍️🎤🧠</div>
 </body>
 </html>
