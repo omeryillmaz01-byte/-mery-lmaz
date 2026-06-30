@@ -55,7 +55,7 @@ main{max-width:960px;margin:0 auto;padding:18px}
 /* okunan ayetin ALTINA gelen hareketli kırmızı ok */
 .mushaf-ok{position:absolute;display:none;color:#e53935;font-size:18px;line-height:1;font-weight:900;
   transform:translateX(-50%);pointer-events:none;text-shadow:0 1px 4px rgba(229,57,53,.5);z-index:5;
-  transition:left .28s ease,top .28s ease;animation:okzip .8s ease-in-out infinite}
+  transition:top .18s ease;animation:okzip .8s ease-in-out infinite}
 @keyframes okzip{0%,100%{margin-top:0}50%{margin-top:-5px}}
 .m-ayet.calar{background:rgba(229,57,53,.10);box-shadow:inset 0 -3px 0 #e53935}
 .m-tr{font-size:14px;line-height:1.62;color:var(--txt)}
@@ -449,27 +449,9 @@ function kuranVurgu(no){
   // eski vurguları ve okları temizle
   document.querySelectorAll(".m-ayet.calar,.m-row.calar").forEach(e=>e.classList.remove("calar"));
   if(no==null){var oo=document.getElementById("mushafOk");if(oo)oo.style.display="none";return;}
-  // Arapça: vurgula + okunan ayetin ALTINA hareketli kırmızı ok + sayfayı kaydır
+  // Arapça: vurgula + sayfayı kaydır (ok ayrı fonksiyonla senkron hareket eder)
   var a=document.querySelector('.m-ayet[data-ayet="'+no+'"]');
-  if(a){
-    a.classList.add("calar");
-    a.scrollIntoView({behavior:"smooth",block:"center"});
-    var kutu=$("mushafKutu");
-    if(kutu){
-      var ok=document.getElementById("mushafOk");
-      if(!ok){ok=document.createElement("div");ok.id="mushafOk";ok.className="mushaf-ok";ok.textContent="▲";kutu.appendChild(ok);}
-      // çapayı ayet sonu durak işaretine göre konumla (altına)
-      var anchor=a.querySelector(".durak")||a;
-      requestAnimationFrame(function(){
-        var ar=anchor.getBoundingClientRect(), cr=kutu.getBoundingClientRect();
-        ok.style.left=(ar.left-cr.left+ar.width/2)+"px";
-        ok.style.top=(ar.bottom-cr.top+2)+"px";
-        ok.style.display="block";
-      });
-    }
-  } else {
-    var ok2=document.getElementById("mushafOk");if(ok2)ok2.style.display="none";
-  }
+  if(a){a.classList.add("calar");a.scrollIntoView({behavior:"smooth",block:"center"});}
   // Meal: vurgula + panel içinde ortala (sayfayı kaydırmadan)
   var r=document.getElementById("meal-"+no);
   if(r){
@@ -478,12 +460,39 @@ function kuranVurgu(no){
     if(panel)panel.scrollTo({top:r.offsetTop-panel.clientHeight/2+r.clientHeight/2,behavior:"smooth"});
   }
 }
-function kuranDur(){if(kuranAudio){kuranAudio.pause();kuranAudio=null;}kuranVurgu(null);}
+var kuranOkRAF=null;
+function okGizle(){var o=document.getElementById("mushafOk");if(o)o.style.display="none";if(kuranOkRAF){cancelAnimationFrame(kuranOkRAF);kuranOkRAF=null;}}
+// Hafızın okumasıyla senkron: oku ayetin altında sağdan-sola kaydır (çok satırlıda satır satır)
+function kuranOkSync(no,audio){
+  var a=document.querySelector('.m-ayet[data-ayet="'+no+'"]');var kutu=$("mushafKutu");
+  if(!a||!kutu)return;
+  var ok=document.getElementById("mushafOk");
+  if(!ok){ok=document.createElement("div");ok.id="mushafOk";ok.className="mushaf-ok";ok.textContent="▲";kutu.appendChild(ok);}
+  function yerlestir(p){
+    var cr=kutu.getBoundingClientRect();
+    var rects=a.getClientRects();if(!rects.length)return;
+    var total=0,i;for(i=0;i<rects.length;i++)total+=rects[i].width;
+    var d=Math.max(0,Math.min(1,p))*total,acc=0,rect=rects[0],off=0;
+    for(i=0;i<rects.length;i++){if(d<=acc+rects[i].width){rect=rects[i];off=d-acc;break;}acc+=rects[i].width;}
+    // RTL: okuma sağ kenardan başlar, sola ilerler
+    var x=rect.right-off,y=rect.bottom;
+    ok.style.left=(x-cr.left)+"px";ok.style.top=(y-cr.top+2)+"px";ok.style.display="block";
+  }
+  yerlestir(0);
+  if(kuranOkRAF)cancelAnimationFrame(kuranOkRAF);
+  function dongu(){
+    if(!audio||audio.paused||audio.ended){kuranOkRAF=null;return;}
+    if(audio.duration)yerlestir(audio.currentTime/audio.duration);
+    kuranOkRAF=requestAnimationFrame(dongu);
+  }
+  kuranOkRAF=requestAnimationFrame(dongu);
+}
+function kuranDur(){if(kuranAudio){kuranAudio.pause();kuranAudio=null;}okGizle();kuranVurgu(null);}
 function ayetSes(sure,ayet){var n=String(sure).padStart(3,"0")+String(ayet).padStart(3,"0");return "https://everyayah.com/data/"+KARILER[+$("kuranKari").value][0]+"/"+n+".mp3";}
 function kuranAyetOynat(sureNo,ayetNo){
   kuranDur();
   kuranAudio=new Audio(ayetSes(sureNo,ayetNo));
-  kuranVurgu(ayetNo);
+  kuranVurgu(ayetNo);kuranOkSync(ayetNo,kuranAudio);
   kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir).</span>';};
   kuranAudio.play().catch(()=>{});
 }
@@ -494,7 +503,7 @@ function kuranTumunuOynat(){
     if(i>=kuranAyetCache.length){kuranDur();return;}
     var no=kuranAyetCache[i];
     if(kuranAudio)kuranAudio.pause();
-    kuranAudio=new Audio(ayetSes(kuranSureNo,no));kuranVurgu(no);
+    kuranAudio=new Audio(ayetSes(kuranSureNo,no));kuranVurgu(no);kuranOkSync(no,kuranAudio);
     kuranAudio.onended=()=>{i++;sonraki();};
     kuranAudio.onerror=()=>{$("kuranDurum").innerHTML='<span style="color:#e67e22">⚠ Ses yüklenemedi (internet gerekir).</span>';};
     kuranAudio.play().catch(()=>{});
