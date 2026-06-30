@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💰 Muhasebe Paneli</title>
+<style>
+:root{
+  --bg0:#070b14;--bg1:#0c1322;--glass:rgba(22,30,48,.55);--glass2:rgba(30,40,64,.5);
+  --line:rgba(120,150,200,.16);--txt:#eef3fb;--mut:#92a3bd;
+  --acc:#22e3b0;--acc2:#5cc8ff;--p1:#22e3b0;--p2:#0fa36b;
+  --shadow:0 22px 60px -22px rgba(0,0,0,.75);
+}
+[data-theme="light"]{
+  --bg0:#e7edf6;--bg1:#f4f8ff;--glass:rgba(255,255,255,.7);--glass2:rgba(255,255,255,.6);
+  --line:rgba(40,70,120,.14);--txt:#16202e;--mut:#5b6c84;--acc:#08b389;--acc2:#1f8fff;
+  --shadow:0 20px 50px -20px rgba(60,90,140,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Segoe UI',-apple-system,system-ui,Arial,sans-serif;background:var(--bg0);color:var(--txt);-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column}
+.bgfx{position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(900px 600px at 0% 0%,rgba(34,227,176,.18),transparent 60%),
+  radial-gradient(900px 700px at 100% 100%,rgba(92,200,255,.15),transparent 60%),
+  linear-gradient(180deg,var(--bg0),var(--bg1));}
+header{display:flex;align-items:center;gap:12px;padding:14px 22px;
+  background:var(--glass);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);flex:none}
+.logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:20px;
+  background:linear-gradient(135deg,var(--p1),var(--p2))}
+header h1{font-size:18px;font-weight:800}
+header .tag{font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px}
+.spacer{flex:1}
+.iconbtn{background:var(--glass2);border:1px solid var(--line);color:var(--txt);height:38px;padding:0 14px;
+  border-radius:11px;cursor:pointer;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:.18s}
+.iconbtn:hover{border-color:var(--acc);color:var(--acc)}
+main{flex:1;overflow:auto;padding:24px 20px 50px}
+.wrap{max-width:960px;margin:0 auto}
+
+/* Özet kartları */
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.sumcard{background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:20px;padding:20px;position:relative;overflow:hidden}
+.sumcard:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--cg)}
+.sumcard .lbl{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:1px;margin-bottom:8px}
+.sumcard .val{font-size:26px;font-weight:900}
+.sumcard .sub{font-size:12px;color:var(--mut);margin-top:4px}
+.s1{--cg:linear-gradient(90deg,#22e3b0,#0fa36b)} /* gelir */
+.s2{--cg:linear-gradient(90deg,#ff5a8a,#c0392b)} /* gider */
+.s3{--cg:linear-gradient(90deg,#5cc8ff,#2980b9)} /* bakiye */
+.s4{--cg:linear-gradient(90deg,#ffd700,#f39c12)} /* birikim */
+.pos{color:#22e3b0}.neg{color:#ff5a8a}.ntr{color:var(--acc2)}
+
+/* İşlem formu */
+.panel{background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:20px}
+.panel h2{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:6px;flex:1;min-width:130px}
+.fld label{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.5px}
+.fld input,.fld select{background:var(--glass2);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:10px 13px;font-size:14px;font-family:inherit;outline:none;transition:.15s;width:100%}
+.fld input:focus,.fld select:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(34,227,176,.12)}
+.fld select option{background:var(--bg1);color:var(--txt)}
+.btn{height:42px;padding:0 22px;border-radius:11px;border:none;cursor:pointer;font-weight:800;font-size:14px;font-family:inherit;transition:.18s;white-space:nowrap}
+.btn-g{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
+.btn-g:hover{transform:translateY(-2px);box-shadow:0 8px 20px -6px rgba(34,227,176,.5)}
+.btn-r{background:linear-gradient(135deg,#ff5a8a,#c0392b);color:#fff}
+.btn-r:hover{transform:translateY(-2px);box-shadow:0 8px 20px -6px rgba(255,90,138,.5)}
+.btn-s{background:var(--glass2);border:1px solid var(--line);color:var(--mut)}
+
+/* Filtre */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--line);background:var(--glass2);color:var(--mut);font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.chip.active{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-color:transparent}
+
+/* Tablo */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.8px;padding:10px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(120,150,200,.07)}
+.tbl tr:hover td{background:rgba(255,255,255,.03)}
+.tbl tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.bge{background:rgba(34,227,176,.15);color:#22e3b0}
+.bgg{background:rgba(255,90,138,.15);color:#ff5a8a}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--mut);font-size:15px;padding:4px 8px;border-radius:8px;transition:.15s}
+.del-btn:hover{color:#ff5a8a;background:rgba(255,90,138,.12)}
+.empty{text-align:center;padding:40px;color:var(--mut);font-size:14px}
+
+/* Bütçe hedefleri */
+.goals{display:grid;gap:12px}
+.goal-item{background:var(--glass2);border:1px solid var(--line);border-radius:16px;padding:16px}
+.goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.goal-name{font-size:14px;font-weight:700}
+.goal-pct{font-size:13px;font-weight:800;color:var(--acc)}
+.progress{height:8px;background:rgba(120,150,200,.15);border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--p1),var(--p2));transition:width .4s ease}
+.goal-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--mut)}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.twocol{grid-template-columns:1fr}.row{flex-direction:column}}
+</style>
+</head>
+<body data-theme="dark">
+<div class="bgfx"></div>
+<header>
+  <div class="logo">💰</div>
+  <div><h1>MUHASEBE PANELİ</h1><div class="tag">GELİR · GİDER · BİRİKİM</div></div>
+  <span class="spacer"></span>
+  <button class="iconbtn" id="themeBtn">🌙</button>
+  <button class="iconbtn" id="clearBtn">🗑 Sıfırla</button>
+</header>
+<main><div class="wrap">
+
+  <!-- Özet -->
+  <div class="sumgrid">
+    <div class="sumcard s1"><div class="lbl">📈 TOPLAM GELİR</div><div class="val pos" id="sumGelir">0 ₺</div><div class="sub">Bu ay</div></div>
+    <div class="sumcard s2"><div class="lbl">📉 TOPLAM GİDER</div><div class="val neg" id="sumGider">0 ₺</div><div class="sub">Bu ay</div></div>
+    <div class="sumcard s3"><div class="lbl">💳 NET BAKİYE</div><div class="val" id="sumBakiye">0 ₺</div><div class="sub">Gelir − Gider</div></div>
+    <div class="sumcard s4"><div class="lbl">🏦 BİRİKİM</div><div class="val ntr" id="sumBirikim">0 ₺</div><div class="sub">Birikim işlemleri</div></div>
+  </div>
+
+  <!-- İşlem ekle -->
+  <div class="panel">
+    <h2>➕ Yeni İşlem Ekle</h2>
+    <div class="row">
+      <div class="fld" style="max-width:120px">
+        <label>TİP</label>
+        <select id="tipSel">
+          <option value="gelir">💚 Gelir</option>
+          <option value="gider">🔴 Gider</option>
+          <option value="birikim">💛 Birikim</option>
+        </select>
+      </div>
+      <div class="fld"><label>AÇIKLAMA</label><input id="aciklamaInp" placeholder="ör. Maaş, Market, Kira…" /></div>
+      <div class="fld" style="max-width:150px"><label>TUTAR (₺)</label><input id="tutarInp" type="number" min="0" placeholder="0.00" /></div>
+      <div class="fld" style="max-width:145px"><label>KATEGORİ</label>
+        <select id="katSel">
+          <option>Genel</option>
+          <option>Maaş / Gelir</option>
+          <option>Market / Yiyecek</option>
+          <option>Fatura / Aidat</option>
+          <option>Ulaşım</option>
+          <option>Sağlık</option>
+          <option>Eğitim</option>
+          <option>Eğlence</option>
+          <option>Giyim</option>
+          <option>Birikim / Yatırım</option>
+          <option>Diğer</option>
+        </select>
+      </div>
+      <div class="fld" style="max-width:145px"><label>TARİH</label><input id="tarihInp" type="date" /></div>
+      <button class="btn btn-g" id="ekleBtn">Ekle</button>
+    </div>
+  </div>
+
+  <div class="twocol">
+    <!-- İşlem listesi -->
+    <div>
+      <div class="panel" style="margin-bottom:0">
+        <h2>📋 İşlem Geçmişi</h2>
+        <div class="filters">
+          <span class="chip active" data-f="hepsi">Hepsi</span>
+          <span class="chip" data-f="gelir">Gelir</span>
+          <span class="chip" data-f="gider">Gider</span>
+          <span class="chip" data-f="birikim">Birikim</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>TARİH</th><th>AÇIKLAMA</th><th>KATEGORİ</th><th>TİP</th><th style="text-align:right">TUTAR</th><th></th></tr></thead>
+            <tbody id="islemBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bütçe hedefleri -->
+    <div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>🎯 Birikim Hedefleri</h2>
+        <div class="row" style="margin-bottom:14px">
+          <div class="fld"><label>HEDEF ADI</label><input id="hedefAdi" placeholder="ör. Araba, Tatil…" /></div>
+          <div class="fld" style="max-width:130px"><label>HEDEF (₺)</label><input id="hedefTutar" type="number" min="1" placeholder="0" /></div>
+          <button class="btn btn-g" id="hedefEkle">Ekle</button>
+        </div>
+        <div class="goals" id="goalList"></div>
+      </div>
+    </div>
+  </div>
+
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";save("muh_theme",t)}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");
+theme(load("muh_theme")||"dark");
+
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+
+let islemler=load("muh_islemler")||[];
+let hedefler=load("muh_hedefler")||[];
+let filtre="hepsi";
+
+// Tarih default bugün
+$("tarihInp").value=new Date().toISOString().slice(0,10);
+
+function fmt(n){return Number(n).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺"}
+
+function renderOzet(){
+  const gelir=islemler.filter(i=>i.tip==="gelir").reduce((s,i)=>s+i.tutar,0);
+  const gider=islemler.filter(i=>i.tip==="gider").reduce((s,i)=>s+i.tutar,0);
+  const birikim=islemler.filter(i=>i.tip==="birikim").reduce((s,i)=>s+i.tutar,0);
+  const bakiye=gelir-gider;
+  $("sumGelir").textContent=fmt(gelir);
+  $("sumGider").textContent=fmt(gider);
+  const bEl=$("sumBakiye");
+  bEl.textContent=fmt(bakiye);
+  bEl.className="val "+(bakiye>=0?"pos":"neg");
+  $("sumBirikim").textContent=fmt(birikim);
+}
+
+function renderIslemler(){
+  const list=filtre==="hepsi"?islemler:islemler.filter(i=>i.tip===filtre);
+  if(!list.length){$("islemBody").innerHTML=`<tr><td colspan="6" class="empty">Henüz işlem yok</td></tr>`;return;}
+  $("islemBody").innerHTML=[...list].reverse().map((item,ri)=>{
+    const idx=islemler.length-1-ri;
+    const badge=item.tip==="gelir"?'<span class="badge bge">💚 Gelir</span>':
+                 item.tip==="birikim"?'<span class="badge" style="background:rgba(255,215,0,.15);color:#ffd700">💛 Birikim</span>':
+                 '<span class="badge bgg">🔴 Gider</span>';
+    const renk=item.tip==="gelir"?"pos":item.tip==="birikim"?"ntr":"neg";
+    return`<tr>
+      <td style="font-size:12px;color:var(--mut)">${item.tarih}</td>
+      <td style="font-weight:600">${item.aciklama}</td>
+      <td style="font-size:12px;color:var(--mut)">${item.kategori}</td>
+      <td>${badge}</td>
+      <td style="text-align:right;font-weight:800" class="${renk}">${item.tip==="gider"?"-":"+"} ${fmt(item.tutar)}</td>
+      <td><button class="del-btn" data-idx="${idx}">✕</button></td>
+    </tr>`;
+  }).join("");
+  document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{islemler.splice(+b.dataset.idx,1);save("muh_islemler",islemler);render()});
+}
+
+function renderHedefler(){
+  const birikim=islemler.filter(i=>i.tip==="birikim").reduce((s,i)=>s+i.tutar,0);
+  if(!hedefler.length){$("goalList").innerHTML=`<div style="color:var(--mut);font-size:13px;text-align:center;padding:16px">Henüz hedef eklenmedi</div>`;return;}
+  $("goalList").innerHTML=hedefler.map((h,i)=>{
+    const pct=Math.min(100,Math.round((birikim/h.tutar)*100));
+    return`<div class="goal-item">
+      <div class="goal-top">
+        <span class="goal-name">🎯 ${h.ad}</span>
+        <span class="goal-pct">%${pct}</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="goal-meta"><span>${fmt(Math.min(birikim,h.tutar))} birikti</span><span>Hedef: ${fmt(h.tutar)}</span>
+        <button class="del-btn" data-hi="${i}" style="margin-left:auto">✕</button></div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("[data-hi]").forEach(b=>b.onclick=()=>{hedefler.splice(+b.dataset.hi,1);save("muh_hedefler",hedefler);renderHedefler()});
+}
+
+function render(){renderOzet();renderIslemler();renderHedefler()}
+
+$("ekleBtn").onclick=()=>{
+  const tip=$("tipSel").value;
+  const aciklama=$("aciklamaInp").value.trim();
+  const tutar=parseFloat($("tutarInp").value);
+  const kategori=$("katSel").value;
+  const tarih=$("tarihInp").value;
+  if(!aciklama||!tutar||tutar<=0){alert("Açıklama ve geçerli bir tutar girin.");return;}
+  islemler.push({tip,aciklama,tutar,kategori,tarih});
+  save("muh_islemler",islemler);
+  $("aciklamaInp").value="";$("tutarInp").value="";
+  render();
+};
+
+$("hedefEkle").onclick=()=>{
+  const ad=$("hedefAdi").value.trim();
+  const tutar=parseFloat($("hedefTutar").value);
+  if(!ad||!tutar||tutar<=0){alert("Hedef adı ve tutarı girin.");return;}
+  hedefler.push({ad,tutar});save("muh_hedefler",hedefler);
+  $("hedefAdi").value="";$("hedefTutar").value="";
+  renderHedefler();
+};
+
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+  filtre=c.dataset.f;
+  document.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
+  c.classList.add("active");renderIslemler();
+});
+
+$("clearBtn").onclick=()=>{if(confirm("Tüm veriler silinecek, emin misin?")){islemler=[];hedefler=[];save("muh_islemler",[]);save("muh_hedefler",[]);render();}};
+
+render();
+</script>
+</body>
+</html>

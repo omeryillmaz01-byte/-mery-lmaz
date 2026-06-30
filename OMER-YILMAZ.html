@@ -76,6 +76,7 @@ header .tag{font-size:11px;color:var(--mut);font-weight:700;letter-spacing:1px}
 .c3{--cg:linear-gradient(135deg,#ff7a59,#e0492b);--gl:rgba(255,122,89,.55)}
 .c4{--cg:linear-gradient(135deg,#ffca28,#f9a825);--gl:rgba(255,202,40,.55)}
 .c5{--cg:linear-gradient(135deg,#7c4dff,#5e35b1);--gl:rgba(124,77,255,.55)}
+.c6{--cg:linear-gradient(135deg,#22e3b0,#0fa36b);--gl:rgba(34,227,176,.55)}
 /* hatırlatma */
 .info{background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
 .info h2{margin:0 0 14px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
@@ -120,6 +121,7 @@ const CARDS=[
  {em:"💪",nm:"Spor & Sağlık",ds:"VKİ · spor · diyet · vücut",cls:"c3",src:"SAGLIK-SPOR-DIYET-PANEL_v3.html"},
  {em:"🟡",nm:"Kişisel Gelişim",ds:"namaz · kaza · alışkanlık · zikir",cls:"c4",src:"KISISEL-GELISIM-PANEL.html"},
  {em:"📖",nm:"İngilizce Öğreniyorum",ds:"kelime · flashcard · pratik",cls:"c5",src:"INGILIZCE-OGRENIYORUM.html"},
+ {em:"💰",nm:"Muhasebe",ds:"gelir · gider · birikim · hedef",cls:"c6",src:"MUHASEBE-PANEL.html"},
 ];
 $("grid").innerHTML=CARDS.map((c,i)=>`<button class="card ${c.cls}" data-i="${i}"><span class="em">${c.em}</span><span class="nm">${c.nm}</span><div class="ds">${c.ds}</div><div class="go">Aç →</div></button>`).join("");
 document.querySelectorAll(".card").forEach(b=>b.onclick=()=>ac(+b.dataset.i));
