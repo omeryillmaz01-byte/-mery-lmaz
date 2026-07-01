@@ -97,7 +97,6 @@ body{background:var(--bg);transition:background .4s}
 .t5{--gl:rgba(167,139,250,.5);--ig:linear-gradient(135deg,rgba(167,139,250,.2),rgba(167,139,250,.05))}
 .t6{--gl:rgba(56,189,248,.5);--ig:linear-gradient(135deg,rgba(56,189,248,.2),rgba(56,189,248,.05))}
 .t7{--gl:rgba(52,211,153,.5);--ig:linear-gradient(135deg,rgba(52,211,153,.2),rgba(52,211,153,.05))}
-.t8{--gl:rgba(168,85,247,.5);--ig:linear-gradient(135deg,rgba(168,85,247,.2),rgba(168,85,247,.05))}
 
 /* görevler */
 .tasks{background:var(--glass);border:1px solid var(--border);border-radius:20px;padding:24px;backdrop-filter:var(--blur)}
@@ -5148,9 +5147,64 @@ function pomoBasla(){if(window._pomoTimer)return;window._pomoTimer=setInterval(f
 function pomoDur(){if(window._pomoTimer){clearInterval(window._pomoTimer);window._pomoTimer=null;var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Durdu";}}
 function pomoSifirla(){pomoDur();window._pomoKalan=25*60;var el=document.getElementById("pomoSayac");if(el)el.textContent="25:00";var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Hazır";}
 
+function dovizKartHtml(){
+  return '<div id="dovizKart" style="background:linear-gradient(135deg,#132436,#1a3348);border:1px solid #2d3a4d;border-radius:14px;padding:16px 18px;margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    +'<h3 style="margin:0;font-size:14px;color:#4cc2ff">💱 Canlı Döviz Kurları</h3>'
+    +'<button onclick="dovizYukle()" style="background:none;border:1px solid #2d3a4d;color:#8b9bb0;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer">🔄 Yenile</button>'
+    +'</div><div id="dovizIcerik" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;font-size:13px;color:#8b9bb0">Yükleniyor…</div>'
+    +'<div style="font-size:10.5px;color:#5c6b80;margin-top:8px">Kaynak: open.er-api.com (TCMB bazlı yaklaşık kur, yatırım kararı için resmi TCMB sitesini kullanın)</div></div>';
+}
+function dovizYukle(){
+  var el=document.getElementById("dovizIcerik");if(!el)return;el.textContent="Yükleniyor…";
+  fetch("https://open.er-api.com/v6/latest/USD").then(r=>r.json()).then(d=>{
+    if(!d||!d.rates||!d.rates.TRY){el.textContent="Kur verisi alınamadı.";return;}
+    var usdTry=d.rates.TRY,eurTry=usdTry/d.rates.EUR,gbpTry=usdTry/d.rates.GBP;
+    var altin=null;
+    var kart=function(ad,deg,ikon){return '<div style="background:#0f1c2a;border:1px solid #24303f;border-radius:10px;padding:10px 12px"><div style="font-size:11px;color:#8b9bb0">'+ikon+' '+ad+'</div><div style="font-size:17px;font-weight:700;color:#e6edf3;margin-top:2px">'+deg.toFixed(4).replace(".",",")+' ₺</div></div>'};
+    el.innerHTML=kart("USD/TRY",usdTry,"💵")+kart("EUR/TRY",eurTry,"💶")+kart("GBP/TRY",gbpTry,"💷")+'<div style="background:#0f1c2a;border:1px solid #24303f;border-radius:10px;padding:10px 12px;display:flex;align-items:center"><a href="https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+page+site+area/bugun" target="_blank" style="color:#4cc2ff;text-decoration:none;font-size:12px">🏦 TCMB resmi kurlar →</a></div>';
+  }).catch(()=>{el.textContent="Kur verisi alınamadı (internet bağlantısını kontrol et).";});
+}
+function haberKartHtml(){
+  return '<div id="haberKart" style="background:var(--bg-card,#1a2230);border:1px solid var(--border,#2d3a4d);border-radius:14px;padding:16px 18px;margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    +'<h3 style="margin:0;font-size:14px;color:#4cc2ff">🗞️ Günün Özeti — Ekonomi & Mevzuat Başlıkları</h3>'
+    +'<button onclick="haberYukle()" style="background:none;border:1px solid #2d3a4d;color:#8b9bb0;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer">🔄 Yenile</button>'
+    +'</div><div id="haberIcerik" style="display:flex;flex-direction:column;gap:14px">Yükleniyor…</div></div>';
+}
+const HABER_KAYNAKLARI=[
+  {ad:"Anadolu Ajansı — Ekonomi",rss:"https://www.aa.com.tr/tr/rss/default?cat=ekonomi",ikon:"📌"},
+  {ad:"Resmi Gazete — Bugünkü Sayı",rss:"https://www.resmigazete.gov.tr/rss.xml",ikon:"📜"},
+  {ad:"Bloomberg HT — Piyasalar",rss:"https://www.bloomberght.com/rss",ikon:"📈"}
+];
+function haberYukle(){
+  var el=document.getElementById("haberIcerik");if(!el)return;el.textContent="Yükleniyor…";
+  var proxy="https://api.allorigins.win/raw?url=";
+  Promise.all(HABER_KAYNAKLARI.map(k=>
+    fetch(proxy+encodeURIComponent(k.rss)).then(r=>r.text()).then(txt=>{
+      var dom=new DOMParser().parseFromString(txt,"text/xml");
+      var items=Array.from(dom.querySelectorAll("item")).slice(0,5).map(it=>({
+        baslik:(it.querySelector("title")?.textContent||"").trim(),
+        link:(it.querySelector("link")?.textContent||"").trim()
+      })).filter(x=>x.baslik);
+      return {kaynak:k,items};
+    }).catch(()=>({kaynak:k,items:[]}))
+  )).then(sonuclar=>{
+    var html="";
+    sonuclar.forEach(s=>{
+      if(!s.items.length)return;
+      html+='<div><h4 style="margin:0 0 8px;font-size:12.5px;color:#8b9bb0">'+s.kaynak.ikon+' '+s.kaynak.ad+'</h4><div style="display:flex;flex-direction:column;gap:6px">';
+      s.items.forEach(it=>{
+        html+='<a href="'+it.link+'" target="_blank" rel="noopener" style="color:var(--text,#e6edf3);text-decoration:none;font-size:13px;padding:6px 10px;background:var(--bg-card-2,#222d3d);border-radius:8px;border:1px solid var(--border,#2d3a4d)">• '+it.baslik+'</a>';
+      });
+      html+='</div></div>';
+    });
+    el.innerHTML=html||'<div style="font-size:12.5px;color:#8b9bb0">Şu an başlık alınamadı, kaynak sitelere doğrudan gitmek için üstteki linkleri kullanabilirsin. (Bazı ağlarda RSS proxy engellenebilir.)</div>';
+  });
+}
 function renderGundem(){
   document.getElementById("sheetTitle").textContent="📰 Mali Gündem & Kaynaklar";
-  document.getElementById("stats").textContent="Güncel mali haberler, beyanname takvimi ve pratik bilgi linkleri";
+  document.getElementById("stats").textContent="Güncel mali haberler, canlı döviz kurları ve pratik bilgi linkleri";
   const KAYNAKLAR={
     "📰 Mali Haber Siteleri":[
       ["Özdoğrular","https://www.ozdogrular.com.tr/","Güncel makaleler, bültenler, flaş haberler"],
@@ -5237,7 +5291,8 @@ function renderGundem(){
       ["YouTube — Benim Hocam","https://www.youtube.com/results?search_query=benim+hocam+kpss","Benim Hocam KPSS"]
     ]
   };
-  let html='<div style="padding:18px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1400px">';
+  let html='<div style="padding:18px 22px 0;max-width:1400px">'+dovizKartHtml()+haberKartHtml()+'</div>';
+  html+='<div style="padding:0 22px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1400px">';
   Object.entries(KAYNAKLAR).forEach(([baslik,linkler])=>{
     html+='<div style="background:var(--bg-card,#1a2230);border:1px solid var(--border,#2d3a4d);border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.15)">';
     html+='<h3 style="margin:0 0 14px;font-size:14px;color:var(--accent,#4cc2ff);letter-spacing:.5px">'+baslik+'</h3>';
@@ -5253,6 +5308,8 @@ function renderGundem(){
   html+='</div>';
   html+='<div style="padding:0 22px 22px;max-width:1400px"><div style="background:linear-gradient(135deg,rgba(76,194,255,.1),rgba(34,211,160,.05));border:1px dashed var(--accent,#4cc2ff);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--muted,#8b9bb0)">💡 <b>İpucu:</b> Buraya eklemek istediğin başka kaynaklar olursa söyle, sana özel olarak ekleyeyim. Sitelerin tamamı yeni sekmede açılır.</div></div>';
   document.getElementById("content").innerHTML=html;
+  dovizYukle();
+  haberYukle();
 }
 
 function bugunISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -9304,7 +9361,6 @@ const PANELS=[
  {ic:"🌱",nm:"Kişisel Gelişim",ds:"Namaz · alışkanlık · zikir",c:"t5",src:"KISISEL-GELISIM-PANEL.html"},
  {ic:"🇬🇧",nm:"İngilizce",ds:"Kelime · C1 · quiz · telaffuz",c:"t6",src:"INGILIZCE-OGRENIYORUM.html"},
  {ic:"💰",nm:"Muhasebe",ds:"Gelir · gider · birikim · hedef",c:"t7",src:"MUHASEBE-PANEL.html"},
- {ic:"🔐",nm:"Kişisel Bilgiler",ds:"Hesaplarım · şifreler · notlar",c:"t8",src:"KISISEL-BILGILER-PANEL.html"},
 ];
 $("ilerleme").textContent=PANELS.length;
 $("grid").innerHTML=PANELS.map((p,i)=>`<button class="tile ${p.c}" data-i="${i}">
