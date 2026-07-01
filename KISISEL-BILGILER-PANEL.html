@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 Kişisel Bilgiler & Hesaplarım</title>
+<style>
+:root{--bg:#0f1419;--panel:#1a2230;--panel2:#222d3d;--line:#2d3a4d;--txt:#e6edf3;--mut:#8b9bb0;--acc:#a855f7;--acc2:#22d3a0;--ok:#2ecc71;--bad:#e74c3c;--warn:#f1c40f;--shadow:0 8px 26px rgba(0,0,0,.4)}
+[data-theme="light"]{--bg:#eef2f7;--panel:#fff;--panel2:#f4f7fb;--line:#dde5ef;--txt:#15202b;--mut:#5d6b7d;--acc:#8b3fd1;--acc2:#0aa97a;--shadow:0 8px 24px rgba(60,90,130,.15)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:linear-gradient(135deg,var(--panel),var(--panel2));border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:19px}.spacer{flex:1}
+.warn-box{background:rgba(241,196,15,.12);border:1px solid var(--warn);border-radius:12px;padding:12px 16px;margin:14px 20px;font-size:13px;color:var(--txt)}
+.tabs{display:flex;gap:8px;padding:12px 20px 0;flex-wrap:wrap}
+.tab{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 16px;border-radius:11px 11px 0 0;cursor:pointer;font-weight:700;font-size:13px}
+.tab.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:1200px;margin:0 auto;padding:18px 20px 60px}
+.view{display:none}.view.active{display:block}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+input,select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 12px;font-family:inherit;font-size:13px}
+.search{flex:1;min-width:180px}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;font-size:13px}
+.btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);height:36px;min-width:36px;border-radius:10px;cursor:pointer;font-size:14px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+th{background:var(--panel2);text-align:left;padding:10px 12px;font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;position:sticky;top:56px}
+td{padding:8px 12px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+tr:hover td{background:var(--panel2)}
+.site-link{color:var(--acc);text-decoration:none;font-weight:600}
+.site-link:hover{text-decoration:underline}
+.mini-in{width:100%;padding:6px 8px;font-size:12px;border-radius:7px}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
+.badge.dolu{background:rgba(46,204,113,.15);color:var(--ok)}
+.badge.bos{background:var(--panel2);color:var(--mut)}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.stat .n{font-size:22px;font-weight:800;color:var(--acc)}.stat .l{font-size:11px;color:var(--mut)}
+.copybtn{cursor:pointer;opacity:.6}.copybtn:hover{opacity:1}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>🔐 Kişisel Bilgiler & Hesaplarım</h1><span class="spacer"></span>
+  <button class="iconbtn" id="themeBtn">🌙</button>
+</header>
+<div class="warn-box">⚠️ <b>Önemli:</b> Bu bilgiler yalnızca bu bilgisayarındaki tarayıcıda (localStorage) saklanır, şifrelenmez ve hiçbir sunucuya gönderilmez. Ortak/iş bilgisayarında kullanma. E-posta/şifre alanları otomatik doldurulmaz — <b>sen kendi bilgilerini gireceksin</b>, ben senin gmail hesabına erişemem.</div>
+<div class="tabs">
+  <div class="tab active" data-v="giyim">👕 Giyim Mağazaları</div>
+  <div class="tab" data-v="diger">🛒 Diğer Siteler</div>
+  <div class="tab" data-v="ozel">📝 Özel Notlarım</div>
+</div>
+<main>
+  <!-- GİYİM -->
+  <section class="view active" id="v-giyim">
+    <div class="stat-row" id="giyimStat"></div>
+    <div class="toolbar">
+      <input class="search" id="giyimAra" placeholder="🔍 Mağaza ara..." oninput="renderGiyim()">
+      <select id="giyimFiltre" onchange="renderGiyim()">
+        <option value="all">Tümü</option>
+        <option value="dolu">Üyeliğim var (dolu)</option>
+        <option value="bos">Boş (henüz girmedim)</option>
+      </select>
+      <button class="btn ghost" onclick="giyimEkle()">➕ Yeni Mağaza Ekle</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th style="width:36px">#</th><th>Mağaza</th><th>Link</th><th>E-posta</th><th>Şifre</th><th>Durum</th><th></th></tr></thead>
+      <tbody id="giyimBody"></tbody>
+    </table>
+    </div>
+  </section>
+  <!-- DİĞER -->
+  <section class="view" id="v-diger">
+    <div class="toolbar">
+      <input class="search" id="digerAra" placeholder="🔍 Site ara..." oninput="renderDiger()">
+      <button class="btn ghost" onclick="digerEkle()">➕ Yeni Site Ekle</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th style="width:36px">#</th><th>Kategori</th><th>Site</th><th>Link</th><th>E-posta</th><th>Şifre</th><th></th></tr></thead>
+      <tbody id="digerBody"></tbody>
+    </table>
+    </div>
+  </section>
+  <!-- ÖZEL -->
+  <section class="view" id="v-ozel">
+    <p class="mut" style="margin:0 0 12px">Kart no, IBAN, önemli notlar gibi tamamen özel bilgilerini buraya serbest metin olarak yaz.</p>
+    <textarea id="ozelNot" style="width:100%;min-height:340px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--txt);font-family:inherit;font-size:14px;line-height:1.6" placeholder="Buraya istediğin özel notu yazabilirsin..."></textarea>
+    <div class="toolbar" style="margin-top:10px"><button class="btn" onclick="ozelKaydet()">💾 Kaydet</button><span class="mut" id="ozelDurum"></span></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function get(k,d){try{const v=JSON.parse(localStorage.getItem("kb_"+k));return v===null?d:v}catch(e){return d}}
+function set(k,v){try{localStorage.setItem("kb_"+k,JSON.stringify(v))}catch(e){}}
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+/* ============ GİYİM MAĞAZALARI (Türkiye) ============ */
+const GIYIM_VARSAYILAN=[
+["U.S. Polo Assn.","https://tr.uspoloassn.com/"],
+["H&M","https://www2.hm.com/tr_tr/account"],
+["Zara","https://www.zara.com/tr/"],
+["Pull & Bear","https://www.pullandbear.com/tr/"],
+["Bershka","https://www.bershka.com/tr/"],
+["Stradivarius","https://www.stradivarius.com/tr/"],
+["Nike","https://www.nike.com.tr/"],
+["Adidas","https://www.adidas.com.tr/"],
+["Puma","https://tr.puma.com/"],
+["Vakko","https://www.vakko.com/"],
+["Burberry","https://www.burberry.com/"],
+["Gucci","https://www.gucci.com/tr/tr/"],
+["LC Waikiki","https://www.lcw.com/"],
+["İpekyol","https://www.ipekyol.com.tr/"],
+["Hatemoğlu","https://www.hatemoglu.com/"],
+["Mavi","https://www.mavi.com/"],
+["Boyner","https://www.boyner.com.tr/"],
+["Koton","https://www.koton.com/"],
+["Kiğılı","https://www.kigili.com/"],
+["Kemal Tanca","https://www.kemaltancaonline.com/"],
+["Mudo","https://www.mudo.com.tr/"],
+["Derimod","https://derimod.com.tr/"],
+["Desa","https://www.desa.com.tr/"],
+["Lescon","https://www.lescon.com.tr/"],
+["Loft","https://www.loft.com.tr/"],
+["DeFacto","https://www.defacto.com.tr/"],
+["Yargıcı","https://www.yargici.com/"],
+["LTB Jeans","https://www.ltbjeans.com/"],
+["Jakamen","https://www.jakamen.com/"],
+["Sarar","https://sarar.com/"],
+["Flo","https://www.flo.com.tr/"],
+["Damat Tween","https://www.damattween.com/"],
+["Greyder","https://www.greyder.com.tr/"],
+["Converse","https://www.converse.com.tr/"],
+["Superstep","https://www.superstep.com.tr/"],
+["Avva","https://www.avva.com.tr/"],
+["Oysho","https://www.oysho.com/tr/"],
+["Massimo Dutti","https://www.massimodutti.com/tr/"],
+["Network","https://www.network.com.tr/"],
+["Beymen","https://www.beymen.com/"],
+["Machka","https://www.machka.com.tr/"],
+["Colin's","https://www.colins.com.tr/"],
+["Mango","https://shop.mango.com/tr"],
+["Adil Işık","https://www.adilisik.com.tr/"],
+["Ramsey","https://www.ramsey.com.tr/"],
+["Cacharel","https://www.cacharel.com.tr/"],
+["Sabri Özel","https://www.sabriozel.com/"],
+["Twist","https://www.twist.com.tr/"],
+["Ipekyol Home","https://www.ipekyolhome.com/"],
+["Aeropostale","https://www.aeropostale.com.tr/"],
+["Tommy Hilfiger","https://tr.tommy.com/"],
+["Calvin Klein","https://www.calvinklein.com.tr/"],
+["Levi's","https://www.levi.com.tr/"],
+["Skechers","https://www.skechers.com.tr/"],
+["New Balance","https://www.newbalance.com.tr/"],
+["Under Armour","https://www.underarmour.com.tr/"],
+["Columbia","https://www.columbiasportswear.com.tr/"],
+["The North Face","https://www.thenorthface.com.tr/"],
+["Decathlon","https://www.decathlon.com.tr/"],
+["Sportive","https://www.sportive.com.tr/"],
+["Trendyol","https://www.trendyol.com/"],
+["Hepsiburada","https://www.hepsiburada.com/"],
+["N11","https://www.n11.com/"],
+["Modanisa","https://www.modanisa.com/"],
+["Morhipo","https://www.morhipo.com/"],
+["Bein.com","https://www.bein.com/"],
+["Faik Sönmez","https://www.faiksonmez.com.tr/"],
+["Silk & Cashmere","https://www.silkandcashmere.com/"],
+["Setre","https://www.setre.com.tr/"],
+["Ekol Ayakkabı","https://www.ekol.com.tr/"],
+["Fabrika Store","https://www.fabrikastore.com/"],
+["Panço","https://www.panco.com.tr/"],
+["Collezione","https://www.collezione.com.tr/"],
+["Divarese","https://www.divarese.com/"],
+["Beta Ayakkabı","https://www.beta.com.tr/"],
+["Aeropark","https://www.aeropark.com.tr/"],
+["Rock's Jeans","https://www.rocksjeans.com/"],
+["Sinequanone","https://www.sinequanone.com.tr/"],
+["Vekuva","https://www.vekuva.com/"],
+["Toffs","https://www.toffs.com.tr/"],
+["Ck Underwear","https://www.ck.com.tr/"],
+["Suwen","https://www.suwen.com.tr/"],
+["Penti","https://www.penti.com/"],
+["Blackspade","https://www.blackspade.com.tr/"],
+["Nbb Collection","https://www.nbbcollection.com/"],
+["Waikiki Kids","https://www.lcwaikikikids.com/"]
+];
+function giyimVeri(){return get("giyim",null)||GIYIM_VARSAYILAN.map((g,i)=>({ad:g[0],link:g[1],eposta:"",sifre:""}))}
+function giyimKaydet(v){set("giyim",v)}
+let giyimData=giyimVeri();
+function giyimStat(){
+  const dolu=giyimData.filter(g=>g.eposta||g.sifre).length;
+  $("giyimStat").innerHTML=`<div class="stat"><div class="n">${giyimData.length}</div><div class="l">Toplam Mağaza</div></div>
+  <div class="stat"><div class="n" style="color:var(--ok)">${dolu}</div><div class="l">Üyeliğim Var</div></div>
+  <div class="stat"><div class="n" style="color:var(--mut)">${giyimData.length-dolu}</div><div class="l">Boş / Bilinmiyor</div></div>`;
+}
+function renderGiyim(){
+  giyimStat();
+  const q=($("giyimAra").value||"").toLowerCase();
+  const f=$("giyimFiltre").value;
+  let list=giyimData.map((g,i)=>({...g,idx:i})).filter(g=>{
+    if(q && !g.ad.toLowerCase().includes(q))return false;
+    if(f==="dolu" && !(g.eposta||g.sifre))return false;
+    if(f==="bos" && (g.eposta||g.sifre))return false;
+    return true;
+  });
+  $("giyimBody").innerHTML=list.map((g,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><b>${esc(g.ad)}</b></td>
+    <td><a class="site-link" href="${esc(g.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
+    <td><input class="mini-in" value="${esc(g.eposta)}" placeholder="e-posta" oninput="giyimGuncelle(${g.idx},'eposta',this.value)"></td>
+    <td><input class="mini-in" value="${esc(g.sifre)}" placeholder="şifre" oninput="giyimGuncelle(${g.idx},'sifre',this.value)"></td>
+    <td><span class="badge ${g.eposta||g.sifre?'dolu':'bos'}">${g.eposta||g.sifre?'✓ Dolu':'Boş'}</span></td>
+    <td><button class="iconbtn" onclick="giyimSil(${g.idx})" title="sil">🗑</button></td>
+  </tr>`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
+}
+function giyimGuncelle(idx,alan,val){giyimData[idx][alan]=val;giyimKaydet(giyimData);giyimStat();}
+function giyimSil(idx){if(!confirm("Bu mağazayı silmek istediğine emin misin?"))return;giyimData.splice(idx,1);giyimKaydet(giyimData);renderGiyim();}
+function giyimEkle(){
+  const ad=prompt("Mağaza adı:");if(!ad)return;
+  const link=prompt("Site linki (https://...):")||"";
+  giyimData.push({ad,link,eposta:"",sifre:""});giyimKaydet(giyimData);renderGiyim();
+}
+
+/* ============ DİĞER SİTELER ============ */
+const DIGER_VARSAYILAN=[
+["E-posta / Sosyal","Gmail","https://mail.google.com/"],
+["E-posta / Sosyal","Instagram","https://www.instagram.com/"],
+["E-posta / Sosyal","WhatsApp Web","https://web.whatsapp.com/"],
+["E-posta / Sosyal","LinkedIn","https://www.linkedin.com/"],
+["Bankacılık","İş Bankası","https://www.isbank.com.tr/"],
+["Bankacılık","Garanti BBVA","https://www.garantibbva.com.tr/"],
+["Bankacılık","Ziraat Bankası","https://www.ziraatbank.com.tr/"],
+["Resmi","e-Devlet","https://www.turkiye.gov.tr/"],
+["Resmi","GİB İnteraktif Vergi Dairesi","https://ivd.gib.gov.tr/"],
+["Resmi","SGK e-Bildirge","https://uyg.sgk.gov.tr/"],
+["Kargo","Yurtiçi Kargo","https://www.yurticikargo.com/"],
+["Kargo","Aras Kargo","https://www.araskargo.com.tr/"],
+["Yemek","Yemeksepeti","https://www.yemeksepeti.com/"],
+["Yemek","Getir","https://getir.com/"],
+["Market","Migros Sanal Market","https://www.migros.com.tr/"],
+["Elektronik","MediaMarkt","https://www.mediamarkt.com.tr/"],
+["Elektronik","Teknosa","https://www.teknosa.com/"]
+];
+function digerVeri(){return get("diger",null)||DIGER_VARSAYILAN.map(d=>({kat:d[0],ad:d[1],link:d[2],eposta:"",sifre:""}))}
+function digerKaydet(v){set("diger",v)}
+let digerData=digerVeri();
+function renderDiger(){
+  const q=($("digerAra").value||"").toLowerCase();
+  let list=digerData.map((d,i)=>({...d,idx:i})).filter(d=>!q||d.ad.toLowerCase().includes(q)||d.kat.toLowerCase().includes(q));
+  $("digerBody").innerHTML=list.map((d,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><span class="mut">${esc(d.kat)}</span></td>
+    <td><b>${esc(d.ad)}</b></td>
+    <td><a class="site-link" href="${esc(d.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
+    <td><input class="mini-in" value="${esc(d.eposta)}" placeholder="e-posta" oninput="digerGuncelle(${d.idx},'eposta',this.value)"></td>
+    <td><input class="mini-in" value="${esc(d.sifre)}" placeholder="şifre" oninput="digerGuncelle(${d.idx},'sifre',this.value)"></td>
+    <td><button class="iconbtn" onclick="digerSil(${d.idx})">🗑</button></td>
+  </tr>`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
+}
+function digerGuncelle(idx,alan,val){digerData[idx][alan]=val;digerKaydet(digerData);}
+function digerSil(idx){if(!confirm("Silinsin mi?"))return;digerData.splice(idx,1);digerKaydet(digerData);renderDiger();}
+function digerEkle(){
+  const kat=prompt("Kategori (örn. Bankacılık, Sosyal Medya):")||"Diğer";
+  const ad=prompt("Site adı:");if(!ad)return;
+  const link=prompt("Link:")||"";
+  digerData.push({kat,ad,link,eposta:"",sifre:""});digerKaydet(digerData);renderDiger();
+}
+
+/* ============ ÖZEL NOTLAR ============ */
+$("ozelNot").value=get("ozelNot","");
+function ozelKaydet(){set("ozelNot",$("ozelNot").value);$("ozelDurum").textContent="✓ Kaydedildi";setTimeout(()=>$("ozelDurum").textContent="",1800);}
+
+/* ============ SEKME GEÇİŞİ ============ */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");document.getElementById("v-"+t.dataset.v).classList.add("active");
+});
+
+renderGiyim();renderDiger();
+</script>
+<div id="panelVer" style="position:fixed;bottom:6px;right:8px;font:600 10px/1 system-ui;color:#888;opacity:.6;z-index:99999;pointer-events:none">v1.0</div>
+</body>
+</html>

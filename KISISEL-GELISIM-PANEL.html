@@ -391,6 +391,11 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
   <!-- NOTLAR -->
   <section class="view" id="v-not">
     <div class="card"><h2>📝 Bugünün Notu</h2><textarea id="notArea" rows="8" placeholder="Bugün aklında ne var?"></textarea><div class="row" style="margin-top:10px"><button class="btn alt" onclick="notKaydet()">💾 Kaydet</button><span class="mut" id="notDurum"></span></div></div>
+    <div class="card">
+      <div class="row spread"><h2 style="margin:0">🚫 Kurallarım / Kendime Sözüm</h2><button class="btn ghost" onclick="kuralEkle()">➕ Kural Ekle</button></div>
+      <p class="mut" style="margin:6px 0 12px;font-size:12px">Kendi belirlediğin disiplin kuralların — istediğin zaman düzenle/sil.</p>
+      <div id="kuralListe"></div>
+    </div>
   </section>
   <!-- AYARLAR -->
   <section class="view" id="v-ayar">
@@ -462,11 +467,11 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
-function habitList(){return get("habitList",["Erken kalktım","Spor/yürüyüş yaptım","Sağlıklı beslendim","Erken yattım","Ekran süresini kontrol ettim","Birine iyilik yaptım","Diş fırçaladım","Yüz yıkadım"]);}
+function habitList(){return get("habitList",["Sabah kardiyosu","Spor yaptım","Diyet programına uydum","İş/mesai tamamlandı","Mevzuat öğrendim","Diş fırçaladım (sabah)","Diş fırçaladım (öğle)","Diş fırçaladım (akşam)","Yüz yıkadım (sabah)","Yüz yıkadım (akşam)","Erken yattım"]);}
 function habitEkle(){var v=$("yeniHabit").value.trim();if(!v)return;var l=habitList();if(l.indexOf(v)<0){l.push(v);set("habitList",l);}$("yeniHabit").value="";loadGun();}
 function habitSil(name){if(!confirm('"'+name+'" alışkanlığını sil?'))return;set("habitList",habitList().filter(function(h){return h!==name;}));loadGun();}
 function freezeHak(){return Math.max(0,get("freeze",1));}
@@ -504,8 +509,16 @@ function hatimBilgi(){var tot=kuranToplam();var hatim=Math.floor(tot/HATIM_SAYFA
 
 function loadGun(){
  $("tarih").value=cur;const g=gun();
- $("namaz").innerHTML=VAKIT.map(v=>`<div class="vakit ${g.namaz[v]?'on':''}" data-v="${v}"><div style="font-size:20px;line-height:1.3">${VAKIT_IC[v]}</div>${v}${g.namaz[v]?' ✓':''}</div>`).join("");
- document.querySelectorAll("#namaz .vakit").forEach(el=>el.onclick=()=>{const v=el.dataset.v;const gg=gun();gg.namaz[v]=!gg.namaz[v];gunSet(gg);loadGun();});
+ var YERLER=["Ev","Ofis","Cami","Mescit","Diğer"];
+ $("namaz").innerHTML=VAKIT.map(v=>{
+   var yer=(g.namazYer&&g.namazYer[v])||"";
+   return `<div class="vakit ${g.namaz[v]?'on':''}" data-v="${v}"><div style="font-size:20px;line-height:1.3">${VAKIT_IC[v]}</div>${v}${g.namaz[v]?' ✓':''}
+   ${g.namaz[v]?'<select class="namazYerSec" data-v="'+v+'" onclick="event.stopPropagation()" style="width:100%;margin-top:5px;font-size:10px;padding:2px 3px;border-radius:6px">'
+     +'<option value="">Yer seç...</option>'+YERLER.map(y=>'<option value="'+y+'"'+(yer===y?' selected':'')+'>'+y+'</option>').join("")+'</select>':''}
+   </div>`;
+ }).join("");
+ document.querySelectorAll("#namaz .vakit").forEach(el=>el.onclick=(e)=>{if(e.target.classList.contains("namazYerSec"))return;const v=el.dataset.v;const gg=gun();gg.namaz[v]=!gg.namaz[v];gunSet(gg);loadGun();});
+ document.querySelectorAll(".namazYerSec").forEach(sel=>sel.onchange=function(){const v=this.dataset.v;const gg=gun();if(!gg.namazYer)gg.namazYer={};gg.namazYer[v]=this.value;gunSet(gg);});
  $("kazaN").textContent=g.kaza||0;
  ["kuran","su","kitap"].forEach(k=>$("c-"+k).textContent=g[k]||0);
  $("habits").innerHTML=habitList().map(function(h){var on=g.habits&&g.habits[h];var st=habitStreak(h);return '<div class="hbox '+(on?'on':'')+'" data-h="'+esc(h)+'"><span class="ck">'+(on?'✓':'')+'</span><span style="flex:1">'+esc(h)+'</span>'+(st>0?'<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--panel);border:1px solid var(--line)">🔥'+st+'</span>':'')+'<span class="hdel" data-h="'+esc(h)+'" title="sil" style="color:var(--mut);cursor:pointer;font-size:15px">✕</span></div>';}).join("");
@@ -546,6 +559,33 @@ function uykuKaydet(){const g=gun();g.uyku={yat:$("uyYat").value,kalk:$("uyKalk"
 function uykuSure(u){if(!u||!u.yat||!u.kalk)return null;var a=u.yat.split(":"),b=u.kalk.split(":");var dk=(+b[0]*60+ +b[1])-(+a[0]*60+ +a[1]);if(dk<0)dk+=1440;return dk;}
 function oncelikSet(i,f,val){const g=gun();if(!g.oncelik)g.oncelik=[{t:"",d:false},{t:"",d:false},{t:"",d:false}];g.oncelik[i][f]=val;gunSet(g);if(f==='d')loadGun();}
 function notKaydet(){const g=gun();g.not=$("notArea").value;gunSet(g);$("notDurum").textContent="✓ kaydedildi";setTimeout(()=>$("notDurum").textContent="",1800);}
+
+/* ════════ KURALLARIM ════════ */
+function kuralVarsayilan(){return [
+ "Asitli içecek içmek yok",
+ "Bakkal/paketli ürün tüketimini azalt — soda, su, meyve-sebze önceliğin olsun",
+ "Hamur işi / tatlı yok — bal veya meyve tercih et, tuzu azalt (günde ~5 gr)",
+ "Sosyal medyada günde maksimum 1 saat",
+ "Fuzuli harcama yok — aylık bütçeni aşma",
+ "Akşam 18:00'dan sonra ağır yemek yok — salata/yoğurt/su tercih et",
+ "Haftanın en az 5 günü spora git, eve gelince duş al ve derslerini çalış",
+ "Namazlarını vaktinde kıl — ezandan 3 dk önce alarm kur, abdestini al",
+ "Dün çalıştığın konuyu tekrar etmeden yeni konuya geçme",
+ "Her akşam yatmadan önce Vâkıa Sûresi'ni oku",
+ "Zikir listene sadık kal — vakitler önemli",
+ "Kişisel gelişim listelerine uy, kaçamak yapma",
+ "Her güne yeni bir bilgi öğrenme hedefiyle başla — pes etmek yok",
+ "Günde 3 litre su iç (spor günü +1 litre)",
+ "Muhasebe işlemlerini günü gününe not al, yarının listesini hazırla",
+ "Sabreden, pes etmeyen, yılmayan biri ol — hedeflerine emin adımlarla yürü"
+];}
+function kuralListesi(){return get("kurallar",null)||kuralVarsayilan();}
+function renderKurallar(){
+  var l=kuralListesi();
+  $("kuralListe").innerHTML=l.map((k,i)=>'<div class="row" style="align-items:flex-start;gap:8px;padding:9px 11px;border-radius:10px;background:var(--panel2);margin-bottom:6px"><span style="flex:none;font-weight:800;color:var(--acc)">'+(i+1)+'.</span><span style="flex:1;font-size:13px;line-height:1.5">'+esc(k)+'</span><button class="iconbtn" onclick="kuralSil('+i+')" style="flex:none;padding:4px 8px;font-size:11px">🗑</button></div>').join("");
+}
+function kuralEkle(){var v=prompt("Yeni kuralını yaz:");if(!v)return;var l=kuralListesi();l.push(v);set("kurallar",l);renderKurallar();}
+function kuralSil(i){if(!confirm("Bu kuralı silmek istiyor musun?"))return;var l=kuralListesi();l.splice(i,1);set("kurallar",l);renderKurallar();}
 
 /* ---- ZİKİR ---- */
 function zikirReset(){set("zikir_"+cur+"_"+$("zikirSec").value,0);renderZikir();}
