@@ -197,6 +197,29 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
         <div class="goals" id="goalList"></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
+        <h2>💳 Sabit Gider / Abonelik Takibi</h2>
+        <div class="row" style="margin-bottom:14px">
+          <div class="fld"><label>ADI</label><input id="abonAdi" placeholder="ör. Netflix, Kira, Taksit…" /></div>
+          <div class="fld" style="max-width:130px"><label>TUTAR (₺)</label><input id="abonTutar" type="number" min="0" placeholder="0" /></div>
+          <div class="fld" style="max-width:130px"><label>AYIN GÜNÜ</label><input id="abonGun" type="number" min="1" max="28" placeholder="1-28" /></div>
+          <button class="btn btn-g" id="abonEkle">Ekle</button>
+        </div>
+        <div id="abonListe"></div>
+        <div style="margin-top:10px;font-weight:700" id="abonToplam"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>📒 Cari Hesap (Borç / Alacak)</h2>
+        <div class="row" style="margin-bottom:14px">
+          <div class="fld"><label>KİŞİ/KURUM</label><input id="cariIsim" placeholder="ör. Ahmet, XYZ Ltd…" /></div>
+          <div class="fld" style="max-width:130px"><label>TUTAR (₺)</label><input id="cariTutar" type="number" min="0" placeholder="0" /></div>
+          <div class="fld" style="max-width:130px"><label>TÜR</label>
+            <select id="cariTip"><option value="borc">Borcum var</option><option value="alacak">Alacağım var</option></select>
+          </div>
+          <button class="btn btn-g" id="cariEkle">Ekle</button>
+        </div>
+        <div id="cariListe"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
         <h2>⚠️ Aylık Bütçe Limiti</h2>
         <div class="row" style="margin-bottom:10px">
           <div class="fld" style="max-width:160px"><label>AYLIK GİDER LİMİTİ (₺)</label><input id="butceLimit" type="number" min="0" placeholder="ör. 15000" /></div>
@@ -254,7 +277,7 @@ function renderIslemler(){
       <td style="font-size:12px;color:var(--mut)">${item.kategori}</td>
       <td>${badge}</td>
       <td style="text-align:right;font-weight:800" class="${renk}">${item.tip==="gider"?"-":"+"} ${fmt(item.tutar)}</td>
-      <td><button class="del-btn" data-idx="${idx}">✕</button></td>
+      <td>${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}<button class="del-btn" data-idx="${idx}">✕</button></td>
     </tr>`;
   }).join("");
   document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{islemler.splice(+b.dataset.idx,1);save("muh_islemler",islemler);render()});
@@ -343,7 +366,44 @@ function butceRender(){
     +(yuzde>=100?'<div style="color:#f87171;margin-top:6px">🚨 Bu ay bütçe limitini aştın!</div>':yuzde>=80?'<div style="color:#fbbf24;margin-top:6px">⚠️ Limitin %80\'ine yaklaştın.</div>':'');
 }
 $("butceKaydet").onclick=()=>{save("muh_butceLimit",+$("butceLimit").value||0);butceRender();};
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender()}
+
+/* ───── ABONELİK / SABİT GİDER ───── */
+let abonelikler=load("muh_abonelik")||[];
+function abonRender(){
+  if(!abonelikler.length){$("abonListe").innerHTML='<div style="color:var(--mut);font-size:13px;padding:8px 0">Henüz sabit gider eklenmedi</div>';$("abonToplam").textContent="";return;}
+  $("abonListe").innerHTML=abonelikler.map((a,i)=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border,#2d3a4d)">
+    <span>💳 ${a.ad} <span style="color:var(--mut);font-size:12px">— her ayın ${a.gun}. günü</span></span>
+    <span style="font-weight:700">${fmt(a.tutar)} <button class="del-btn" data-ai="${i}" style="margin-left:8px">✕</button></span>
+  </div>`).join("");
+  document.querySelectorAll("[data-ai]").forEach(b=>b.onclick=()=>{abonelikler.splice(+b.dataset.ai,1);save("muh_abonelik",abonelikler);abonRender();});
+  const toplam=abonelikler.reduce((s,a)=>s+(+a.tutar||0),0);
+  $("abonToplam").textContent="Aylık toplam sabit gider: "+fmt(toplam);
+}
+$("abonEkle").onclick=()=>{
+  const ad=$("abonAdi").value.trim(),tutar=+$("abonTutar").value,gun=+$("abonGun").value;
+  if(!ad||!tutar||!gun)return;
+  abonelikler.push({ad,tutar,gun});save("muh_abonelik",abonelikler);
+  $("abonAdi").value="";$("abonTutar").value="";$("abonGun").value="";abonRender();
+};
+
+/* ───── CARİ HESAP ───── */
+let cariHesap=load("muh_cari")||[];
+function cariRender(){
+  if(!cariHesap.length){$("cariListe").innerHTML='<div style="color:var(--mut);font-size:13px;padding:8px 0">Henüz cari kayıt yok</div>';return;}
+  $("cariListe").innerHTML=cariHesap.map((c,i)=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border,#2d3a4d)">
+    <span>${c.tip==="borc"?"🔴 Borcum:":"🟢 Alacağım:"} ${c.isim}</span>
+    <span style="font-weight:700">${fmt(c.tutar)} <button class="del-btn" data-ci="${i}" style="margin-left:8px">✕</button></span>
+  </div>`).join("");
+  document.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{cariHesap.splice(+b.dataset.ci,1);save("muh_cari",cariHesap);cariRender();});
+}
+$("cariEkle").onclick=()=>{
+  const isim=$("cariIsim").value.trim(),tutar=+$("cariTutar").value,tip=$("cariTip").value;
+  if(!isim||!tutar)return;
+  cariHesap.push({isim,tutar,tip});save("muh_cari",cariHesap);
+  $("cariIsim").value="";$("cariTutar").value="";cariRender();
+};
+
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender()}
 
 $("ekleBtn").onclick=()=>{
   const tip=$("tipSel").value;

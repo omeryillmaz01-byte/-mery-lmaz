@@ -181,8 +181,10 @@ body{background:var(--bg);transition:background .4s}
     </div>
     <span class="chip"><span class="dot"></span> <span id="tarih">–</span></span>
     <span class="chip">⚡ <b>v400</b></span>
+    <span class="chip" id="havaChip" style="cursor:pointer" title="Yenilemek için tıkla">🌤️ –</span>
     <button class="gbtn" id="bildirimBtn" title="Bildirimler">🔔</button>
     <button class="gbtn" id="sesBtn" title="Sesli komut: 'muhasebe panelini aç' de">🎙️</button>
+    <button class="gbtn" id="dilBtn" title="Dil / Language">TR</button>
     <button class="gbtn" id="themeBtn">🌙</button>
   </div>
 
@@ -3868,6 +3870,19 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
 <div class="tab-pane" id="tabCalisma">
   <div class="section-h"><h3>📚 Konu Çalışması</h3><span class="line"></span></div>
   <div class="topics-grid" id="calismaGrid"></div>
+
+  <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-top:24px">
+    <h4 style="margin-bottom:14px;font-size:15px;font-weight:800">✍️ Kendi Sorunu Ekle</h4>
+    <div style="display:grid;gap:10px;max-width:600px">
+      <select id="ozelKonu"></select>
+      <textarea id="ozelSoru" rows="2" placeholder="Soru metni" style="padding:8px;border-radius:8px;border:1px solid var(--border-soft)"></textarea>
+      <input id="ozelCevap" placeholder="Cevap" style="padding:8px;border-radius:8px;border:1px solid var(--border-soft)">
+      <input id="ozelAnahtar" placeholder="Anahtar kavram (opsiyonel)" style="padding:8px;border-radius:8px;border:1px solid var(--border-soft)">
+      <input id="ozelPuf" placeholder="Püf noktası (opsiyonel)" style="padding:8px;border-radius:8px;border:1px solid var(--border-soft)">
+      <button class="btn btn-primary" style="width:fit-content" onclick="App.ozelSoruEkle()">➕ Ekle</button>
+    </div>
+    <div id="ozelSoruListe" style="margin-top:16px"></div>
+  </div>
 </div>
 
 <!-- ════════ GEÇMİŞ YILLAR TAB ════════ -->
@@ -4169,10 +4184,62 @@ const App = {
       });
     });
     try{localStorage.setItem('kgkNotlar', JSON.stringify(NOTLAR));}catch(e){}
+    this.ozelSorulariEkle();
     this.konulariCiz();
     this.istatistikGuncelle();
     this.guncelle();
     this.toast('✓ Hazır soru bankası yüklendi · Excel ile genişletebilirsin');
+  },
+
+  ozelSorular(){try{return JSON.parse(localStorage.getItem('kgkOzelSorular')||'{}')}catch(e){return{}}},
+  ozelSorulariEkle(){
+    const oz=this.ozelSorular();
+    Object.keys(oz).forEach(konu=>{
+      if(!SHEETS[konu])SHEETS[konu]=[];
+      oz[konu].forEach(s=>SHEETS[konu].push({q:s.q,a:s.a,added:true}));
+      oz[konu].forEach((s,idx)=>{
+        const key=\`\${konu}-\${(SHEETS[konu].length-oz[konu].length+idx)}\`;
+        if(s.anahtar||s.puf)NOTLAR[key]={anahtar:s.anahtar||'',puf:s.puf||''};
+      });
+    });
+    try{localStorage.setItem('kgkNotlar', JSON.stringify(NOTLAR));}catch(e){}
+  },
+  ozelKonuSecimDoldur(){
+    const sel=document.getElementById('ozelKonu');if(!sel)return;
+    sel.innerHTML=KGK_KONULAR.map(k=>\`<option value="\${k.ad}">\${k.ic} \${k.ad}</option>\`).join('');
+  },
+  ozelSoruEkle(){
+    const konu=document.getElementById('ozelKonu').value;
+    const q=document.getElementById('ozelSoru').value.trim();
+    const a=document.getElementById('ozelCevap').value.trim();
+    const anahtar=document.getElementById('ozelAnahtar').value.trim();
+    const puf=document.getElementById('ozelPuf').value.trim();
+    if(!q||!a){this.toast('Soru ve cevap zorunlu','err');return;}
+    const oz=this.ozelSorular();
+    if(!oz[konu])oz[konu]=[];
+    oz[konu].push({q,a,anahtar,puf});
+    localStorage.setItem('kgkOzelSorular', JSON.stringify(oz));
+    document.getElementById('ozelSoru').value='';document.getElementById('ozelCevap').value='';
+    document.getElementById('ozelAnahtar').value='';document.getElementById('ozelPuf').value='';
+    this.ozelSorulariEkle();this.konulariCiz();this.ozelSoruListesiCiz();
+    this.toast('✓ Soru eklendi');
+  },
+  ozelSoruListesiCiz(){
+    const el=document.getElementById('ozelSoruListe');if(!el)return;
+    const oz=this.ozelSorular();
+    const satirlar=[];
+    Object.keys(oz).forEach(konu=>oz[konu].forEach((s,idx)=>satirlar.push({konu,idx,...s})));
+    if(!satirlar.length){el.innerHTML='<p style="color:var(--text-dim)">Henüz kendi sorun yok.</p>';return;}
+    el.innerHTML='<h4 style="margin-bottom:10px">Eklediğin Sorular ('+satirlar.length+')</h4>'+satirlar.map(s=>\`
+      <div style="padding:10px;border-bottom:1px solid var(--border-soft)">
+        <b>\${s.konu}</b> — \${s.q}
+        <button style="float:right;color:var(--err);background:none;border:none;cursor:pointer" onclick="App.ozelSoruSil('\${s.konu}',\${s.idx})">✕</button>
+      </div>\`).join('');
+  },
+  ozelSoruSil(konu,idx){
+    const oz=this.ozelSorular();oz[konu].splice(idx,1);
+    localStorage.setItem('kgkOzelSorular', JSON.stringify(oz));
+    this.hazirSorulariYukle();this.ozelSoruListesiCiz();
   },
 
   saatTik(){
@@ -4245,6 +4312,7 @@ const App = {
         }catch(e){
           this.toast('Veri çok büyük, geçici olarak yüklendi (otomatik kaydedilmedi)','err');
         }
+        this.ozelSorulariEkle();
         this.konulariCiz();
         this.istatistikGuncelle();
         this.guncelle();
@@ -4292,7 +4360,7 @@ const App = {
     this.guncelle();
   },
 
-  calismaHazirla(){this.konulariCiz()},
+  calismaHazirla(){this.konulariCiz();this.ozelKonuSecimDoldur();this.ozelSoruListesiCiz();},
 
   // ─── İSTATİSTİK ───
   istatistikGuncelle(){
@@ -4509,12 +4577,20 @@ const App = {
   kapat(){
     document.getElementById('solverOverlay').classList.remove('show');
     if(this.modal.timer){
-      ISTATISTIK.sure=(ISTATISTIK.sure||0)+Math.floor((Date.now()-this.modal.baslangic)/1000);
+      const gecenSure=Math.floor((Date.now()-this.modal.baslangic)/1000);
+      ISTATISTIK.sure=(ISTATISTIK.sure||0)+gecenSure;
       localStorage.setItem('kgkIstatistik', JSON.stringify(ISTATISTIK));
+      if(this.modal.konuAdi)this.konuZamanEkle(this.modal.konuAdi,gecenSure);
       clearInterval(this.modal.timer);
     }
     this.konulariCiz();
     this.istatistikGuncelle();
+  },
+
+  konuZaman(){try{return JSON.parse(localStorage.getItem('kgkKonuZaman')||'{}')}catch(e){return{}}},
+  konuZamanEkle(konuAdi,sn){
+    const z=this.konuZaman();z[konuAdi]=(z[konuAdi]||0)+sn;
+    localStorage.setItem('kgkKonuZaman', JSON.stringify(z));
   },
 
   // ─── GEÇMİŞ YILLAR ───
@@ -4658,7 +4734,13 @@ const App = {
         return \`<div style="background:rgba(239,68,68,.08);border-left:4px solid var(--err);border-radius:12px;padding:14px 18px;margin-bottom:20px">
           <b>🎯 En zayıf konun:</b> \${enZayif.ic} \${enZayif.ad} — %\${y} başarı. Buraya odaklan!</div>\`;
       })()}
-      <h4 style="margin-bottom:14px;font-size:18px;font-weight:800">Konu Bazında Başarı</h4>
+      <h4 style="margin-bottom:14px;font-size:18px;font-weight:800">⏱ Konu Bazında Çalışma Süresi</h4>
+      \${(()=>{
+        const zaman=this.konuZaman();
+        const fmtSure=sn=>{const s=Math.round(sn/60);return s<60?s+' dk':Math.floor(s/60)+' sa '+(s%60)+' dk';};
+        return KGK_KONULAR.map(k=>\`<div class="row" style="justify-content:space-between;font-size:13px;padding:6px 0"><span>\${k.ic} \${k.ad}</span><b>\${fmtSure(zaman[k.ad]||0)}</b></div>\`).join('');
+      })()}
+      <h4 style="margin:24px 0 14px;font-size:18px;font-weight:800">Konu Bazında Başarı</h4>
       \${KGK_KONULAR.map(k=>{
         const s=konuStat[k.ad];
         const y=s.t?Math.round(s.d/s.t*100):0;
@@ -6181,6 +6263,7 @@ th{color:var(--mut);font-weight:700}
     <button class="tab" data-view="foto">📸 Foto Analiz</button>
     <button class="tab" data-view="ogun">🍽️ Kalori (Öğün)</button>
     <button class="tab" data-view="vucut">💪 Vücut Analizi</button>
+    <button class="tab" data-view="menu">🍽️ Haftalık Menü</button>
   </div>
   <button class="iconbtn" id="themeBtn" title="Tema">🌙</button>
 </header>
@@ -6445,6 +6528,21 @@ th{color:var(--mut);font-weight:700}
   </div>
 </section>
 
+<!-- ============ HAFTALIK MENÜ / ÖĞÜN PLANLAYICI ============ -->
+<section class="view" id="v-menu">
+  <div class="card">
+    <h2>🍽️ Haftalık Öğün Planı</h2>
+    <p class="notice">Her gün için kahvaltı/öğle/akşam ne yiyeceğini yaz — hazır tarif değil, senin kendi planın.</p>
+    <div id="menuPlan" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+    <div class="row" style="margin-top:12px"><button class="btn alt" id="menuKaydet">💾 Planı Kaydet</button><span class="mut" id="menuDurum"></span></div>
+  </div>
+  <div class="card">
+    <h2>🛒 Alışveriş Listesi</h2>
+    <textarea id="menuAlisveris" rows="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:inherit;font-family:inherit" placeholder="ör. Yumurta, tavuk göğsü, yulaf, sebze…"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="alisverisKaydet">💾 Kaydet</button></div>
+  </div>
+</section>
+
 <!-- Egzersiz detay penceresi -->
 <div id="ex-modal" onclick="if(event.target===this)exKapat()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:480px;width:100%;max-height:88vh;overflow:auto;padding:20px;box-shadow:var(--shadow)">
@@ -6461,6 +6559,29 @@ const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 function get(k,def){try{return JSON.parse(localStorage.getItem(LS+k))??def;}catch(e){return def;}}
 function set(k,v){localStorage.setItem(LS+k,JSON.stringify(v));}
 
+/* ───── HAFTALIK MENÜ ───── */
+const MENU_GUNLER=["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+function renderMenu(){
+  const plan=get("menuPlan",{});
+  $("menuPlan").innerHTML=MENU_GUNLER.map(g=>\`
+    <div class="grid g3" style="align-items:center;gap:8px">
+      <b>\${g}</b>
+      <input data-g="\${g}" data-o="kahvalti" placeholder="🍳 Kahvaltı" value="\${(plan[g]&&plan[g].kahvalti||"").replace(/"/g,'&quot;')}">
+      <input data-g="\${g}" data-o="ogle" placeholder="🍲 Öğle" value="\${(plan[g]&&plan[g].ogle||"").replace(/"/g,'&quot;')}">
+      <input data-g="\${g}" data-o="aksam" placeholder="🌙 Akşam" value="\${(plan[g]&&plan[g].aksam||"").replace(/"/g,'&quot;')}">
+    </div>\`).join("");
+  $("menuAlisveris").value=get("alisveris","");
+}
+$("menuKaydet").onclick=()=>{
+  const plan={};
+  document.querySelectorAll("#menuPlan input").forEach(inp=>{
+    if(!plan[inp.dataset.g])plan[inp.dataset.g]={};
+    plan[inp.dataset.g][inp.dataset.o]=inp.value;
+  });
+  set("menuPlan",plan);$("menuDurum").textContent="✓ Kaydedildi";setTimeout(()=>$("menuDurum").textContent="",2000);
+};
+$("alisverisKaydet").onclick=()=>{set("alisveris",$("menuAlisveris").value);};
+
 /* ---------- Tabs ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
@@ -6471,6 +6592,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.view==="foto")renderFoto();
   if(t.dataset.view==="ogun")renderOgun();
   if(t.dataset.view==="vucut")renderVucut();
+  if(t.dataset.view==="menu")renderMenu();
 });
 /* ---------- Theme ---------- */
 $("themeBtn").onclick=()=>{const b=document.body;const n=b.dataset.theme==="dark"?"light":"dark";b.dataset.theme=n;$("themeBtn").textContent=n==="dark"?"🌙":"☀️";set("theme",n);};
@@ -7237,6 +7359,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <button class="tab" data-v="hedef">🎯 Hedefler</button>
     <button class="tab" data-v="analiz">📊 Analiz</button>
     <button class="tab" data-v="basari">🏅 Başarım</button>
+    <button class="tab" data-v="kitap">📚 Kitaplar</button>
     <button class="tab" data-v="not">📝 Notlar</button>
     <button class="tab" data-v="ayar">⚙️ Ayarlar</button>
   </div>
@@ -7414,6 +7537,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
       <div class="namaz-grid" id="namazVakitler"></div>
       <div class="namaz-sayac" id="namazSayac" style="margin-top:14px"></div>
     </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px">🕋 Kıble Yönü</h2>
+      <div id="kibleIc" class="mut">Şehir seçip "Namaz Vakti" butonuna basınca kıble açısı da hesaplanır.</div>
+    </div>
     <div class="card" id="ramazanKart" style="display:none">
       <h2 style="margin:0 0 10px">🌙 Ramazan</h2>
       <div id="ramazanIc"></div>
@@ -7475,6 +7602,20 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <div class="row spread" style="margin-bottom:12px"><b>🏆 Başarım & Karne</b><button class="btn ghost" onclick="window.print()">🖨️ Yazdır / PDF</button></div>
     <div class="card"><h2>🏅 Rozetler</h2><div class="rozetler" id="rozetGrid"></div></div>
     <div class="card"><h2>🗓️ Yıllık Karne (<span id="karneYil"></span>)</h2><div class="grid g3" id="karneStat"></div></div>
+  </section>
+  <!-- KİTAPLAR -->
+  <section class="view" id="v-kitap">
+    <div class="card">
+      <div class="row spread"><h2 style="margin:0">📚 Kitap Okuma Takibi</h2><span class="mut">Yıllık hedef: <input id="kitapHedef" type="number" min="1" style="width:60px;display:inline-block" value="12"> kitap</span></div>
+      <div class="row" style="gap:6px;margin:12px 0;flex-wrap:wrap">
+        <input id="kitapAd" placeholder="Kitap adı" style="flex:2">
+        <input id="kitapYazar" placeholder="Yazar" style="flex:1">
+        <input id="kitapSayfa" type="number" placeholder="Toplam sayfa" style="width:110px">
+        <button class="btn" onclick="kitapEkle()">➕ Ekle</button>
+      </div>
+      <div class="mut" id="kitapOzet" style="margin-bottom:10px"></div>
+      <div id="kitapListe"></div>
+    </div>
   </section>
   <!-- NOTLAR -->
   <section class="view" id="v-not">
@@ -7555,7 +7696,7 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="kitap")renderKitap();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
@@ -8008,6 +8149,51 @@ function hicriGoster(){
     })
     .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
 }
+/* ───── KİTAP TAKİBİ ───── */
+function kitapListesi(){return get("kitaplar",[]);}
+function kitapEkle(){
+  var ad=$("kitapAd").value.trim(),yazar=$("kitapYazar").value.trim(),sayfa=+$("kitapSayfa").value||0;
+  if(!ad)return;
+  var l=kitapListesi();l.push({ad,yazar,sayfaToplam:sayfa,sayfaOkunan:0,durum:"okunuyor",baslangic:todayStr()});
+  set("kitaplar",l);
+  $("kitapAd").value="";$("kitapYazar").value="";$("kitapSayfa").value="";
+  renderKitap();
+}
+function kitapIlerlemeGuncelle(i,val){
+  var l=kitapListesi();l[i].sayfaOkunan=Math.max(0,Math.min(l[i].sayfaToplam||val,+val));
+  if(l[i].sayfaToplam&&l[i].sayfaOkunan>=l[i].sayfaToplam){l[i].durum="bitti";l[i].bitis=todayStr();}
+  set("kitaplar",l);renderKitap();
+}
+function kitapSil(i){var l=kitapListesi();l.splice(i,1);set("kitaplar",l);renderKitap();}
+function renderKitap(){
+  $("kitapHedef").value=get("kitapHedefYil",12);
+  $("kitapHedef").onchange=function(){set("kitapHedefYil",+this.value);renderKitap();};
+  var l=kitapListesi();
+  var buYilBitenler=l.filter(function(k){return k.durum==="bitti"&&k.bitis&&k.bitis.slice(0,4)===String(new Date().getFullYear());}).length;
+  var hedef=get("kitapHedefYil",12);
+  $("kitapOzet").textContent="Bu yıl "+buYilBitenler+" / "+hedef+" kitap bitirdin ("+Math.round(buYilBitenler/hedef*100)+"%)";
+  $("kitapListe").innerHTML=l.map(function(k,i){
+    var yuzde=k.sayfaToplam?Math.round(k.sayfaOkunan/k.sayfaToplam*100):0;
+    return '<div class="card" style="padding:12px;margin-bottom:8px">'
+      +'<div class="row spread"><b>'+(k.durum==="bitti"?"✅ ":"📖 ")+k.ad+'</b><button class="iconbtn" onclick="kitapSil('+i+')">✕</button></div>'
+      +(k.yazar?'<div class="mut" style="font-size:12px">'+k.yazar+'</div>':'')
+      +(k.sayfaToplam?'<div style="margin-top:6px"><input type="number" style="width:90px" value="'+k.sayfaOkunan+'" onchange="kitapIlerlemeGuncelle('+i+',this.value)"> / '+k.sayfaToplam+' sayfa (%'+yuzde+')</div>'
+        +'<div class="bar" style="margin-top:4px"><i style="width:'+yuzde+'%"></i></div>':'')
+      +'</div>';
+  }).join("")||'<div class="mut">Henüz kitap eklenmedi.</div>';
+}
+function kibleHesapla(lat,lng){
+  var kabeLat=21.4225*Math.PI/180,kabeLng=39.8262*Math.PI/180;
+  var phi1=lat*Math.PI/180,phi2=kabeLat,dLambda=(kabeLng-lng*Math.PI/180);
+  var y=Math.sin(dLambda)*Math.cos(phi2);
+  var x=Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(dLambda);
+  var brg=(Math.atan2(y,x)*180/Math.PI+360)%360;
+  var yonler=["Kuzey","Kuzeydoğu","Doğu","Güneydoğu","Güney","Güneybatı","Batı","Kuzeybatı"];
+  var yon=yonler[Math.round(brg/45)%8];
+  $("kibleIc").innerHTML='<div style="font-size:42px;text-align:center;transform:rotate('+brg+'deg);transition:.3s">🧭</div>'+
+    '<div style="text-align:center;font-size:15px;margin-top:6px"><b>'+Math.round(brg)+'°</b> — kuzeyden itibaren saat yönünde, yaklaşık <b>'+yon+'</b> istikameti</div>'+
+    '<div class="mut" style="text-align:center;font-size:11px;margin-top:6px">Pusulanı kuzeye hizala, sonra bu açı kadar sağa dön.</div>';
+}
 function namazYukle(){
   var sehir=($("islamiSehir").value||"Istanbul").trim();
   set("islamiSehir",sehir);
@@ -8040,6 +8226,8 @@ function namazYukle(){
       }).join("");
       // bir sonraki vakte sayaç
       namazSayacBaslat(vakitler,aktifIdx);
+      // kıble yönü
+      if(d.data.meta&&d.data.meta.latitude)kibleHesapla(d.data.meta.latitude,d.data.meta.longitude);
     })
     .catch(()=>{
       $("namazVakitler").innerHTML='<div class="mut" style="grid-column:1/-1;text-align:center;padding:14px;color:#e67e22">⚠ Namaz vakitleri yüklenemedi (internet gerekli). Şehir adını İngilizce yaz: Istanbul, Ankara, Izmir...</div>';
@@ -9134,6 +9322,29 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
         <div class="goals" id="goalList"></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
+        <h2>💳 Sabit Gider / Abonelik Takibi</h2>
+        <div class="row" style="margin-bottom:14px">
+          <div class="fld"><label>ADI</label><input id="abonAdi" placeholder="ör. Netflix, Kira, Taksit…" /></div>
+          <div class="fld" style="max-width:130px"><label>TUTAR (₺)</label><input id="abonTutar" type="number" min="0" placeholder="0" /></div>
+          <div class="fld" style="max-width:130px"><label>AYIN GÜNÜ</label><input id="abonGun" type="number" min="1" max="28" placeholder="1-28" /></div>
+          <button class="btn btn-g" id="abonEkle">Ekle</button>
+        </div>
+        <div id="abonListe"></div>
+        <div style="margin-top:10px;font-weight:700" id="abonToplam"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>📒 Cari Hesap (Borç / Alacak)</h2>
+        <div class="row" style="margin-bottom:14px">
+          <div class="fld"><label>KİŞİ/KURUM</label><input id="cariIsim" placeholder="ör. Ahmet, XYZ Ltd…" /></div>
+          <div class="fld" style="max-width:130px"><label>TUTAR (₺)</label><input id="cariTutar" type="number" min="0" placeholder="0" /></div>
+          <div class="fld" style="max-width:130px"><label>TÜR</label>
+            <select id="cariTip"><option value="borc">Borcum var</option><option value="alacak">Alacağım var</option></select>
+          </div>
+          <button class="btn btn-g" id="cariEkle">Ekle</button>
+        </div>
+        <div id="cariListe"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
         <h2>⚠️ Aylık Bütçe Limiti</h2>
         <div class="row" style="margin-bottom:10px">
           <div class="fld" style="max-width:160px"><label>AYLIK GİDER LİMİTİ (₺)</label><input id="butceLimit" type="number" min="0" placeholder="ör. 15000" /></div>
@@ -9191,7 +9402,7 @@ function renderIslemler(){
       <td style="font-size:12px;color:var(--mut)">\${item.kategori}</td>
       <td>\${badge}</td>
       <td style="text-align:right;font-weight:800" class="\${renk}">\${item.tip==="gider"?"-":"+"} \${fmt(item.tutar)}</td>
-      <td><button class="del-btn" data-idx="\${idx}">✕</button></td>
+      <td>\${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}<button class="del-btn" data-idx="\${idx}">✕</button></td>
     </tr>\`;
   }).join("");
   document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{islemler.splice(+b.dataset.idx,1);save("muh_islemler",islemler);render()});
@@ -9280,7 +9491,44 @@ function butceRender(){
     +(yuzde>=100?'<div style="color:#f87171;margin-top:6px">🚨 Bu ay bütçe limitini aştın!</div>':yuzde>=80?'<div style="color:#fbbf24;margin-top:6px">⚠️ Limitin %80\\'ine yaklaştın.</div>':'');
 }
 $("butceKaydet").onclick=()=>{save("muh_butceLimit",+$("butceLimit").value||0);butceRender();};
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender()}
+
+/* ───── ABONELİK / SABİT GİDER ───── */
+let abonelikler=load("muh_abonelik")||[];
+function abonRender(){
+  if(!abonelikler.length){$("abonListe").innerHTML='<div style="color:var(--mut);font-size:13px;padding:8px 0">Henüz sabit gider eklenmedi</div>';$("abonToplam").textContent="";return;}
+  $("abonListe").innerHTML=abonelikler.map((a,i)=>\`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border,#2d3a4d)">
+    <span>💳 \${a.ad} <span style="color:var(--mut);font-size:12px">— her ayın \${a.gun}. günü</span></span>
+    <span style="font-weight:700">\${fmt(a.tutar)} <button class="del-btn" data-ai="\${i}" style="margin-left:8px">✕</button></span>
+  </div>\`).join("");
+  document.querySelectorAll("[data-ai]").forEach(b=>b.onclick=()=>{abonelikler.splice(+b.dataset.ai,1);save("muh_abonelik",abonelikler);abonRender();});
+  const toplam=abonelikler.reduce((s,a)=>s+(+a.tutar||0),0);
+  $("abonToplam").textContent="Aylık toplam sabit gider: "+fmt(toplam);
+}
+$("abonEkle").onclick=()=>{
+  const ad=$("abonAdi").value.trim(),tutar=+$("abonTutar").value,gun=+$("abonGun").value;
+  if(!ad||!tutar||!gun)return;
+  abonelikler.push({ad,tutar,gun});save("muh_abonelik",abonelikler);
+  $("abonAdi").value="";$("abonTutar").value="";$("abonGun").value="";abonRender();
+};
+
+/* ───── CARİ HESAP ───── */
+let cariHesap=load("muh_cari")||[];
+function cariRender(){
+  if(!cariHesap.length){$("cariListe").innerHTML='<div style="color:var(--mut);font-size:13px;padding:8px 0">Henüz cari kayıt yok</div>';return;}
+  $("cariListe").innerHTML=cariHesap.map((c,i)=>\`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border,#2d3a4d)">
+    <span>\${c.tip==="borc"?"🔴 Borcum:":"🟢 Alacağım:"} \${c.isim}</span>
+    <span style="font-weight:700">\${fmt(c.tutar)} <button class="del-btn" data-ci="\${i}" style="margin-left:8px">✕</button></span>
+  </div>\`).join("");
+  document.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{cariHesap.splice(+b.dataset.ci,1);save("muh_cari",cariHesap);cariRender();});
+}
+$("cariEkle").onclick=()=>{
+  const isim=$("cariIsim").value.trim(),tutar=+$("cariTutar").value,tip=$("cariTip").value;
+  if(!isim||!tutar)return;
+  cariHesap.push({isim,tutar,tip});save("muh_cari",cariHesap);
+  $("cariIsim").value="";$("cariTutar").value="";cariRender();
+};
+
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender()}
 
 $("ekleBtn").onclick=()=>{
   const tip=$("tipSel").value;
@@ -9853,6 +10101,49 @@ function rozetRender(){
     rozetler.map(r=>`<div class="mini-card" style="opacity:${r.aktif?1:.4}"><h4>${r.ad}</h4><div class="mini-row">${r.ac}</div></div>`).join("");
 }
 rozetRender();
+
+/* ───── HAVA DURUMU ───── */
+const HAVA_KOD={0:"☀️ Açık",1:"🌤️ Az bulutlu",2:"⛅ Parçalı bulutlu",3:"☁️ Kapalı",45:"🌫️ Sisli",48:"🌫️ Kırağı",
+ 51:"🌦️ Çisenti",61:"🌧️ Yağmurlu",63:"🌧️ Yağmurlu",65:"🌧️ Şiddetli yağmur",71:"🌨️ Karlı",73:"🌨️ Karlı",75:"❄️ Yoğun kar",
+ 80:"🌦️ Sağanak",95:"⛈️ Fırtına"};
+function havaYukle(){
+  $("havaChip").textContent="🌤️ Yükleniyor…";
+  const sehir=localStorage.getItem("oy_havaSehir")||"İstanbul";
+  const koord=localStorage.getItem("oy_havaKoord")||"41.01,28.97";
+  const [lat,lon]=koord.split(",");
+  fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&current=temperature_2m,weather_code").then(r=>r.json()).then(d=>{
+    const c=d.current;if(!c)throw 0;
+    const durum=HAVA_KOD[c.weather_code]||"🌡️";
+    $("havaChip").textContent=durum+" "+Math.round(c.temperature_2m)+"°C · "+sehir;
+  }).catch(()=>{$("havaChip").textContent="🌤️ Alınamadı";});
+}
+$("havaChip").onclick=()=>{
+  const yeni=prompt("Şehir adı ve koordinat gir (lat,lon) — örn: Ankara / 39.92,32.85","İstanbul / 41.01,28.97");
+  if(yeni&&yeni.includes("/")){
+    const [sehir,koord]=yeni.split("/").map(s=>s.trim());
+    localStorage.setItem("oy_havaSehir",sehir);localStorage.setItem("oy_havaKoord",koord);
+  }
+  havaYukle();
+};
+havaYukle();
+
+/* ───── DİL (TR/EN) — hub arayüzü ───── */
+const CEVIRI={
+  "PANELLER":"PANELS","BUGÜN":"TODAY","HAFTALIK ÖZET":"WEEKLY SUMMARY","HATIRLATICILAR":"REMINDERS",
+  "YEDEKLEME":"BACKUP","✅ YAPILACAKLAR":"✅ TO-DO","🎯 HEDEF TAKİP":"🎯 GOAL TRACKING",
+  "📅 BİRLEŞİK TAKVİM":"📅 UNIFIED CALENDAR","🏆 ROZETLER & SERİLER":"🏆 BADGES & STREAKS",
+  "Tekrar hoş geldin,":"Welcome back,"
+};
+function dilUygula(dil){
+  document.querySelectorAll(".sec-label,.greet-hi").forEach(el=>{
+    const orig=el.dataset.tr||el.textContent;el.dataset.tr=orig;
+    el.textContent=dil==="en"?(CEVIRI[orig]||orig):orig;
+  });
+  $("dilBtn").textContent=dil==="en"?"EN":"TR";
+  try{localStorage.setItem("oy_dil",dil)}catch(e){}
+}
+$("dilBtn").onclick=()=>dilUygula($("dilBtn").textContent==="TR"?"en":"tr");
+setTimeout(()=>{try{dilUygula(localStorage.getItem("oy_dil")||"tr")}catch(e){}},100);
 
 /* ───── SESLİ KOMUT ───── */
 (function(){

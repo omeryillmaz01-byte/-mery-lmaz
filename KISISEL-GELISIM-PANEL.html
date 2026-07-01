@@ -156,6 +156,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <button class="tab" data-v="hedef">🎯 Hedefler</button>
     <button class="tab" data-v="analiz">📊 Analiz</button>
     <button class="tab" data-v="basari">🏅 Başarım</button>
+    <button class="tab" data-v="kitap">📚 Kitaplar</button>
     <button class="tab" data-v="not">📝 Notlar</button>
     <button class="tab" data-v="ayar">⚙️ Ayarlar</button>
   </div>
@@ -333,6 +334,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
       <div class="namaz-grid" id="namazVakitler"></div>
       <div class="namaz-sayac" id="namazSayac" style="margin-top:14px"></div>
     </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px">🕋 Kıble Yönü</h2>
+      <div id="kibleIc" class="mut">Şehir seçip "Namaz Vakti" butonuna basınca kıble açısı da hesaplanır.</div>
+    </div>
     <div class="card" id="ramazanKart" style="display:none">
       <h2 style="margin:0 0 10px">🌙 Ramazan</h2>
       <div id="ramazanIc"></div>
@@ -394,6 +399,20 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <div class="row spread" style="margin-bottom:12px"><b>🏆 Başarım & Karne</b><button class="btn ghost" onclick="window.print()">🖨️ Yazdır / PDF</button></div>
     <div class="card"><h2>🏅 Rozetler</h2><div class="rozetler" id="rozetGrid"></div></div>
     <div class="card"><h2>🗓️ Yıllık Karne (<span id="karneYil"></span>)</h2><div class="grid g3" id="karneStat"></div></div>
+  </section>
+  <!-- KİTAPLAR -->
+  <section class="view" id="v-kitap">
+    <div class="card">
+      <div class="row spread"><h2 style="margin:0">📚 Kitap Okuma Takibi</h2><span class="mut">Yıllık hedef: <input id="kitapHedef" type="number" min="1" style="width:60px;display:inline-block" value="12"> kitap</span></div>
+      <div class="row" style="gap:6px;margin:12px 0;flex-wrap:wrap">
+        <input id="kitapAd" placeholder="Kitap adı" style="flex:2">
+        <input id="kitapYazar" placeholder="Yazar" style="flex:1">
+        <input id="kitapSayfa" type="number" placeholder="Toplam sayfa" style="width:110px">
+        <button class="btn" onclick="kitapEkle()">➕ Ekle</button>
+      </div>
+      <div class="mut" id="kitapOzet" style="margin-bottom:10px"></div>
+      <div id="kitapListe"></div>
+    </div>
   </section>
   <!-- NOTLAR -->
   <section class="view" id="v-not">
@@ -474,7 +493,7 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="kitap")renderKitap();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
@@ -927,6 +946,51 @@ function hicriGoster(){
     })
     .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
 }
+/* ───── KİTAP TAKİBİ ───── */
+function kitapListesi(){return get("kitaplar",[]);}
+function kitapEkle(){
+  var ad=$("kitapAd").value.trim(),yazar=$("kitapYazar").value.trim(),sayfa=+$("kitapSayfa").value||0;
+  if(!ad)return;
+  var l=kitapListesi();l.push({ad,yazar,sayfaToplam:sayfa,sayfaOkunan:0,durum:"okunuyor",baslangic:todayStr()});
+  set("kitaplar",l);
+  $("kitapAd").value="";$("kitapYazar").value="";$("kitapSayfa").value="";
+  renderKitap();
+}
+function kitapIlerlemeGuncelle(i,val){
+  var l=kitapListesi();l[i].sayfaOkunan=Math.max(0,Math.min(l[i].sayfaToplam||val,+val));
+  if(l[i].sayfaToplam&&l[i].sayfaOkunan>=l[i].sayfaToplam){l[i].durum="bitti";l[i].bitis=todayStr();}
+  set("kitaplar",l);renderKitap();
+}
+function kitapSil(i){var l=kitapListesi();l.splice(i,1);set("kitaplar",l);renderKitap();}
+function renderKitap(){
+  $("kitapHedef").value=get("kitapHedefYil",12);
+  $("kitapHedef").onchange=function(){set("kitapHedefYil",+this.value);renderKitap();};
+  var l=kitapListesi();
+  var buYilBitenler=l.filter(function(k){return k.durum==="bitti"&&k.bitis&&k.bitis.slice(0,4)===String(new Date().getFullYear());}).length;
+  var hedef=get("kitapHedefYil",12);
+  $("kitapOzet").textContent="Bu yıl "+buYilBitenler+" / "+hedef+" kitap bitirdin ("+Math.round(buYilBitenler/hedef*100)+"%)";
+  $("kitapListe").innerHTML=l.map(function(k,i){
+    var yuzde=k.sayfaToplam?Math.round(k.sayfaOkunan/k.sayfaToplam*100):0;
+    return '<div class="card" style="padding:12px;margin-bottom:8px">'
+      +'<div class="row spread"><b>'+(k.durum==="bitti"?"✅ ":"📖 ")+k.ad+'</b><button class="iconbtn" onclick="kitapSil('+i+')">✕</button></div>'
+      +(k.yazar?'<div class="mut" style="font-size:12px">'+k.yazar+'</div>':'')
+      +(k.sayfaToplam?'<div style="margin-top:6px"><input type="number" style="width:90px" value="'+k.sayfaOkunan+'" onchange="kitapIlerlemeGuncelle('+i+',this.value)"> / '+k.sayfaToplam+' sayfa (%'+yuzde+')</div>'
+        +'<div class="bar" style="margin-top:4px"><i style="width:'+yuzde+'%"></i></div>':'')
+      +'</div>';
+  }).join("")||'<div class="mut">Henüz kitap eklenmedi.</div>';
+}
+function kibleHesapla(lat,lng){
+  var kabeLat=21.4225*Math.PI/180,kabeLng=39.8262*Math.PI/180;
+  var phi1=lat*Math.PI/180,phi2=kabeLat,dLambda=(kabeLng-lng*Math.PI/180);
+  var y=Math.sin(dLambda)*Math.cos(phi2);
+  var x=Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(dLambda);
+  var brg=(Math.atan2(y,x)*180/Math.PI+360)%360;
+  var yonler=["Kuzey","Kuzeydoğu","Doğu","Güneydoğu","Güney","Güneybatı","Batı","Kuzeybatı"];
+  var yon=yonler[Math.round(brg/45)%8];
+  $("kibleIc").innerHTML='<div style="font-size:42px;text-align:center;transform:rotate('+brg+'deg);transition:.3s">🧭</div>'+
+    '<div style="text-align:center;font-size:15px;margin-top:6px"><b>'+Math.round(brg)+'°</b> — kuzeyden itibaren saat yönünde, yaklaşık <b>'+yon+'</b> istikameti</div>'+
+    '<div class="mut" style="text-align:center;font-size:11px;margin-top:6px">Pusulanı kuzeye hizala, sonra bu açı kadar sağa dön.</div>';
+}
 function namazYukle(){
   var sehir=($("islamiSehir").value||"Istanbul").trim();
   set("islamiSehir",sehir);
@@ -959,6 +1023,8 @@ function namazYukle(){
       }).join("");
       // bir sonraki vakte sayaç
       namazSayacBaslat(vakitler,aktifIdx);
+      // kıble yönü
+      if(d.data.meta&&d.data.meta.latitude)kibleHesapla(d.data.meta.latitude,d.data.meta.longitude);
     })
     .catch(()=>{
       $("namazVakitler").innerHTML='<div class="mut" style="grid-column:1/-1;text-align:center;padding:14px;color:#e67e22">⚠ Namaz vakitleri yüklenemedi (internet gerekli). Şehir adını İngilizce yaz: Istanbul, Ankara, Izmir...</div>';

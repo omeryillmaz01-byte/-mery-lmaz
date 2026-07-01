@@ -181,8 +181,10 @@ body{background:var(--bg);transition:background .4s}
     </div>
     <span class="chip"><span class="dot"></span> <span id="tarih">–</span></span>
     <span class="chip">⚡ <b>v400</b></span>
+    <span class="chip" id="havaChip" style="cursor:pointer" title="Yenilemek için tıkla">🌤️ –</span>
     <button class="gbtn" id="bildirimBtn" title="Bildirimler">🔔</button>
     <button class="gbtn" id="sesBtn" title="Sesli komut: 'muhasebe panelini aç' de">🎙️</button>
+    <button class="gbtn" id="dilBtn" title="Dil / Language">TR</button>
     <button class="gbtn" id="themeBtn">🌙</button>
   </div>
 
@@ -535,6 +537,49 @@ function rozetRender(){
     rozetler.map(r=>`<div class="mini-card" style="opacity:${r.aktif?1:.4}"><h4>${r.ad}</h4><div class="mini-row">${r.ac}</div></div>`).join("");
 }
 rozetRender();
+
+/* ───── HAVA DURUMU ───── */
+const HAVA_KOD={0:"☀️ Açık",1:"🌤️ Az bulutlu",2:"⛅ Parçalı bulutlu",3:"☁️ Kapalı",45:"🌫️ Sisli",48:"🌫️ Kırağı",
+ 51:"🌦️ Çisenti",61:"🌧️ Yağmurlu",63:"🌧️ Yağmurlu",65:"🌧️ Şiddetli yağmur",71:"🌨️ Karlı",73:"🌨️ Karlı",75:"❄️ Yoğun kar",
+ 80:"🌦️ Sağanak",95:"⛈️ Fırtına"};
+function havaYukle(){
+  $("havaChip").textContent="🌤️ Yükleniyor…";
+  const sehir=localStorage.getItem("oy_havaSehir")||"İstanbul";
+  const koord=localStorage.getItem("oy_havaKoord")||"41.01,28.97";
+  const [lat,lon]=koord.split(",");
+  fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&current=temperature_2m,weather_code").then(r=>r.json()).then(d=>{
+    const c=d.current;if(!c)throw 0;
+    const durum=HAVA_KOD[c.weather_code]||"🌡️";
+    $("havaChip").textContent=durum+" "+Math.round(c.temperature_2m)+"°C · "+sehir;
+  }).catch(()=>{$("havaChip").textContent="🌤️ Alınamadı";});
+}
+$("havaChip").onclick=()=>{
+  const yeni=prompt("Şehir adı ve koordinat gir (lat,lon) — örn: Ankara / 39.92,32.85","İstanbul / 41.01,28.97");
+  if(yeni&&yeni.includes("/")){
+    const [sehir,koord]=yeni.split("/").map(s=>s.trim());
+    localStorage.setItem("oy_havaSehir",sehir);localStorage.setItem("oy_havaKoord",koord);
+  }
+  havaYukle();
+};
+havaYukle();
+
+/* ───── DİL (TR/EN) — hub arayüzü ───── */
+const CEVIRI={
+  "PANELLER":"PANELS","BUGÜN":"TODAY","HAFTALIK ÖZET":"WEEKLY SUMMARY","HATIRLATICILAR":"REMINDERS",
+  "YEDEKLEME":"BACKUP","✅ YAPILACAKLAR":"✅ TO-DO","🎯 HEDEF TAKİP":"🎯 GOAL TRACKING",
+  "📅 BİRLEŞİK TAKVİM":"📅 UNIFIED CALENDAR","🏆 ROZETLER & SERİLER":"🏆 BADGES & STREAKS",
+  "Tekrar hoş geldin,":"Welcome back,"
+};
+function dilUygula(dil){
+  document.querySelectorAll(".sec-label,.greet-hi").forEach(el=>{
+    const orig=el.dataset.tr||el.textContent;el.dataset.tr=orig;
+    el.textContent=dil==="en"?(CEVIRI[orig]||orig):orig;
+  });
+  $("dilBtn").textContent=dil==="en"?"EN":"TR";
+  try{localStorage.setItem("oy_dil",dil)}catch(e){}
+}
+$("dilBtn").onclick=()=>dilUygula($("dilBtn").textContent==="TR"?"en":"tr");
+setTimeout(()=>{try{dilUygula(localStorage.getItem("oy_dil")||"tr")}catch(e){}},100);
 
 /* ───── SESLİ KOMUT ───── */
 (function(){

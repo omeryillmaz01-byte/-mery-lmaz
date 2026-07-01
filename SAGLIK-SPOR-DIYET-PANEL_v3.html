@@ -93,6 +93,7 @@ th{color:var(--mut);font-weight:700}
     <button class="tab" data-view="foto">📸 Foto Analiz</button>
     <button class="tab" data-view="ogun">🍽️ Kalori (Öğün)</button>
     <button class="tab" data-view="vucut">💪 Vücut Analizi</button>
+    <button class="tab" data-view="menu">🍽️ Haftalık Menü</button>
   </div>
   <button class="iconbtn" id="themeBtn" title="Tema">🌙</button>
 </header>
@@ -357,6 +358,21 @@ th{color:var(--mut);font-weight:700}
   </div>
 </section>
 
+<!-- ============ HAFTALIK MENÜ / ÖĞÜN PLANLAYICI ============ -->
+<section class="view" id="v-menu">
+  <div class="card">
+    <h2>🍽️ Haftalık Öğün Planı</h2>
+    <p class="notice">Her gün için kahvaltı/öğle/akşam ne yiyeceğini yaz — hazır tarif değil, senin kendi planın.</p>
+    <div id="menuPlan" style="margin-top:12px;display:flex;flex-direction:column;gap:10px"></div>
+    <div class="row" style="margin-top:12px"><button class="btn alt" id="menuKaydet">💾 Planı Kaydet</button><span class="mut" id="menuDurum"></span></div>
+  </div>
+  <div class="card">
+    <h2>🛒 Alışveriş Listesi</h2>
+    <textarea id="menuAlisveris" rows="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:inherit;font-family:inherit" placeholder="ör. Yumurta, tavuk göğsü, yulaf, sebze…"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="alisverisKaydet">💾 Kaydet</button></div>
+  </div>
+</section>
+
 <!-- Egzersiz detay penceresi -->
 <div id="ex-modal" onclick="if(event.target===this)exKapat()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:480px;width:100%;max-height:88vh;overflow:auto;padding:20px;box-shadow:var(--shadow)">
@@ -373,6 +389,29 @@ const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 function get(k,def){try{return JSON.parse(localStorage.getItem(LS+k))??def;}catch(e){return def;}}
 function set(k,v){localStorage.setItem(LS+k,JSON.stringify(v));}
 
+/* ───── HAFTALIK MENÜ ───── */
+const MENU_GUNLER=["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+function renderMenu(){
+  const plan=get("menuPlan",{});
+  $("menuPlan").innerHTML=MENU_GUNLER.map(g=>`
+    <div class="grid g3" style="align-items:center;gap:8px">
+      <b>${g}</b>
+      <input data-g="${g}" data-o="kahvalti" placeholder="🍳 Kahvaltı" value="${(plan[g]&&plan[g].kahvalti||"").replace(/"/g,'&quot;')}">
+      <input data-g="${g}" data-o="ogle" placeholder="🍲 Öğle" value="${(plan[g]&&plan[g].ogle||"").replace(/"/g,'&quot;')}">
+      <input data-g="${g}" data-o="aksam" placeholder="🌙 Akşam" value="${(plan[g]&&plan[g].aksam||"").replace(/"/g,'&quot;')}">
+    </div>`).join("");
+  $("menuAlisveris").value=get("alisveris","");
+}
+$("menuKaydet").onclick=()=>{
+  const plan={};
+  document.querySelectorAll("#menuPlan input").forEach(inp=>{
+    if(!plan[inp.dataset.g])plan[inp.dataset.g]={};
+    plan[inp.dataset.g][inp.dataset.o]=inp.value;
+  });
+  set("menuPlan",plan);$("menuDurum").textContent="✓ Kaydedildi";setTimeout(()=>$("menuDurum").textContent="",2000);
+};
+$("alisverisKaydet").onclick=()=>{set("alisveris",$("menuAlisveris").value);};
+
 /* ---------- Tabs ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
@@ -383,6 +422,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   if(t.dataset.view==="foto")renderFoto();
   if(t.dataset.view==="ogun")renderOgun();
   if(t.dataset.view==="vucut")renderVucut();
+  if(t.dataset.view==="menu")renderMenu();
 });
 /* ---------- Theme ---------- */
 $("themeBtn").onclick=()=>{const b=document.body;const n=b.dataset.theme==="dark"?"light":"dark";b.dataset.theme=n;$("themeBtn").textContent=n==="dark"?"🌙":"☀️";set("theme",n);};
