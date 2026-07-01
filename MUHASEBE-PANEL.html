@@ -196,6 +196,14 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
         </div>
         <div class="goals" id="goalList"></div>
       </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>⚠️ Aylık Bütçe Limiti</h2>
+        <div class="row" style="margin-bottom:10px">
+          <div class="fld" style="max-width:160px"><label>AYLIK GİDER LİMİTİ (₺)</label><input id="butceLimit" type="number" min="0" placeholder="ör. 15000" /></div>
+          <button class="btn btn-g" id="butceKaydet">Kaydet</button>
+        </div>
+        <div id="butceUyari" style="font-size:13px"></div>
+      </div>
     </div>
   </div>
 
@@ -322,7 +330,20 @@ function csvIndir(){
 }
 $("csvBtn").onclick=csvIndir;
 
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart()}
+function butceRender(){
+  const limit=load("muh_butceLimit")||0;
+  $("butceLimit").value=limit||"";
+  if(!limit){$("butceUyari").innerHTML='<span style="color:var(--muted,#8b9bb0)">Limit belirlenmedi.</span>';return;}
+  const ay=new Date().getMonth(),yil=new Date().getFullYear();
+  const buAyGider=islemler.filter(i=>i.tip==="gider"&&new Date(i.tarih).getMonth()===ay&&new Date(i.tarih).getFullYear()===yil).reduce((s,i)=>s+(+i.tutar||0),0);
+  const yuzde=Math.round(buAyGider/limit*100);
+  const renk=yuzde>=100?"#f87171":yuzde>=80?"#fbbf24":"#34d399";
+  $("butceUyari").innerHTML='<div style="height:8px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:'+Math.min(100,yuzde)+'%;background:'+renk+'"></div></div>'
+    +'<b style="color:'+renk+'">'+fmt(buAyGider)+' / '+fmt(limit)+' (%'+yuzde+')</b>'
+    +(yuzde>=100?'<div style="color:#f87171;margin-top:6px">🚨 Bu ay bütçe limitini aştın!</div>':yuzde>=80?'<div style="color:#fbbf24;margin-top:6px">⚠️ Limitin %80\'ine yaklaştın.</div>':'');
+}
+$("butceKaydet").onclick=()=>{save("muh_butceLimit",+$("butceLimit").value||0);butceRender();};
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender()}
 
 $("ekleBtn").onclick=()=>{
   const tip=$("tipSel").value;

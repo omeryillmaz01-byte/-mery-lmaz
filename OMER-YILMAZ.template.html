@@ -182,6 +182,7 @@ body{background:var(--bg);transition:background .4s}
     <span class="chip"><span class="dot"></span> <span id="tarih">–</span></span>
     <span class="chip">⚡ <b>v400</b></span>
     <button class="gbtn" id="bildirimBtn" title="Bildirimler">🔔</button>
+    <button class="gbtn" id="sesBtn" title="Sesli komut: 'muhasebe panelini aç' de">🎙️</button>
     <button class="gbtn" id="themeBtn">🌙</button>
   </div>
 
@@ -198,8 +199,33 @@ body{background:var(--bg);transition:background .4s}
     <div class="sec-label">PANELLER</div>
     <div class="grid" id="grid"></div>
 
+    <div class="sec-label">🏆 ROZETLER & SERİLER</div>
+    <div class="mini-cards" id="rozetCards"></div>
+
     <div class="sec-label">BUGÜN</div>
     <div class="tasks"><div class="tasks-grid" id="tasks"></div></div>
+
+    <div class="sec-label" style="margin-top:34px">✅ YAPILACAKLAR</div>
+    <div class="mini-cards">
+      <div class="mini-card" style="grid-column:span 2">
+        <div class="rem-row">
+          <input type="text" id="todoMetin" placeholder="yeni görev ekle…" style="flex:2">
+          <select id="todoOncelik" style="padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12px">
+            <option value="yuksek">🔴 Yüksek</option><option value="orta" selected>🟡 Orta</option><option value="dusuk">🟢 Düşük</option>
+          </select>
+          <button class="mini-btn" style="flex:none;padding:8px 14px" id="todoEkle">Ekle</button>
+        </div>
+        <div class="rem-list" id="todoListe" style="max-height:220px"></div>
+      </div>
+    </div>
+
+    <div class="sec-label">🎯 HEDEF TAKİP</div>
+    <div class="mini-cards" id="hedefCards"></div>
+
+    <div class="sec-label">📅 BİRLEŞİK TAKVİM</div>
+    <div class="mini-cards">
+      <div class="mini-card" style="grid-column:span 2" id="takvimCard"></div>
+    </div>
 
     <div class="sec-label" style="margin-top:34px">HAFTALIK ÖZET</div>
     <div class="mini-cards" id="ozetCards"></div>
@@ -207,10 +233,13 @@ body{background:var(--bg);transition:background .4s}
     <div class="sec-label">HATIRLATICILAR</div>
     <div class="mini-cards">
       <div class="mini-card" style="grid-column:span 2">
-        <h4>⏰ Kendi hatırlatıcını ekle (tarayıcı bildirimi + ses)</h4>
+        <h4>⏰ Hatırlatıcı ekle (tarayıcı bildirimi + ses) — tekrar seçebilirsin</h4>
         <div class="rem-row">
           <input type="time" id="remSaat">
-          <input type="text" id="remMetin" placeholder="örn: Su iç, namaz vakti, ilaç…">
+          <input type="text" id="remMetin" placeholder="örn: Su iç, namaz vakti, kira ödemesi…">
+          <select id="remTekrar" style="padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12px">
+            <option value="gunluk">Her gün</option><option value="haftalik">Her hafta</option><option value="aylik">Her ay (bugünün günü)</option>
+          </select>
           <button class="mini-btn" style="flex:none;padding:8px 14px" id="remEkle">Ekle</button>
         </div>
         <div class="rem-list" id="remListe"></div>
@@ -326,15 +355,16 @@ document.addEventListener("click",e=>{if(!e.target.closest(".search-wrap"))$("ar
 /* ───── HATIRLATICILAR + BİLDİRİM ───── */
 function remGetir(){try{return JSON.parse(localStorage.getItem("oy_reminders"))||[]}catch(e){return[]}}
 function remKaydet(l){try{localStorage.setItem("oy_reminders",JSON.stringify(l))}catch(e){}}
+const TEKRAR_ETIKET={gunluk:"Her gün",haftalik:"Her hafta",aylik:"Her ay"};
 function remRender(){
   const l=remGetir();
-  $("remListe").innerHTML=l.map((r,i)=>`<div class="rem-item"><span>⏰ ${r.saat} — ${r.metin}</span><span data-i="${i}">✕</span></div>`).join("")||'<div style="font-size:11.5px;color:var(--faint)">Henüz hatırlatıcı yok.</div>';
+  $("remListe").innerHTML=l.map((r,i)=>`<div class="rem-item"><span>⏰ ${r.saat} — ${r.metin} <small style="color:var(--faint)">(${TEKRAR_ETIKET[r.tekrar]||"Her gün"})</small></span><span data-i="${i}">✕</span></div>`).join("")||'<div style="font-size:11.5px;color:var(--faint)">Henüz hatırlatıcı yok.</div>';
   $("remListe").querySelectorAll("span[data-i]").forEach(s=>s.onclick=()=>{const l2=remGetir();l2.splice(+s.dataset.i,1);remKaydet(l2);remRender();});
 }
 $("remEkle").onclick=()=>{
-  const saat=$("remSaat").value,metin=$("remMetin").value.trim();
+  const saat=$("remSaat").value,metin=$("remMetin").value.trim(),tekrar=$("remTekrar").value;
   if(!saat||!metin)return;
-  const l=remGetir();l.push({saat,metin,son:""});remKaydet(l);
+  const l=remGetir();l.push({saat,metin,tekrar,son:"",ayGunu:new Date().getDate(),haftaGunu:new Date().getDay()});remKaydet(l);
   $("remSaat").value="";$("remMetin").value="";remRender();
 };
 function remSesCal(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>{o.stop();ctx.close();},350);}catch(e){}}
@@ -343,11 +373,15 @@ function remKontrolEt(){
   const bugunISO=simdi.toDateString();
   const l=remGetir();let degisti=false;
   l.forEach(r=>{
-    if(r.saat===hhmm&&r.son!==bugunISO){
-      r.son=bugunISO;degisti=true;remSesCal();
-      if("Notification" in window && Notification.permission==="granted"){try{new Notification("⏰ Hatırlatıcı",{body:r.metin});}catch(e){}}
-      else alert("⏰ Hatırlatıcı: "+r.metin);
-    }
+    if(r.saat!==hhmm||r.son===bugunISO)return;
+    const tekrar=r.tekrar||"gunluk";
+    let uygun=true;
+    if(tekrar==="haftalik")uygun=(simdi.getDay()===(r.haftaGunu??simdi.getDay()));
+    else if(tekrar==="aylik")uygun=(simdi.getDate()===(r.ayGunu??simdi.getDate()));
+    if(!uygun)return;
+    r.son=bugunISO;degisti=true;remSesCal();
+    if("Notification" in window && Notification.permission==="granted"){try{new Notification("⏰ Hatırlatıcı",{body:r.metin});}catch(e){}}
+    else alert("⏰ Hatırlatıcı: "+r.metin);
   });
   if(degisti)remKaydet(l);
 }
@@ -416,6 +450,112 @@ $("yedekDosya").onchange=e=>{
   };
   r.readAsText(f);
 };
+
+/* ───── YAPILACAKLAR (TO-DO) ───── */
+function todoGetir(){try{return JSON.parse(localStorage.getItem("oy_todo"))||[]}catch(e){return[]}}
+function todoKaydet(l){try{localStorage.setItem("oy_todo",JSON.stringify(l))}catch(e){}}
+const ONCELIK_ETIKET={yuksek:"🔴",orta:"🟡",dusuk:"🟢"};
+function todoRender(){
+  const l=todoGetir();
+  const sirali=l.map((t,i)=>({...t,i})).sort((a,b)=>(a.tamam-b.tamam)||({yuksek:0,orta:1,dusuk:2}[a.oncelik]-{yuksek:0,orta:1,dusuk:2}[b.oncelik]));
+  $("todoListe").innerHTML=sirali.map(t=>`<div class="rem-item"><span style="${t.tamam?'text-decoration:line-through;color:var(--faint)':''}"><input type="checkbox" data-c="${t.i}" ${t.tamam?"checked":""}> ${ONCELIK_ETIKET[t.oncelik]||"🟡"} ${t.metin}</span><span data-i="${t.i}">✕</span></div>`).join("")||'<div style="font-size:11.5px;color:var(--faint)">Görev yok, ekleyerek başla.</div>';
+  $("todoListe").querySelectorAll("input[data-c]").forEach(c=>c.onchange=()=>{const l2=todoGetir();l2[+c.dataset.c].tamam=c.checked;todoKaydet(l2);todoRender();});
+  $("todoListe").querySelectorAll("span[data-i]").forEach(s=>s.onclick=()=>{const l2=todoGetir();l2.splice(+s.dataset.i,1);todoKaydet(l2);todoRender();});
+}
+$("todoEkle").onclick=()=>{
+  const metin=$("todoMetin").value.trim();if(!metin)return;
+  const l=todoGetir();l.push({metin,oncelik:$("todoOncelik").value,tamam:false});todoKaydet(l);
+  $("todoMetin").value="";todoRender();
+};
+todoRender();
+
+/* ───── HEDEF TAKİP ───── */
+function hedefRender(){
+  const kalanGun=+$("kalan").textContent||0;
+  const kgkYuzde=Math.max(0,Math.min(100,Math.round((1-kalanGun/365)*100)));
+  const habitYuzde=parseInt(($("ozetCards").querySelector(".mini-row b")||{}).textContent)||0;
+  const kelime=ls("eng_srs",{})||{};const kelimeSayisi=Object.keys(kelime).length;
+  const kelimeHedef=500,kelimeYuzde=Math.min(100,Math.round(kelimeSayisi/kelimeHedef*100));
+  const prof=ls("saglik_profil",{})||{};
+  let kiloYuzde=null;
+  if(prof.kilo&&prof.hedefKilo){const bas=+prof.kilo,he=+prof.hedefKilo;kiloYuzde=Math.max(0,Math.min(100,Math.round((1-Math.abs(bas-he)/Math.max(1,Math.abs(bas-he)+5))*100)));}
+  function bar(pct){return `<div style="height:7px;border-radius:5px;background:var(--border);margin-top:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:5px"></div></div>`;}
+  $("hedefCards").innerHTML=`
+    <div class="mini-card"><h4>🎓 KGK Sınavına Kalan Süre</h4><div class="mini-row">Yaklaşık ilerleme <b>%${kgkYuzde}</b></div>${bar(kgkYuzde)}</div>
+    <div class="mini-card"><h4>🌱 Alışkanlık Hedefi</h4><div class="mini-row">Son 7 gün <b>%${habitYuzde}</b></div>${bar(habitYuzde)}</div>
+    <div class="mini-card"><h4>🇬🇧 Kelime Hedefi (${kelimeHedef})</h4><div class="mini-row">${kelimeSayisi} / ${kelimeHedef} <b>%${kelimeYuzde}</b></div>${bar(kelimeYuzde)}</div>
+    ${kiloYuzde!==null?`<div class="mini-card"><h4>💪 Kilo Hedefi</h4><div class="mini-row">İlerleme <b>%${kiloYuzde}</b></div>${bar(kiloYuzde)}</div>`:""}`;
+}
+setTimeout(hedefRender,50);
+
+/* ───── BİRLEŞİK TAKVİM ───── */
+const DINI_GUNLER_MINI=[
+ {ad:"Ramazan Başlangıcı",tarih:"2027-02-18"},{ad:"Ramazan Bayramı",tarih:"2027-03-20"},
+ {ad:"Kurban Bayramı",tarih:"2027-05-27"},{ad:"Regaib Kandili",tarih:"2026-12-31"},
+ {ad:"Mirac Kandili",tarih:"2027-01-19"},{ad:"Berat Kandili",tarih:"2027-02-03"},{ad:"Kadir Gecesi",tarih:"2027-03-16"}
+];
+function takvimRenderMini(){
+  const bugun=new Date();bugun.setHours(0,0,0,0);
+  const olaylar=[];
+  olaylar.push({ad:"🎓 KGK Bağımsız Denetçilik Sınavı",tarih:new Date(2026,10,21)});
+  DINI_GUNLER_MINI.forEach(d=>olaylar.push({ad:"🕌 "+d.ad,tarih:new Date(d.tarih)}));
+  (ls("kg_onemliler",[])||[]).forEach(o=>{if(o.tarih)olaylar.push({ad:"🎂 "+(o.ad||"Önemli Gün"),tarih:new Date(o.tarih)});});
+  const beyanKalemleri=[{ad:"KDV Beyannamesi",gun:26},{ad:"Muhtasar Beyanname",gun:26},{ad:"Geçici Vergi",gun:17}];
+  beyanKalemleri.forEach(b=>{let t=new Date(bugun.getFullYear(),bugun.getMonth(),b.gun);if(t<bugun)t=new Date(bugun.getFullYear(),bugun.getMonth()+1,b.gun);olaylar.push({ad:"📑 "+b.ad,tarih:t});});
+  const yakin=olaylar.map(o=>({...o,gun:Math.ceil((o.tarih-bugun)/86400000)})).filter(o=>o.gun>=0).sort((a,b)=>a.gun-b.gun).slice(0,8);
+  $("takvimCard").innerHTML="<h4>📅 Yaklaşan Önemli Tarihler</h4>"+
+    (yakin.map(o=>`<div class="mini-row">${o.ad} <b>${o.gun===0?"Bugün":o.gun+" gün"}</b></div>`).join("")||'<div class="mini-row" style="color:var(--faint)">Yaklaşan özel tarih yok.</div>');
+}
+takvimRenderMini();
+
+/* ───── ROZETLER & SERİLER ───── */
+function gunFmt(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function habitStreakHesapla(){
+  let streak=0;const d=new Date();
+  for(let i=0;i<365;i++){
+    const veri=ls("kg_gun_"+gunFmt(d),null);
+    const ok=veri&&veri.habits&&Object.values(veri.habits).some(Boolean);
+    if(ok){streak++;d.setDate(d.getDate()-1);}else break;
+  }
+  return streak;
+}
+function rozetRender(){
+  const streak=habitStreakHesapla();
+  const kelime=Object.keys(ls("eng_srs",{})||{}).length;
+  const islemSayisi=(ls("muh_islemler",[])||[]).length;
+  const rozetler=[
+    {ad:"🔥 "+streak+" gün seri",aktif:streak>0,ac:"Alışkanlık takibi"},
+    {ad:"📖 100 Kelime",aktif:kelime>=100,ac:kelime+"/100 kelime öğrenildi"},
+    {ad:"📖 500 Kelime",aktif:kelime>=500,ac:kelime+"/500 kelime öğrenildi"},
+    {ad:"💰 50 İşlem",aktif:islemSayisi>=50,ac:islemSayisi+"/50 muhasebe kaydı"},
+    {ad:"🕌 7 Gün Zikir",aktif:streak>=7,ac:"7 gün kesintisiz takip"},
+    {ad:"🏅 30 Gün Seri",aktif:streak>=30,ac:"30 gün kesintisiz takip"},
+  ];
+  $("rozetCards").innerHTML=`<div class="mini-card"><h4>🔥 Anlık Seri</h4><div style="font-size:32px;font-weight:800;color:var(--acc2)">${streak}</div><div class="mini-row">gün kesintisiz alışkanlık takibi</div></div>`+
+    rozetler.map(r=>`<div class="mini-card" style="opacity:${r.aktif?1:.4}"><h4>${r.ad}</h4><div class="mini-row">${r.ac}</div></div>`).join("");
+}
+rozetRender();
+
+/* ───── SESLİ KOMUT ───── */
+(function(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$("sesBtn").style.display="none";return;}
+  const rec=new SR();rec.lang="tr-TR";rec.continuous=false;rec.interimResults=false;
+  let dinliyor=false;
+  $("sesBtn").onclick=()=>{
+    if(dinliyor)return;
+    dinliyor=true;$("sesBtn").style.color="var(--acc2)";
+    try{rec.start();}catch(e){dinliyor=false;}
+  };
+  rec.onresult=e=>{
+    const soylenen=e.results[0][0].transcript.toLocaleLowerCase("tr");
+    const sonuc=aramaAra(soylenen);
+    if(sonuc.length)aç(PANELS.indexOf(sonuc[0]));
+    else alert("Anlayamadım: \""+soylenen+"\" — panel adını söylemeyi dene (örn: 'muhasebe').");
+  };
+  rec.onerror=()=>{dinliyor=false;$("sesBtn").style.color="";};
+  rec.onend=()=>{dinliyor=false;$("sesBtn").style.color="";};
+})();
 </script>
 </body>
 </html>

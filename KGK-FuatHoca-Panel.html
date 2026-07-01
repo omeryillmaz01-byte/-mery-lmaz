@@ -333,6 +333,10 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
       <button class="btn btn-primary" onclick="App.denemeBasla(100,150)">🎯 100 Soru · 150 dk (Tam)</button>
     </div>
   </div>
+  <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-top:18px">
+    <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">📈 Deneme Sonuç Grafiği</h4>
+    <div id="denemeGrafik" style="overflow-x:auto"></div>
+  </div>
 </div>
 
 <!-- ════════ ANALİZ TAB ════════ -->
@@ -622,6 +626,7 @@ const App = {
         if(a.dataset.tab==='gecmis') this.gyHazirla();
         if(a.dataset.tab==='calisma') this.calismaHazirla();
         if(a.dataset.tab==='analiz') this.analizCiz();
+        if(a.dataset.tab==='deneme') this.denemeGrafikCiz();
       });
     });
   },
@@ -758,8 +763,8 @@ const App = {
     this.modalAc(sorular.map((s,i)=>({...s,_konuIdx:i,_konu:konuAdi})), 'konu', `${KGK_KONULAR.find(k=>k.ad===konuAdi).ic} ${konuAdi}`, konuAdi);
   },
 
-  modalAc(sorular, mod, baslik, konuAdi){
-    this.modal={sorular, idx:0, mod, baslangic:Date.now(), timer:null, konuAdi:konuAdi||''};
+  modalAc(sorular, mod, baslik, konuAdi, deneme){
+    this.modal={sorular, idx:0, mod, baslangic:Date.now(), timer:null, konuAdi:konuAdi||'', deneme:!!deneme, oDogru:0, oYanlis:0};
     document.getElementById('solverTitle').textContent=baslik;
     document.getElementById('solverOverlay').classList.add('show');
     this.soruyuGoster();
@@ -844,6 +849,7 @@ const App = {
 
     const dogruMu=harf===dogru;
     this.istatistikKaydet(dogruMu);
+    if(this.modal.deneme){if(dogruMu)this.modal.oDogru++;else this.modal.oYanlis++;}
     CEVAPLAR[this.notKey(s)]={secim:harf, dogru:dogruMu, t:Date.now()};
     localStorage.setItem('kgkCevaplar', JSON.stringify(CEVAPLAR));
     this.toast(dogruMu?'✓ Doğru!':'✗ Yanlış','+dogru,'+(dogruMu?'ok':'err'));
@@ -878,9 +884,16 @@ const App = {
 
   bittiGoster(){
     document.getElementById('qNumber').textContent='✅';
-    document.getElementById('qText').innerHTML=`<b>Tamamlandı!</b><br><br>${this.modal.sorular.length} soru gördün.`;
+    let ekBilgi='';
+    if(this.modal.deneme){
+      const toplam=this.modal.oDogru+this.modal.oYanlis;
+      this.denemeKaydet(this.modal.oDogru,toplam);
+      ekBilgi=`<br>Sonuç: <b>${this.modal.oDogru}/${toplam}</b> doğru (%${toplam?Math.round(this.modal.oDogru/toplam*100):0})`;
+    }
+    document.getElementById('qText').innerHTML=`<b>Tamamlandı!</b><br><br>${this.modal.sorular.length} soru gördün.${ekBilgi}`;
     document.getElementById('qChoices').innerHTML='';
     document.getElementById('qAcikBtn').style.display='none';
+    if(typeof this.denemeGrafikCiz==='function')this.denemeGrafikCiz();
   },
 
   bayrak(){
@@ -992,8 +1005,39 @@ const App = {
   denemeBasla(sayi, dakika){
     if(!GECMIS.length){this.toast('Geçmiş yıl havuzu boş','err');return}
     const karistir=[...GECMIS].sort(()=>Math.random()-0.5).slice(0,sayi);
-    this.modalAc(karistir, 'gy', `📝 Deneme · ${sayi} soru · ${dakika} dk`);
+    this.modalAc(karistir, 'gy', `📝 Deneme · ${sayi} soru · ${dakika} dk`, null, true);
     // Süre limit göster (basitleştirilmiş)
+  },
+
+  denemeGecmisi(){try{return JSON.parse(localStorage.getItem('kgkDenemeGecmisi')||'[]')}catch(e){return[]}},
+  denemeKaydet(dogru,toplam){
+    const l=this.denemeGecmisi();
+    l.push({tarih:new Date().toISOString().slice(0,10),dogru,toplam,yuzde:toplam?Math.round(dogru/toplam*100):0});
+    localStorage.setItem('kgkDenemeGecmisi', JSON.stringify(l.slice(-30)));
+  },
+  denemeGrafikCiz(){
+    const kutu=document.getElementById('denemeGrafik');if(!kutu)return;
+    const l=this.denemeGecmisi();
+    if(!l.length){kutu.innerHTML='<div style="color:var(--text-dim);font-size:13px">Henüz deneme sınavı çözülmedi.</div>';return;}
+    const w=Math.max(320,kutu.clientWidth||500),h=160,pad=28;
+    kutu.innerHTML=`<canvas id="denemeCanvas" width="${w}" height="${h}"></canvas>`;
+    const cv=document.getElementById('denemeCanvas'),ctx=cv.getContext('2d');
+    const maxY=100;
+    ctx.strokeStyle='rgba(150,150,150,.25)';ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-10,h-pad);ctx.stroke();
+    ctx.beginPath();
+    l.forEach((r,i)=>{
+      const x=pad+(i/(Math.max(1,l.length-1)))*(w-pad-20);
+      const y=(h-pad)-(r.yuzde/maxY)*(h-pad-14);
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='#5c5fe1';ctx.lineWidth=2.5;ctx.stroke();
+    l.forEach((r,i)=>{
+      const x=pad+(i/(Math.max(1,l.length-1)))*(w-pad-20);
+      const y=(h-pad)-(r.yuzde/maxY)*(h-pad-14);
+      ctx.fillStyle='#5c5fe1';ctx.beginPath();ctx.arc(x,y,3.5,0,7);ctx.fill();
+    });
+    const son=l[l.length-1];
+    ctx.fillStyle='#888';ctx.font='11px sans-serif';ctx.fillText('Son: %'+son.yuzde+' ('+son.dogru+'/'+son.toplam+')',pad,16);
   },
 
   // ─── ANALİZ ───
@@ -1040,6 +1084,14 @@ const App = {
           <div style="font-size:32px;font-weight:800;color:var(--blue-2)">${bayrakAdet}</div>
         </div>
       </div>
+      ${(()=>{
+        const denenmis=KGK_KONULAR.filter(k=>konuStat[k.ad].t>=3);
+        if(!denenmis.length)return'';
+        const enZayif=denenmis.reduce((a,b)=>(konuStat[a.ad].d/konuStat[a.ad].t)<=(konuStat[b.ad].d/konuStat[b.ad].t)?a:b);
+        const y=Math.round(konuStat[enZayif.ad].d/konuStat[enZayif.ad].t*100);
+        return `<div style="background:rgba(239,68,68,.08);border-left:4px solid var(--err);border-radius:12px;padding:14px 18px;margin-bottom:20px">
+          <b>🎯 En zayıf konun:</b> ${enZayif.ic} ${enZayif.ad} — %${y} başarı. Buraya odaklan!</div>`;
+      })()}
       <h4 style="margin-bottom:14px;font-size:18px;font-weight:800">Konu Bazında Başarı</h4>
       ${KGK_KONULAR.map(k=>{
         const s=konuStat[k.ad];
