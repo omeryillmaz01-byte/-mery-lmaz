@@ -157,6 +157,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     <button class="tab" data-v="analiz">📊 Analiz</button>
     <button class="tab" data-v="basari">🏅 Başarım</button>
     <button class="tab" data-v="kitap">📚 Kitaplar</button>
+    <button class="tab" data-v="ilmihal">☪️ İlmihal</button>
     <button class="tab" data-v="not">📝 Notlar</button>
     <button class="tab" data-v="ayar">⚙️ Ayarlar</button>
   </div>
@@ -415,6 +416,29 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
     </div>
   </section>
   <!-- NOTLAR -->
+  <!-- İLMİHAL -->
+  <section class="view" id="v-ilmihal">
+    <div class="card">
+      <h2 style="margin:0 0 10px">🕋 Esmâ-ül Hüsnâ — Allah'ın 99 Güzel İsmi</h2>
+      <input id="esmaAra" placeholder="İsim veya anlamda ara…" style="margin-bottom:10px">
+      <div id="esmaListe" class="grid g3"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px">📜 Kırk Hadis (İmam Nevevî)</h2>
+      <p class="mut" style="font-size:12px;margin-bottom:10px">Kaynak: İmam Nevevî'nin meşhur "Kırk Hadis" (el-Erbaûn en-Neveviyye) derlemesinden seçmeler — Türkçe meal. Tam metin ve senetleri için <a href="https://hadislerleislam.diyanet.gov.tr/" target="_blank">Diyanet Hadislerle İslam</a> sayfasını kullanabilirsin.</p>
+      <div id="hadisListe"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px">🕌 Peygamberler (Kur'an'da Adı Geçen 25 Peygamber)</h2>
+      <p class="mut" style="font-size:12px;margin-bottom:10px">Kısa tanıtım — detaylı kıssalar için <a href="https://islamansiklopedisi.org.tr/" target="_blank">TDV İslam Ansiklopedisi</a> ve <a href="https://kuran.diyanet.gov.tr/" target="_blank">Diyanet Kur'an Meali</a>'ne bakabilirsin.</p>
+      <div id="peygamberListe" class="grid g3"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 10px">🌟 Evliyalar & Alimler — Güvenilir Kaynaklar</h2>
+      <p class="mut" style="font-size:12px;margin-bottom:10px">Evliya/alim hayatlarında rivayetler çok çeşitlenip zamanla karışabildiği için burada uydurma bir "biyografi" üretmek yerine seni doğrudan güvenilir kaynaklara yönlendiriyorum:</p>
+      <div id="evliyaLinkler" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </section>
   <section class="view" id="v-not">
     <div class="card"><h2>📝 Bugünün Notu</h2><textarea id="notArea" rows="8" placeholder="Bugün aklında ne var?"></textarea><div class="row" style="margin-top:10px"><button class="btn alt" onclick="notKaydet()">💾 Kaydet</button><span class="mut" id="notDurum"></span></div></div>
     <div class="card">
@@ -493,7 +517,7 @@ function renderMoti(){var m=MOTI[gunNo()%MOTI.length];$("moti").innerHTML='💡 
 /* ---- tema + tabs ---- */
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="kitap")renderKitap();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");var v=t.dataset.v;if(v==="analiz")renderAnaliz();if(v==="butce")renderHarcama();if(v==="zikir")renderZikir();if(v==="kuran")kuranInit();if(v==="islami")islamiInit();if(v==="maneviyat")maneviyatInit();if(v==="not")renderKurallar();if(v==="kitap")renderKitap();if(v==="ilmihal")renderIlmihal();if(v==="hedef")renderHedefler();if(v==="basari")renderBasari();if(v==="ayar")renderAyar();});
 $("tarih").onchange=()=>{cur=$("tarih").value||todayStr();loadGun();};
 
 /* ---- GÜN ---- */
@@ -946,6 +970,121 @@ function hicriGoster(){
     })
     .catch(()=>{$("islamiHicri").textContent="📅 Hicri tarih (internet gerekli)";});
 }
+/* ───── İLMİHAL: ESMÂ-ÜL HÜSNÂ, HADİS, PEYGAMBERLER ───── */
+var ESMA_UL_HUSNA=[
+["Allah","Yegâne ilah, tüm isimlerin sahibi"],["Er-Rahmân","Dünyada tüm yaratıklara merhamet eden"],
+["Er-Rahîm","Ahirette müminlere özel merhamet eden"],["El-Melik","Mülkün gerçek sahibi, mutlak hükümdar"],
+["El-Kuddûs","Her türlü eksiklikten uzak, tertemiz"],["Es-Selâm","Her türlü tehlikeden selamet veren"],
+["El-Mü'min","Güven veren, emin kılan"],["El-Müheymin","Her şeyi gözetip koruyan"],
+["El-Azîz","Karşı konulmaz güç sahibi, mutlak galip"],["El-Cebbâr","Dilediğini zorla yaptırabilen, yaraları saran"],
+["El-Mütekebbir","Büyüklükte eşi olmayan"],["El-Hâlık","Yaratan, yoktan var eden"],
+["El-Bâri","Her şeyi kusursuz ve uyumlu yaratan"],["El-Musavvir","Varlıklara şekil ve suret veren"],
+["El-Ğaffâr","Günahları tekrar tekrar bağışlayan"],["El-Kahhâr","Her şeye galip ve hâkim olan"],
+["El-Vehhâb","Karşılıksız çokça bağışta bulunan"],["Er-Rezzâk","Bütün canlıların rızkını veren"],
+["El-Fettâh","Hayır kapılarını açan, hükmeden"],["El-Alîm","Her şeyi hakkıyla bilen"],
+["El-Kâbıd","Dilediğine darlık veren"],["El-Bâsıt","Dilediğine bolluk veren"],
+["El-Hâfıd","Alçaltan, zillete düşüren"],["Er-Râfi","Yücelten, şeref veren"],
+["El-Muizz","İzzet ve şeref veren"],["El-Müzill","Zillete düşüren"],
+["Es-Semî","Her şeyi işiten"],["El-Basîr","Her şeyi gören"],
+["El-Hakem","Mutlak adaletle hükmeden"],["El-Adl","Son derece adil olan"],
+["El-Latîf","Yarattıklarına lütufkâr davranan, en ince işleri bilen"],["El-Habîr","Her şeyin iç yüzünden haberdar olan"],
+["El-Halîm","Yumuşak davranan, cezada acele etmeyen"],["El-Azîm","Büyüklükte sınırsız olan"],
+["El-Ğafûr","Çok bağışlayan"],["Eş-Şekûr","Az amele çok mükâfat veren"],
+["El-Aliyy","Yüceler yücesi"],["El-Kebîr","Büyüklükte eşsiz"],
+["El-Hafîz","Koruyan, saklayan"],["El-Mukît","Rızkı ve gıdayı yaratıp ulaştıran"],
+["El-Hasîb","Herkesin hesabını gören"],["El-Celîl","Azamet ve celal sahibi"],
+["El-Kerîm","Sonsuz cömertlik sahibi"],["Er-Rakîb","Her an gözetleyip kontrol eden"],
+["El-Mucîb","Duaları kabul eden"],["El-Vâsi","İlmi ve rahmeti her şeyi kuşatan"],
+["El-Hakîm","Her işi yerli yerinde yapan"],["El-Vedûd","Kullarını çok seven, sevilen"],
+["El-Mecîd","Şanı yüce, keremi bol"],["El-Bâis","Ölüleri diriltip yeniden yaratan"],
+["Eş-Şehîd","Her şeye şahit olan"],["El-Hakk","Varlığı hiç değişmeyen mutlak gerçek"],
+["El-Vekîl","Kendisine güvenilip dayanılan"],["El-Kaviyy","Sonsuz güç sahibi"],
+["El-Metîn","Çok sağlam, kudreti asla sarsılmayan"],["El-Veliyy","Dost olan, yardım eden"],
+["El-Hamîd","Her türlü övgüye layık"],["El-Muhsî","Her şeyi sayıp bilen"],
+["El-Mübdi","Örneksiz ilk yaratan"],["El-Muîd","Yarattığını yeniden var eden"],
+["El-Muhyî","Can veren, dirilten"],["El-Mümît","Ölümü yaratan"],
+["El-Hayy","Diri olan, ezelî ve ebedî hayat sahibi"],["El-Kayyûm","Her şeyi ayakta tutan"],
+["El-Vâcid","Dilediğini bulan, hiçbir şeye muhtaç olmayan"],["El-Mâcid","Şanı yüce, keremi bol"],
+["El-Vâhid","Bir olan, eşi ve benzeri olmayan"],["Es-Samed","Hiçbir şeye muhtaç olmayan, herkesin muhtaç olduğu"],
+["El-Kâdir","Her şeye gücü yeten"],["El-Muktedir","Kudretiyle dilediğini yapan"],
+["El-Mukaddim","Dilediğini öne alan"],["El-Muahhir","Dilediğini geri bırakan"],
+["El-Evvel","Varlığının başlangıcı olmayan"],["El-Âhir","Varlığının sonu olmayan"],
+["Ez-Zâhir","Varlığı apaçık delillerle görünen"],["El-Bâtın","Zâtı gizli, akıl ile idrak edilemeyen"],
+["El-Vâlî","Kâinatı yöneten"],["El-Müteâlî","Akıl almaz derecede yüce"],
+["El-Berr","İyilik ve ihsanı bol"],["Et-Tevvâb","Tevbeleri çokça kabul eden"],
+["El-Müntekim","Suçluyu adaletle cezalandıran"],["El-Afüvv","Affı bol olan"],
+["Er-Raûf","Çok şefkatli, esirgeyen"],["Mâlik-ül Mülk","Mülkün gerçek sahibi"],
+["Zül-Celâli vel İkrâm","Hem azamet hem ikram sahibi"],["El-Muksit","Adaleti gerçekleştiren"],
+["El-Câmi","Dilediğini bir araya toplayan"],["El-Ğaniyy","Hiçbir şeye muhtaç olmayan, zengin"],
+["El-Muğnî","Dilediğini zengin kılan"],["El-Mâni","Dilemediği şeye engel olan"],
+["Ed-Dârr","Zarar verecek şeyleri yaratan"],["En-Nâfi","Fayda verecek şeyleri yaratan"],
+["En-Nûr","Alemleri nurlandıran, hidayet kaynağı"],["El-Hâdî","Doğru yola ileten"],
+["El-Bedî","Eşi benzeri olmadan yaratan"],["El-Bâkî","Varlığının sonu olmayan, ebedî"],
+["El-Vâris","Her şeyin gerçek sahibi, sonunda her şey ona döner"],["Er-Reşîd","Dosdoğru yola götüren"],
+["Es-Sabûr","Çok sabırlı, cezalandırmada acele etmeyen"]
+];
+var KIRK_HADIS=[
+{h:"Ameller niyetlere göredir. Herkese niyet ettiği şey vardır.",k:"Buhârî, Müslim"},
+{h:"Sizden biriniz, kendisi için istediğini kardeşi için de istemedikçe (gerçek anlamda) iman etmiş olmaz.",k:"Buhârî, Müslim"},
+{h:"Müslüman, elinden ve dilinden diğer Müslümanların emin olduğu kimsedir.",k:"Buhârî, Müslim"},
+{h:"Kolaylaştırınız, zorlaştırmayınız; müjdeleyiniz, nefret ettirmeyiniz.",k:"Buhârî, Müslim"},
+{h:"Helal bellidir, haram da bellidir. İkisi arasında şüpheli şeyler vardır.",k:"Buhârî, Müslim"},
+{h:"Din nasihattir (samimiyettir).",k:"Müslim"},
+{h:"Kim Allah'a ve ahiret gününe inanıyorsa ya hayır söylesin ya sussun.",k:"Buhârî, Müslim"},
+{h:"Sizin en hayırlınız, Kur'an'ı öğrenen ve öğretendir.",k:"Buhârî"},
+{h:"Bir kötülük gördüğünüzde onu eliyle, olmazsa diliyle, ona da gücü yetmezse kalbiyle değiştirsin; bu imanın en zayıf derecesidir.",k:"Müslim"},
+{h:"Komşusu açken tok yatan kimse (kâmil manada) bizden değildir.",k:"Hâkim, Beyhakî (hasen)"},
+{h:"Küçüklerimize merhamet etmeyen, büyüklerimize saygı göstermeyen bizden değildir.",k:"Tirmizî, Ebû Dâvûd"},
+{h:"Kişinin malayani (boş, faydasız) şeyleri terk etmesi, İslam'ının güzelliğindendir.",k:"Tirmizî"},
+{h:"Allah güzeldir, güzelliği sever.",k:"Müslim"},
+{h:"Kolaylaştırın, zorlaştırmayın.",k:"Buhârî"},
+{h:"Ana-babaya iyilik etmek, cihaddan daha üstündür (belirli şartlarda).",k:"Buhârî, Müslim"},
+{h:"Cennet, annelerin ayakları altındadır.",k:"Nesâî, İbn Mâce (hasen)"},
+{h:"Kişi, sevdiğiyle beraberdir.",k:"Buhârî, Müslim"},
+{h:"Kolay olanı yapın, zorlaştırmayın; birbirinizi sevindirin, nefret ettirmeyin.",k:"Buhârî, Müslim"},
+{h:"Mü'minlerin iman bakımından en olgunu, ahlakı en güzel olanıdır.",k:"Ebû Dâvûd, Tirmizî"},
+{h:"Sadaka malı eksiltmez.",k:"Müslim"}
+];
+var PEYGAMBERLER_25=[
+["Âdem (a.s.)","İlk insan ve ilk peygamber"],["İdris (a.s.)","Yazı ve ilimle anılan peygamber"],
+["Nûh (a.s.)","Tufan ve gemi kıssasıyla bilinen peygamber"],["Hûd (a.s.)","Âd kavmine gönderilen peygamber"],
+["Sâlih (a.s.)","Semûd kavmine gönderilen, deve mucizesiyle bilinen peygamber"],["İbrâhim (a.s.)","Halilullah, tevhid mücadelesi ve Kâbe'nin inşasıyla bilinen peygamber"],
+["Lût (a.s.)","İbrahim (a.s.)'ın çağdaşı, kavmi helak olan peygamber"],["İsmâil (a.s.)","İbrahim (a.s.)'ın oğlu, kurban kıssasıyla bilinen peygamber"],
+["İshâk (a.s.)","İbrahim (a.s.)'ın diğer oğlu"],["Ya'kûb (a.s.)","İshak (a.s.)'ın oğlu, İsrailoğulları'nın atası"],
+["Yûsuf (a.s.)","Sabır ve rüya tabiriyle bilinen, Mısır'a vezir olan peygamber"],["Eyyûb (a.s.)","Sabrın sembolü, hastalık imtihanıyla bilinen peygamber"],
+["Şuayb (a.s.)","Medyen halkına gönderilen, ölçü-tartıda adaleti öğütleyen peygamber"],["Mûsâ (a.s.)","Kelîmullah, Firavun'a karşı mücadele eden peygamber"],
+["Hârûn (a.s.)","Musa (a.s.)'ın kardeşi ve yardımcısı"],["Zülkifl (a.s.)","Sabrı ve adaletiyle anılan peygamber"],
+["Dâvûd (a.s.)","Zebur'un indirildiği, adaletiyle bilinen peygamber-kral"],["Süleymân (a.s.)","Cinlere, hayvanlara ve rüzgâra hükmeden peygamber-kral"],
+["İlyâs (a.s.)","Putperestliğe karşı mücadele eden peygamber"],["Elyesa' (a.s.)","İlyas (a.s.)'ın halefi olan peygamber"],
+["Yûnus (a.s.)","Balığın karnında kaldığı kıssasıyla bilinen peygamber"],["Zekeriyyâ (a.s.)","Yahya (a.s.)'ın babası, dua ile evlat isteyen peygamber"],
+["Yahyâ (a.s.)","Takva ve iffetiyle bilinen peygamber"],["Îsâ (a.s.)","Mucizevi doğumu, İncil ve göğe yükselişiyle bilinen peygamber"],
+["Muhammed (s.a.v.)","Peygamberlerin sonuncusu, Kur'an'ın kendisine indirildiği son peygamber"]
+];
+function renderIlmihal(){
+  var arama=($("esmaAra").value||"").toLocaleLowerCase("tr");
+  $("esmaListe").innerHTML=ESMA_UL_HUSNA
+    .map(function(e,i){return{e:e,i:i};})
+    .filter(function(x){return !arama||x.e[0].toLocaleLowerCase("tr").includes(arama)||x.e[1].toLocaleLowerCase("tr").includes(arama);})
+    .map(function(x){return '<div style="padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px"><b>'+(x.i+1)+'. '+x.e[0]+'</b><div class="mut" style="font-size:12px;margin-top:2px">'+x.e[1]+'</div></div>';})
+    .join("");
+  if(!$("esmaAra").dataset.bagli){$("esmaAra").addEventListener("input",renderIlmihal);$("esmaAra").dataset.bagli="1";}
+  $("hadisListe").innerHTML=KIRK_HADIS.map(function(h,i){
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>'+(i+1)+'.</b> "'+h.h+'" <span class="mut" style="font-size:11px">— '+h.k+'</span></div>';
+  }).join("");
+  $("peygamberListe").innerHTML=PEYGAMBERLER_25.map(function(p){
+    return '<div style="padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px"><b>'+p[0]+'</b><div class="mut" style="font-size:12px;margin-top:2px">'+p[1]+'</div></div>';
+  }).join("");
+  var evliyaKaynaklar=[
+    ["TDV İslam Ansiklopedisi","https://islamansiklopedisi.org.tr/","Alim ve evliyaların akademik, kaynaklı biyografileri"],
+    ["Diyanet — Hadislerle İslam","https://hadislerleislam.diyanet.gov.tr/","Hadis ve siyer araştırmaları"],
+    ["Diyanet İşleri Başkanlığı","https://www.diyanet.gov.tr/","Resmi dini bilgi kaynağı"],
+    ["Sorularla İslamiyet","https://sorularlaislamiyet.com/","Kaynaklı soru-cevap arşivi"]
+  ];
+  $("evliyaLinkler").innerHTML=evliyaKaynaklar.map(function(k){
+    return '<a href="'+k[1]+'" target="_blank" style="text-decoration:none;padding:10px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:inherit"><b>🔗 '+k[0]+'</b><div class="mut" style="font-size:12px">'+k[2]+'</div></a>';
+  }).join("");
+}
+
 /* ───── KİTAP TAKİBİ ───── */
 function kitapListesi(){return get("kitaplar",[]);}
 function kitapEkle(){
