@@ -313,6 +313,10 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
 
 <!-- ════════ KONU ÇALIŞMASI TAB ════════ -->
 <div class="tab-pane" id="tabCalisma">
+  <div class="section-h"><h3>📌 Konu Özetleri (Hızlı Bakış)</h3><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:14px">Her konunun can alıcı anahtar kelimeleri — sınavdan hemen önce hızlı tekrar için. Detaylar için soruları çöz.</p>
+  <div id="konuOzetGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:28px"></div>
+
   <div class="section-h"><h3>📚 Konu Çalışması</h3><span class="line"></span></div>
   <div class="topics-grid" id="calismaGrid"></div>
 
@@ -498,6 +502,17 @@ const KGK_KONULAR = [
   {ad:'KURUMSAL YÖNETİM', tip:'t7', ic:'🏛', hoca:'Ulaş Hoca'},
   {ad:'GENEL HUKUK', tip:'t8', ic:'⚖', hoca:'Ali Kemal Hoca'},
 ];
+
+const KONU_OZET={
+ 'MUHASEBE':['Hesap planı: 1 Dönen, 2 Duran, 3 KV Yab.Kay, 4 UV Yab.Kay, 5 Özkaynak','Amortisman: normal / azalan bakiyeler (max %50)','Reeskont: sadece senetli alacak/borç','Şüpheli alacak: dava/icra/protesto şartı','FIFO ve ağırlıklı ortalama (LIFO yasak)','KDV: 191 indirilecek / 391 hesaplanan','Ertelenmiş vergi: geçici fark × oran','Şerefiye: itfa edilmez, yıllık test','Kıdem tazminatı: aktüeryal hesap','Konsolidasyon: kontrol esası (TFRS 10)'],
+ 'DENETİM':['Denetim riski = Doğal × Kontrol × Bulgu','Önemlilik: nicel + nitel','Mesleki şüphecilik ≠ güvensizlik','Hile üçgeni: baskı-fırsat-haklı gösterme','Görüşler: olumlu/şartlı/olumsuz/kaçınma','KAM: kilit denetim konuları (TDS 701)','Denetçi rotasyonu: yakınlık tehdidi','Kanıt: dışarıdan+yazılı en güvenilir','TDS 240: hile, TDS 315: risk','Bağımsızlık: 5 tehdit türü'],
+ 'FİNANS':['NPV > IRR güvenilirlik','WACC: ağırlıklı sermaye maliyeti','Cari oran ~2, asit-test ~1','CAPM: risksiz + β×(piyasa-risksiz)','Kaldıraç: faaliyet × finansal = toplam','Faktoring: alacağı erken nakde çevirme','F/K ve PD/DD oranları','EVA: sermaye maliyeti üstü değer','Beta: sistematik risk ölçüsü','Nakit döngüsü = stok+alacak-borç süresi'],
+ 'TMS-TFRS':['TMS 2: maliyet ile net gerçekleşebilir değerin düşüğü','TMS 16: maliyet / yeniden değerleme modeli','TFRS 15: 5 aşamalı hasılat modeli','TFRS 16: kiralama bilançoya alınır','TMS 36: şerefiye yıllık test, iptal edilemez','TMS 37: karşılık vs koşullu borç','TMS 19: kıdem tazminatı aktüeryal','TFRS 9: ECL beklenen kredi zararı','TFRS 3: işletme birleşmesi/şerefiye','TFRS 13: gerçeğe uygun değer hiyerarşisi (3 seviye)'],
+ 'VERGİ MEVZUATI':['GVK: 7 gelir unsuru','KVK: iştirak kazancı istisnası','Örtülü sermaye: öz sermayenin 3 katı','Transfer fiyatlandırması: emsallere uygunluk','VUK: tarh-tebliğ-tahakkuk-tahsil','Vergi ziyaı: 1 kat, kaçakçılıkta 3 kat','Pişmanlık: ceza kesilmez, zam var','Uzlaşma: dava hakkından vazgeçme','Zamanaşımı: tarh 5 yıl (VUK 114)','KDV: 191/391 indirim mekanizması'],
+ 'KGK MEVZUATI':['KGK: 660 sayılı KHK ile kuruldu','TDS: uluslararası ISA ile uyumlu','KAYİK: kamu yararını ilgilendiren kuruluş','Denetçi rotasyonu: ~7 yıl kilit ortak','Kalite güvence: peer review','BOBİ FRS: sadeleştirilmiş çerçeve','Bağımsızlık tehditleri: 5 tür','Disiplin: uyarı → yetki iptali','TDS 220: görev bazlı kalite kontrol','EQR: KAYİK\'te bağımsız gözden geçirme'],
+ 'KURUMSAL YÖNETİM':['4 ilke: şeffaflık-hesap verebilirlik-sorumluluk-adillik','Uygula ya da açıkla (comply or explain)','Bağımsız üye: çıkar ilişkisi yok','Denetim komitesi: çoğunluk bağımsız','KAP: kamuyu aydınlatma platformu','İçeriden öğrenenler ticareti yasak','Rüçhan hakkı: pay sulanmasını önler','Tunneling: kaynak kaydırma riski','Vekalet teorisi: sahiplik-kontrol ayrışması','ESG: çevresel-sosyal-yönetişim'],
+ 'GENEL HUKUK':['AŞ vs Ltd: pay senedi, halka açılma','Kambiyo: bono-poliçe-çek','Zamanaşımı: TBK 10 yıl genel','Haciz: cebri icra aşaması','Kıdem: 1 yıl+haklı neden şartı','İşe iade: iş güvencesi kapsamı','Butlan (kesin) vs iptal edilebilirlik','Hata-hile-ikrah: sözleşme sakatlıkları','Konkordato: iflası önleyen yapılandırma','Aval: kambiyo senedine kefalet']
+};
 
 // ════════════════════════════════════════════════════════════
 // HAZIR SORU BANKASI (Excel olmadan da dolu gelsin)
@@ -1678,7 +1693,17 @@ const App = {
     this.guncelle();
   },
 
-  calismaHazirla(){this.konulariCiz();this.ozelKonuSecimDoldur();this.ozelSoruListesiCiz();},
+  calismaHazirla(){this.konulariCiz();this.ozelKonuSecimDoldur();this.ozelSoruListesiCiz();this.konuOzetleriCiz();},
+  konuOzetleriCiz(){
+    const grid=document.getElementById('konuOzetGrid');if(!grid)return;
+    grid.innerHTML=KGK_KONULAR.map(k=>{
+      const maddeler=(KONU_OZET[k.ad]||[]).map(m=>`<li>${m}</li>`).join('');
+      return `<div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-sm);border-left:4px solid var(--primary,#5c5fe1)">
+        <h4 style="margin:0 0 8px;font-size:13.5px;font-weight:800">${k.ic} ${k.ad}</h4>
+        <ul style="margin:0;padding-left:18px;font-size:12px;line-height:1.7;color:var(--text-soft)">${maddeler}</ul>
+      </div>`;
+    }).join('');
+  },
 
   // ─── İSTATİSTİK ───
   istatistikGuncelle(){
