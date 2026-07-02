@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🟡 Kişisel Gelişim Paneli</title>
+<title>🟡 Kişisel Gelişim Paneli · v400</title>
 <style>
 :root{--bg:#0f1419;--panel:#1a2230;--panel2:#222d3d;--line:#2d3a4d;--txt:#e6edf3;--mut:#8b9bb0;--acc:#ffca28;--acc2:#22d3a0;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;--shadow:0 4px 18px rgba(0,0,0,.35)}
 [data-theme="light"]{--bg:#eef2f7;--panel:#fff;--panel2:#f4f7fb;--line:#dde5ef;--txt:#15202b;--mut:#5d6b7d;--acc:#f9a825;--acc2:#0aa97a;--shadow:0 4px 16px rgba(60,90,130,.12)}
@@ -385,6 +385,20 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
       <div class="row" style="margin-top:10px"><button class="btn alt" onclick="hedefEkle()">➕ Hedef Ekle</button></div>
     </div>
     <div id="hedefList"></div>
+    <div class="card">
+      <div class="row spread"><h2 style="margin:0">📆 Haftalık Hedef Listesi</h2></div>
+      <p class="mut" style="margin:6px 0 12px;font-size:12px">Excel'deki "hedef listesi" gibi — bu hafta yapman gerekenleri yaz, tamamlayınca işaretle.</p>
+      <div class="row" style="gap:6px;margin-bottom:8px">
+        <input id="hhAd" placeholder="ör. 94 kg - Bel çevresi: 107" style="flex:2">
+        <button class="btn" onclick="hhEkle()">➕ Ekle</button>
+      </div>
+      <div class="row" style="gap:8px;margin-bottom:10px;align-items:center">
+        <label style="margin:0;font-size:12px">Hafta aralığı:</label>
+        <input id="hhBas" type="date"><span class="mut">—</span><input id="hhBit" type="date">
+        <button class="btn ghost" onclick="hhTemizle()">🗑 Bu Haftayı Sıfırla</button>
+      </div>
+      <div id="hhListe"></div>
+    </div>
   </section>
   <!-- ANALİZ -->
   <section class="view" id="v-analiz">
@@ -442,7 +456,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
   <section class="view" id="v-not">
     <div class="card"><h2>📝 Bugünün Notu</h2><textarea id="notArea" rows="8" placeholder="Bugün aklında ne var?"></textarea><div class="row" style="margin-top:10px"><button class="btn alt" onclick="notKaydet()">💾 Kaydet</button><span class="mut" id="notDurum"></span></div></div>
     <div class="card">
-      <div class="row spread"><h2 style="margin:0">🚫 Kurallarım / Kendime Sözüm</h2><button class="btn ghost" onclick="kuralEkle()">➕ Kural Ekle</button></div>
+      <div class="row spread"><h2 style="margin:0">🚫 Kurallarım / Kendime Sözüm</h2><span><button class="btn ghost" onclick="kuralYeniListeGetir()" style="margin-right:6px">🔄 Yeni Kuralları Ekle</button><button class="btn ghost" onclick="kuralEkle()">➕ Kural Ekle</button></span></div>
       <p class="mut" style="margin:6px 0 12px;font-size:12px">Kendi belirlediğin disiplin kuralların — istediğin zaman düzenle/sil.</p>
       <div id="kuralListe"></div>
     </div>
@@ -629,6 +643,22 @@ function kuralVarsayilan(){return [
  "Muhasebe işlemlerini günü gününe not al, yarının listesini hazırla",
  "Sabreden, pes etmeyen, yılmayan biri ol — hedeflerine emin adımlarla yürü"
 ];}
+function kuralVarsayilan2(){return [
+ "PC'de/telefonda oyun oynamak yok",
+ "Hafta sonu dışında dışarı çıkma — hafta içi max 1 gün sosyal ol",
+ "Ayda 10.000 TL'den fazla fuzuli harcama yok",
+ "Hergüne yeni bir bilgi öğrenme hedefiyle başla, sonuna kadar götür — pes etmek yok",
+ "Diyet programına mutlaka uy",
+ "Günde 3 litre su tüket, spor esnasında +1 litre ekle",
+ "Hafta sonları arkadaşlarına vakit ayırabilirsin ama hafta içi katı ol",
+ "Muhasebe işlemlerini günü gününe not tut — o gün yaptığın işleri hepsini yaz, yarının listesini hazırla"
+];}
+function kuralYeniListeGetir(){
+ var l=kuralListesi();var eklendi=0;
+ kuralVarsayilan2().forEach(function(k){if(l.indexOf(k)===-1){l.push(k);eklendi++;}});
+ set("kurallar",l);renderKurallar();
+ alert(eklendi?eklendi+" yeni kural eklendi.":"Zaten tüm güncel kurallar listende.");
+}
 function kuralListesi(){return get("kurallar",null)||kuralVarsayilan();}
 function renderKurallar(){
   var l=kuralListesi();
@@ -1281,7 +1311,35 @@ function renderHedefler(){var arr=hedefler();if(!arr.length){$("hedefList").inne
    '<div class="bar" style="margin:8px 0 6px"><i style="width:'+p+'%"></i></div>'+
    '<div class="row spread" style="font-size:12.5px"><span class="mut">'+h.mevcut+' / '+h.hedef+' '+esc(h.birim)+' (%'+p+')</span><span class="mut">⏳ '+kalanGun+'</span></div>'+
    '<div class="row" style="margin-top:8px;gap:8px"><label style="margin:0">Güncelle:</label><input type="number" step="any" value="'+h.mevcut+'" style="width:120px" onchange="hedefGuncelle('+h.id+',this.value)"><span class="mut">📈 gereken: <b>'+gerekli+'</b></span></div></div>';
- }).join("");}
+ }).join("");
+ hhRender();}
+
+/* ---- HAFTALIK HEDEF LİSTESİ (basit checklist, Excel'deki gibi) ---- */
+function hhHaftaAnahtari(){
+ var bas=$("hhBas").value,bit=$("hhBit").value;
+ if(!bas||!bit){var d=new Date();var pzt=new Date(d);pzt.setDate(d.getDate()-((d.getDay()+6)%7));var paz=new Date(pzt);paz.setDate(pzt.getDate()+6);
+  bas=fmt(pzt);bit=fmt(paz);$("hhBas").value=bas;$("hhBit").value=bit;}
+ return bas+"_"+bit;
+}
+function hhListesi(){return get("hhListe_"+hhHaftaAnahtari(),[]);}
+function hhKaydet(l){set("hhListe_"+hhHaftaAnahtari(),l);}
+function hhEkle(){
+ var ad=$("hhAd").value.trim();if(!ad)return;
+ var l=hhListesi();l.push({ad:ad,tamam:false});hhKaydet(l);
+ $("hhAd").value="";hhRender();
+}
+function hhToggle(i){var l=hhListesi();l[i].tamam=!l[i].tamam;hhKaydet(l);hhRender();}
+function hhSil(i){var l=hhListesi();l.splice(i,1);hhKaydet(l);hhRender();}
+function hhTemizle(){if(!confirm("Bu haftanın hedef listesi silinsin mi?"))return;hhKaydet([]);hhRender();}
+function hhRender(){
+ var el=$("hhListe");if(!el)return;
+ var l=hhListesi();
+ el.innerHTML=l.map(function(h,i){
+  return '<div class="row spread" style="padding:8px 10px;border-radius:8px;background:var(--panel2);margin-bottom:6px">'
+   +'<label style="margin:0;display:flex;align-items:center;gap:8px;flex:1"><input type="checkbox" '+(h.tamam?"checked":"")+' onchange="hhToggle('+i+')"><span style="'+(h.tamam?"text-decoration:line-through;color:var(--mut)":"")+'">'+esc(h.ad)+'</span></label>'
+   +'<button class="iconbtn" onclick="hhSil('+i+')" style="padding:3px 8px;font-size:11px">🗑</button></div>';
+ }).join("")||'<div class="mut">Bu hafta için henüz hedef eklenmedi.</div>';
+}
 
 /* ---- ANALİZ ---- */
 function shiftStr(n){var d=new Date();d.setDate(d.getDate()+n);return fmt(d);}

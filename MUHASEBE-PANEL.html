@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💰 Muhasebe Paneli</title>
+<title>💰 Muhasebe Paneli · v400</title>
 <style>
 :root{
   --bg0:#070b14;--bg1:#0c1322;--glass:rgba(22,30,48,.55);--glass2:rgba(30,40,64,.5);
@@ -230,6 +230,43 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
     </div>
   </div>
 
+  <!-- KIYMETLİ MADEN (ALTIN-GÜMÜŞ) YATIRIM TAKİBİ -->
+  <div class="panel" style="margin-top:20px">
+    <h2>🥇 Kıymetli Maden Yatırım Takibi (Altın · Gümüş)</h2>
+    <div class="filters" style="margin-bottom:16px">
+      <span class="chip active" data-maden="altin">🟡 Altın</span>
+      <span class="chip" data-maden="gumus">⚪ Gümüş</span>
+    </div>
+    <div class="row" style="margin-bottom:16px">
+      <div class="fld" style="max-width:145px"><label>TARİH</label><input id="madenTarih" type="date" /></div>
+      <div class="fld" style="max-width:110px"><label>İŞLEM</label>
+        <select id="madenTip"><option value="alis">Alış</option><option value="satis">Satış</option></select>
+      </div>
+      <div class="fld" style="max-width:120px"><label>GRAM</label><input id="madenGram" type="number" step="0.01" placeholder="0,00" /></div>
+      <div class="fld" style="max-width:130px"><label>KUR (₺/gram)</label><input id="madenKur" type="number" step="0.01" placeholder="0,00" /></div>
+      <div class="fld"><label>NOT (opsiyonel)</label><input id="madenNot" placeholder="ör. Kıymetli maden ödül taşıma" /></div>
+      <button class="btn btn-g" id="madenEkle">Ekle</button>
+    </div>
+
+    <div class="sumgrid" style="margin-bottom:16px">
+      <div class="sumcard s4"><div class="lbl" id="madenBaslikGram">📦 TOPLAM GRAM</div><div class="val ntr" id="madenToplamGram">0 gr</div><div class="sub">Alış − Satış</div></div>
+      <div class="sumcard s2"><div class="lbl">💸 TOPLAM MALİYET</div><div class="val neg" id="madenToplamMaliyet">0 ₺</div><div class="sub">Net alış maliyeti</div></div>
+      <div class="sumcard s3"><div class="lbl">⚖️ ORTALAMA MALİYET</div><div class="val" id="madenOrtMaliyet">0 ₺/gr</div><div class="sub">Ağırlıklı ortalama</div></div>
+      <div class="sumcard s1"><div class="lbl">📈 GÜNCEL DEĞER</div><div class="val pos" id="madenGuncelDeger">0 ₺</div><div class="sub" id="madenKarZarar">Güncel kuru gir</div></div>
+    </div>
+    <div class="row" style="margin-bottom:16px;align-items:flex-end">
+      <div class="fld" style="max-width:200px"><label>GÜNCEL PİYASA KURU (₺/gram)</label><input id="madenGuncelKur" type="number" step="0.01" placeholder="ör. 4300" /></div>
+      <button class="btn btn-s" id="madenGuncelKaydet">Güncel Değeri Hesapla</button>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>TARİH</th><th style="text-align:right">GRAM</th><th style="text-align:right">KUR</th><th style="text-align:right">TL TUTARI</th><th>NOT</th><th></th></tr></thead>
+        <tbody id="madenBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div></main>
 <script>
 const $=id=>document.getElementById(id);
@@ -403,7 +440,76 @@ $("cariEkle").onclick=()=>{
   $("cariIsim").value="";$("cariTutar").value="";cariRender();
 };
 
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender()}
+/* ───── KIYMETLİ MADEN (ALTIN-GÜMÜŞ) YATIRIM TAKİBİ ───── */
+let madenAktif="altin";
+let madenHareketleri={altin:load("muh_altin")||[],gumus:load("muh_gumus")||[]};
+document.querySelectorAll("[data-maden]").forEach(c=>c.onclick=()=>{
+  document.querySelectorAll("[data-maden]").forEach(x=>x.classList.remove("active"));
+  c.classList.add("active");madenAktif=c.dataset.maden;madenRender();
+});
+$("madenTarih").value=new Date().toISOString().slice(0,10);
+$("madenEkle").onclick=()=>{
+  const tarih=$("madenTarih").value,tip=$("madenTip").value;
+  const gram=+$("madenGram").value,kur=+$("madenKur").value,not=$("madenNot").value.trim();
+  if(!tarih||!gram||!kur){alert("Tarih, gram ve kur zorunlu.");return;}
+  const gramImzali=tip==="satis"?-Math.abs(gram):Math.abs(gram);
+  const tutar=gramImzali*kur;
+  const liste=madenHareketleri[madenAktif];
+  liste.push({tarih,gram:gramImzali,kur,tutar,not:not||(tip==="satis"?"SATIŞ":"")});
+  liste.sort((a,b)=>a.tarih.localeCompare(b.tarih));
+  save("muh_"+madenAktif,liste);
+  $("madenGram").value="";$("madenKur").value="";$("madenNot").value="";
+  madenRender();
+};
+function madenSil(i){
+  const liste=madenHareketleri[madenAktif];liste.splice(i,1);
+  save("muh_"+madenAktif,liste);madenRender();
+}
+$("madenGuncelKaydet").onclick=()=>{save("muh_guncelKur_"+madenAktif,+$("madenGuncelKur").value||0);madenRender();};
+function madenRender(){
+  const liste=madenHareketleri[madenAktif];
+  const ikon=madenAktif==="altin"?"🟡":"⚪";
+  $("madenBaslikGram").textContent=ikon+" TOPLAM GRAM";
+  if(!liste.length){
+    $("madenBody").innerHTML='<tr><td colspan="5" class="empty">Henüz işlem yok</td></tr>';
+  }else{
+    $("madenBody").innerHTML=[...liste].reverse().map((h,ri)=>{
+      const idx=liste.length-1-ri;
+      const renk=h.gram>=0?"pos":"neg";
+      return `<tr>
+        <td style="font-size:12px;color:var(--mut)">${h.tarih}</td>
+        <td style="text-align:right;font-weight:700" class="${renk}">${h.gram.toFixed(2)} gr</td>
+        <td style="text-align:right">${h.kur.toFixed(2)} ₺</td>
+        <td style="text-align:right;font-weight:800" class="${renk}">${h.tutar.toFixed(2)} ₺</td>
+        <td style="font-size:12px;color:var(--mut)">${h.not||""}</td>
+        <td><button class="del-btn" data-mi="${idx}">✕</button></td>
+      </tr>`;
+    }).join("");
+    document.querySelectorAll("[data-mi]").forEach(b=>b.onclick=()=>madenSil(+b.dataset.mi));
+  }
+  const toplamGram=liste.reduce((s,h)=>s+h.gram,0);
+  const alisGram=liste.filter(h=>h.gram>0).reduce((s,h)=>s+h.gram,0);
+  const alisMaliyet=liste.filter(h=>h.gram>0).reduce((s,h)=>s+h.tutar,0);
+  const satisGram=liste.filter(h=>h.gram<0).reduce((s,h)=>s+Math.abs(h.gram),0);
+  const netMaliyet=liste.reduce((s,h)=>s+h.tutar,0);
+  const ortMaliyet=alisGram?alisMaliyet/alisGram:0;
+  $("madenToplamGram").textContent=toplamGram.toFixed(2)+" gr";
+  $("madenToplamMaliyet").textContent=netMaliyet.toFixed(2)+" ₺";
+  $("madenOrtMaliyet").textContent=ortMaliyet.toFixed(2)+" ₺/gr";
+  const guncelKur=load("muh_guncelKur_"+madenAktif)||0;
+  $("madenGuncelKur").value=guncelKur||"";
+  if(guncelKur&&toplamGram>0){
+    const guncelDeger=toplamGram*guncelKur;
+    const karZarar=guncelDeger-(toplamGram*ortMaliyet);
+    $("madenGuncelDeger").textContent=guncelDeger.toFixed(2)+" ₺";
+    $("madenKarZarar").innerHTML=(karZarar>=0?'<span class="pos">▲ +':'<span class="neg">▼ ')+karZarar.toFixed(2)+" ₺</span>";
+  }else{
+    $("madenGuncelDeger").textContent="0 ₺";
+    $("madenKarZarar").textContent=toplamGram<=0?"Elde tutulan gram yok":"Güncel kuru gir";
+  }
+}
+
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender()}
 
 $("ekleBtn").onclick=()=>{
   const tip=$("tipSel").value;
