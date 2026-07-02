@@ -3798,6 +3798,7 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="calisma">Konu Çalışması</a>
     <a data-tab="gecmis">Geçmiş Yıllar</a>
     <a data-tab="deneme">Deneme Sınavı</a>
+    <a data-tab="gunun">📅 Günün Soruları</a>
     <a data-tab="analiz">Analiz</a>
   </nav>
   <div class="actions">
@@ -3917,6 +3918,24 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
   <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-top:18px">
     <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">📈 Deneme Sonuç Grafiği</h4>
     <div id="denemeGrafik" style="overflow-x:auto"></div>
+  </div>
+</div>
+
+<!-- ════════ GÜNÜN SORULARI TAB ════════ -->
+<div class="tab-pane" id="tabGunun">
+  <div class="section-h"><h3>📅 Günün Soruları</h3><span class="badge" id="gununTarih"></span><span class="line"></span></div>
+  <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:18px">
+    <p style="color:var(--text-soft);margin-bottom:16px">Her gün otomatik olarak, tüm konulardan karışık ve <b>zorluk seviyesine göre dengeli</b> yeni bir set seçilir: 5 🟢 Kolay + 5 🟡 Orta + 5 🔴 Zor = 15 soru. Yarın açtığında farklı bir set seni bekliyor olacak.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <span class="badge" style="background:#10b98122;color:#10b981">🟢 Kolay 5</span>
+      <span class="badge" style="background:#f59e0b22;color:#f59e0b">🟡 Orta 5</span>
+      <span class="badge" style="background:#ef444422;color:#ef4444">🔴 Zor 5</span>
+    </div>
+    <button class="btn btn-primary" onclick="App.gununSorulariBasla()" style="margin-top:8px">🚀 Günün Sorularını Çöz</button>
+  </div>
+  <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm)">
+    <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">🗂️ Bugünkü Sorular (Önizleme)</h4>
+    <div id="gununListe"></div>
   </div>
 </div>
 
@@ -4899,12 +4918,16 @@ const App = {
     }
   },
 
+  zorlukBelirle(idx,toplam){
+    const oran=idx/toplam;
+    return oran<0.34?'kolay':oran<0.67?'orta':'zor';
+  },
   hazirSorulariYukle(){
     SHEETS={};
     const konular=new Set([...Object.keys(HAZIR_SORULAR),...Object.keys(HAZIR_SORULAR_EK)]);
     konular.forEach(konu=>{
       const birlesik=[...(HAZIR_SORULAR[konu]||[]),...(HAZIR_SORULAR_EK[konu]||[])];
-      SHEETS[konu]=birlesik.map(s=>({q:s.q, a:s.a, added:false}));
+      SHEETS[konu]=birlesik.map((s,idx)=>({q:s.q, a:s.a, added:false, zorluk:this.zorlukBelirle(idx,birlesik.length), _konuAdi:konu, _idx:idx}));
       // anahtar kavram + püf noktası notlarını yaz
       birlesik.forEach((s,idx)=>{
         const key=\`\${konu}-\${idx}\`;
@@ -4990,6 +5013,7 @@ const App = {
         if(a.dataset.tab==='calisma') this.calismaHazirla();
         if(a.dataset.tab==='analiz') this.analizCiz();
         if(a.dataset.tab==='deneme') this.denemeGrafikCiz();
+        if(a.dataset.tab==='gunun') this.gununSorulariGoster();
       });
     });
   },
@@ -5146,10 +5170,18 @@ const App = {
 
     // Etiket
     const tag=document.getElementById('qTag');
+    const ZORLUK_RENK={kolay:'#10b981',orta:'#f59e0b',zor:'#ef4444'};
+    const ZORLUK_IC={kolay:'🟢 Kolay',orta:'🟡 Orta',zor:'🔴 Zor'};
     if(m.mod==='gy'){
       tag.style.display='inline-block';
       tag.className='q-tag gy';
       tag.textContent=\`\${s.sinav||''} \${s.yil||''} · \${s.konu||''}\`.trim();
+    }else if(s.zorluk){
+      tag.style.display='inline-block';
+      tag.className='q-tag';
+      tag.style.background=ZORLUK_RENK[s.zorluk]+'22';
+      tag.style.color=ZORLUK_RENK[s.zorluk];
+      tag.textContent=(s._konuAdi?s._konuAdi+' · ':'')+ZORLUK_IC[s.zorluk];
     }else{
       tag.style.display='none';
     }
@@ -5410,6 +5442,54 @@ const App = {
     });
     const son=l[l.length-1];
     ctx.fillStyle='#888';ctx.font='11px sans-serif';ctx.fillText('Son: %'+son.yuzde+' ('+son.dogru+'/'+son.toplam+')',pad,16);
+  },
+
+  // ─── GÜNÜN SORULARI (zorluk dengeli, tarihe göre değişen set) ───
+  bugunAnahtari(){return new Date().toISOString().slice(0,10);},
+  seedliRastgele(seed){
+    let s=0;for(let i=0;i<seed.length;i++)s=(s*31+seed.charCodeAt(i))>>>0;
+    return function(){s=(s*1103515245+12345)>>>0;return (s>>>8)/16777216;};
+  },
+  seedliKaristir(arr,rnd){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
+  },
+  gununSorulariHazirla(){
+    if(!Object.keys(SHEETS).length)this.hazirSorulariYukle();
+    const tarih=this.bugunAnahtari();
+    const rnd=this.seedliRastgele('kgk-gunun-'+tarih);
+    const havuz={kolay:[],orta:[],zor:[]};
+    Object.keys(SHEETS).forEach(konu=>{
+      (SHEETS[konu]||[]).forEach((s,idx)=>{
+        if(s.zorluk)havuz[s.zorluk].push({...s,_konuAdi:s._konuAdi||konu,_konuIdx:s._idx??idx});
+      });
+    });
+    const secim=[];
+    ['kolay','orta','zor'].forEach(z=>{
+      const karisik=this.seedliKaristir(havuz[z],rnd);
+      secim.push(...karisik.slice(0,5).map(s=>({...s,zorluk:z})));
+    });
+    return secim;
+  },
+  gununSorulariGoster(){
+    document.getElementById('gununTarih').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+    const sorular=this.gununSorulariHazirla();
+    const ZORLUK_RENK={kolay:'#10b981',orta:'#f59e0b',zor:'#ef4444'};
+    const ZORLUK_IC={kolay:'🟢',orta:'🟡',zor:'🔴'};
+    const liste=document.getElementById('gununListe');
+    if(!liste)return;
+    if(!sorular.length){liste.innerHTML='<p style="color:var(--text-dim)">Önce hazır soru bankasını yükle (Ana Sayfa).</p>';return;}
+    liste.innerHTML=sorular.map(s=>\`
+      <div style="padding:12px 0;border-bottom:1px solid var(--border-soft);display:flex;gap:10px;align-items:flex-start">
+        <span style="flex:none;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:\${ZORLUK_RENK[s.zorluk]}22;color:\${ZORLUK_RENK[s.zorluk]}">\${ZORLUK_IC[s.zorluk]} \${s.zorluk.toUpperCase()}</span>
+        <div><b style="font-size:12px;color:var(--text-dim)">\${s._konuAdi}</b><div style="margin-top:2px">\${s.q}</div></div>
+      </div>\`).join('');
+  },
+  gununSorulariBasla(){
+    const sorular=this.gununSorulariHazirla();
+    if(!sorular.length){this.toast('Önce hazır soru bankasını yükle','err');return;}
+    this.modalAc(sorular.map(s=>({...s,_konu:s._konuAdi,_konuIdx:s._konuIdx})), 'konu', \`📅 Günün Soruları · \${new Date().toLocaleDateString('tr-TR')}\`, null);
   },
 
   // ─── ANALİZ ───
