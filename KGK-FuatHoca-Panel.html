@@ -148,6 +148,8 @@ body{background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;-w
 .q-number{display:inline-block;background:#f1f2f5;color:var(--text-soft);padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:14px;margin-right:8px}
 .q-tag{display:inline-block;background:rgba(245,158,11,.13);color:#a14b00;padding:5px 10px;border-radius:8px;font-size:11.5px;font-weight:700;margin-bottom:14px}
 .q-tag.gy{background:rgba(168,85,247,.13);color:var(--purple-2)}
+.search-res-item{padding:10px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid #eee}
+.search-res-item:hover{background:#f6f7fb}
 .q-text{font-size:18.5px;line-height:1.85;color:var(--text);margin:6px 0 28px;font-weight:500;white-space:pre-wrap;
   padding:20px 24px;background:linear-gradient(180deg,#fafbfd,#f4f6fa);border:1px solid var(--border);border-radius:14px;
   box-shadow:inset 0 1px 0 #fff,0 2px 8px rgba(0,0,0,.03)}
@@ -232,9 +234,14 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="deneme">Deneme Sınavı</a>
     <a data-tab="gunun">📅 Günün Soruları</a>
     <a data-tab="bilgi">📘 Muhasebe Bilgileri</a>
+    <a data-tab="favoriler">⭐ Favoriler</a>
     <a data-tab="analiz">Analiz</a>
   </nav>
   <div class="actions">
+    <div style="position:relative">
+      <input id="genelAramaInput" placeholder="🔍 Soru/bilgi ara…" oninput="App.genelAra()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border-soft);font-size:12.5px;width:170px">
+      <div id="genelAramaSonuc" style="display:none;position:absolute;top:36px;left:0;width:320px;max-height:340px;overflow:auto;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);z-index:50"></div>
+    </div>
     <div class="clock" id="topClock">--:--:--</div>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
     <button class="btn btn-outline btn-small" onclick="document.getElementById('fileInput').click()">📁 Excel Yükle</button>
@@ -256,6 +263,10 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <div class="info">8 konu sayfası + YENİ SORULAR + GEÇMİŞ YILLAR formatı desteklenir.<br>
       Mevcut KGK panelinizin Excel'i ile uyumlu.</div>
   </div>
+
+  <!-- Günlük Özet -->
+  <div id="gunlukOzetKutu" style="background:#fff;border-radius:12px;padding:12px 18px;box-shadow:var(--shadow-sm);margin-bottom:8px;font-size:13.5px"></div>
+  <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:16px">💡 Bu paneli internetsiz "uygulama gibi" kullanmak istersen: dosyayı indirdiğin klasörden çift tıkla, tarayıcı sekmesini "Ana Ekrana Ekle" veya yer imlerine kaydet — gerçek çevrimdışı (offline) mod bu dosya yapısında teknik olarak desteklenmiyor.</div>
 
   <!-- Hero -->
   <div class="hero-grid" id="heroGrid">
@@ -348,6 +359,15 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
       <button class="btn btn-primary" onclick="App.denemeBasla(100,150)">🎯 100 Soru · 150 dk (Tam)</button>
     </div>
   </div>
+  <div style="background:#fff;border-radius:14px;padding:32px;text-align:center;box-shadow:var(--shadow-sm);margin-top:18px">
+    <div style="font-size:64px;margin-bottom:12px">⚖️</div>
+    <h3 style="font-size:22px;margin-bottom:8px">Gerçekçi Sınav Simülasyonu</h3>
+    <p style="color:var(--text-soft);margin-bottom:20px">Konu çalışması havuzundan, 8 konunun gerçek KGK sınav ağırlığına yakın oranlarda dağıtılmış soru seti (Muhasebe %20, Denetim %15, TMS-TFRS %15, Vergi %15, Finans %10, KGK Mevzuatı %10, Genel Hukuk %8, Kurumsal Yönetim %7).</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="App.gercekciSimulasyonBasla(40,60)">40 Soru · 60 dk</button>
+      <button class="btn btn-primary" onclick="App.gercekciSimulasyonBasla(100,150)">⚖️ 100 Soru · 150 dk (Gerçekçi Tam)</button>
+    </div>
+  </div>
   <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-top:18px">
     <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">📈 Deneme Sonuç Grafiği</h4>
     <div id="denemeGrafik" style="overflow-x:auto"></div>
@@ -375,8 +395,16 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
 <!-- ════════ MUHASEBE BİLGİLERİ TAB ════════ -->
 <div class="tab-pane" id="tabBilgi">
   <div class="section-h"><h3>📘 Muhasebe Bilgileri</h3><span class="badge" id="bilgiTarih"></span><span class="line"></span></div>
-  <p style="color:var(--text-soft);margin-bottom:18px">Sınav sorusu değil — genel bilgi seviyeni geliştirmek için her gün <b>10 farklı, kısa ve öz konu notu</b>. Örtülü sermaye, transfer fiyatlandırması gibi güncel/sık karışan konuları anlatır. Sorularla karışmaz, ayrı bir bilgi köşesidir.</p>
+  <p style="color:var(--text-soft);margin-bottom:12px">Sınav sorusu değil — genel bilgi seviyeni geliştirmek için her gün <b>10 farklı, kısa ve öz konu notu</b>. Örtülü sermaye, transfer fiyatlandırması gibi güncel/sık karışan konuları anlatır. Sorularla karışmaz, ayrı bir bilgi köşesidir.</p>
+  <button class="btn btn-outline btn-small" onclick="App.bilgiYazdir()" style="margin-bottom:16px">🖨️ Yazdır / PDF</button>
   <div id="bilgiListe" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+
+<!-- ════════ FAVORİLER TAB ════════ -->
+<div class="tab-pane" id="tabFavoriler">
+  <div class="section-h"><h3>⭐ Favorilerim</h3><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:16px">Soru çözerken veya bilgi kartlarında ⭐ ikonuna bastığında burada birikir — tekrar bakmak istediklerin için.</p>
+  <div id="favorilerListe"></div>
 </div>
 
 <!-- ════════ ANALİZ TAB ════════ -->
@@ -396,9 +424,12 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
       <button class="close" onclick="App.kapat()">×</button>
     </div>
     <div class="solver-body">
-      <div>
+      <div style="display:flex;align-items:center;gap:8px">
         <span class="q-number" id="qNumber">Soru #1</span>
         <span class="q-tag" id="qTag" style="display:none"></span>
+        <span style="flex:1"></span>
+        <button title="Sesli oku" onclick="App.konus(App.modal.sorular[App.modal.idx].q)" style="background:none;border:none;cursor:pointer;font-size:17px">🔊</button>
+        <button title="Favori" id="qFavBtn" onclick="App.favoriSoruEkleCikar(App.modal.sorular[App.modal.idx]._konu||App.modal.konuAdi,App.modal.sorular[App.modal.idx]._konuIdx??App.modal.idx)" style="background:none;border:none;cursor:pointer;font-size:17px">☆</button>
       </div>
       <div class="q-text" id="qText"></div>
 
@@ -408,6 +439,7 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
       <div class="acik-cevap" id="qAcikCevap">
         <h6>✓ DOĞRU CEVAP</h6>
         <p id="acikText"></p>
+        <div id="ilgiliBilgiKutu" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(92,95,225,.08);border-radius:8px;font-size:12.5px;cursor:pointer"></div>
       </div>
 
       <div class="fuat-box anahtar" id="boxAnahtar">
@@ -1422,6 +1454,7 @@ const App = {
     this.istatistikGuncelle();
     this.tabBaglantilari();
     this.dragDropKur();
+    this.gunlukOzetHesapla();
 
     // Excel input
     document.getElementById('fileInput').addEventListener('change', e=>{
@@ -1544,6 +1577,7 @@ const App = {
         if(a.dataset.tab==='deneme') this.denemeGrafikCiz();
         if(a.dataset.tab==='gunun') this.gununSorulariGoster();
         if(a.dataset.tab==='bilgi') this.bilgiGoster();
+        if(a.dataset.tab==='favoriler') this.favorilerGoster();
       });
     });
   },
@@ -1697,6 +1731,8 @@ const App = {
     document.getElementById('qNumber').textContent=`Soru #${m.idx+1}`;
     document.getElementById('solverProgress').textContent=`${m.idx+1} / ${m.sorular.length}`;
     document.getElementById('qText').textContent=s.q || '(Soru metni yok)';
+    const favKey=(s._konu||m.konuAdi||'')+'-'+(s._konuIdx??m.idx);
+    document.getElementById('qFavBtn').textContent=this.favoriler().sorular.includes(favKey)?'⭐':'☆';
 
     // Etiket
     const tag=document.getElementById('qTag');
@@ -1720,6 +1756,7 @@ const App = {
     document.getElementById('qChoices').innerHTML='';
     document.getElementById('qAcikBtn').style.display='none';
     document.getElementById('qAcikCevap').classList.remove('show');
+    document.getElementById('ilgiliBilgiKutu').style.display='none';
     document.getElementById('boxAnahtar').classList.remove('show');
     document.getElementById('boxCozum').classList.remove('show');
     document.getElementById('boxPuf').classList.remove('show');
@@ -1771,6 +1808,7 @@ const App = {
     if(s.a){
       document.getElementById('acikText').textContent='Doğru: '+dogru+(s.a?(' · '+s.a):'');
       document.getElementById('qAcikCevap').classList.add('show');
+      this.ilgiliBilgiOner(s);
     }
 
     const dogruMu=harf===dogru;
@@ -1789,6 +1827,19 @@ const App = {
     CEVAPLAR[this.notKey(s)]={gorulen:true, t:Date.now()};
     localStorage.setItem('kgkCevaplar', JSON.stringify(CEVAPLAR));
     this.istatistikKaydet(null); // sadece görüldü
+    this.ilgiliBilgiOner(s);
+  },
+  ilgiliBilgiOner(s){
+    const kutu=document.getElementById('ilgiliBilgiKutu');if(!kutu)return;
+    const metin=((s._konu||this.modal.konuAdi||'')+' '+s.q).toLocaleLowerCase('tr');
+    const anahtarKelimeler=['örtülü sermaye','transfer fiyatlandırması','amortisman','reeskont','şüpheli alacak','kdv','ertelenmiş vergi','şerefiye','konsolide','kiralama','hasılat','kıdem tazminatı','yeniden değerleme','karşılık','denetim riski','önemlilik','mesleki şüphecilik','hile','kilit denetim','rotasyon','vergi ziyaı','pişmanlık','uzlaşma','faktoring','kurumsal yönetim','rüçhan','sermaye artırımı','kambiyo','iflas','basit usul','devir','iştirak','ar-ge','cfc','damga vergisi','özelge','faaliyet bölüm','hisse başına kazanç','bilanço tarihinden sonra','muhasebe tahmini','işletme birleşme','gerçeğe uygun değer','kredi zararı','nakit döngüsü','değişken maliyet','standart maliyet'];
+    const eslesen=anahtarKelimeler.find(k=>metin.includes(k));
+    if(!eslesen){kutu.style.display='none';return;}
+    const bilgi=MUHASEBE_BILGI_HAVUZU.find(b=>b.baslik.toLocaleLowerCase('tr').includes(eslesen)||b.icerik.toLocaleLowerCase('tr').includes(eslesen));
+    if(!bilgi){kutu.style.display='none';return;}
+    kutu.style.display='block';
+    kutu.innerHTML=`📘 <b>İlgili bilgi kartı:</b> ${bilgi.baslik} <span style="color:var(--primary,#5c5fe1);font-weight:700">→ Oku</span>`;
+    kutu.onclick=()=>this.aramaBilgiyeGit(bilgi.baslik);
   },
 
   istatistikKaydet(dogruMu){
@@ -2027,17 +2078,26 @@ const App = {
     document.getElementById('bilgiTarih').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
     const tarih=this.bugunAnahtari();
     const havuz=bilgiSeedliKaristir(MUHASEBE_BILGI_HAVUZU,'muhasebe-bilgi-'+tarih);
-    const secim=havuz.slice(0,10);
+    this._bilgiSecim=havuz.slice(0,10);
+    this.bilgiRenderListe(this._bilgiSecim);
+  },
+  bilgiRenderListe(secim){
     const liste=document.getElementById('bilgiListe');
     if(!liste)return;
-    liste.innerHTML=secim.map((b,i)=>`
-      <div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm);border-left:4px solid var(--primary,#5c5fe1)">
+    const f=this.favoriler();
+    liste.innerHTML=secim.map((b,i)=>{
+      const fav=f.bilgi.includes(b.baslik);
+      return `
+      <div data-b-idx="${i}" style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm);border-left:4px solid var(--primary,#5c5fe1)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--primary,#5c5fe1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">${i+1}</span>
-          <h4 style="margin:0;font-size:15px;font-weight:800">${b.baslik}</h4>
+          <h4 style="margin:0;font-size:15px;font-weight:800;flex:1">${b.baslik}</h4>
+          <button title="Sesli oku" onclick="App.konus('${(b.baslik+'. '+b.icerik).replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:16px">🔊</button>
+          <button title="Favori" onclick="App.favoriBilgiEkleCikar('${b.baslik.replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:16px">${fav?'⭐':'☆'}</button>
         </div>
         <p style="margin:0;color:var(--text-soft);line-height:1.7;font-size:13.5px">${b.icerik}</p>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   },
 
   // ─── ANALİZ ───
@@ -2089,8 +2149,9 @@ const App = {
         if(!denenmis.length)return'';
         const enZayif=denenmis.reduce((a,b)=>(konuStat[a.ad].d/konuStat[a.ad].t)<=(konuStat[b.ad].d/konuStat[b.ad].t)?a:b);
         const y=Math.round(konuStat[enZayif.ad].d/konuStat[enZayif.ad].t*100);
-        return `<div style="background:rgba(239,68,68,.08);border-left:4px solid var(--err);border-radius:12px;padding:14px 18px;margin-bottom:20px">
-          <b>🎯 En zayıf konun:</b> ${enZayif.ic} ${enZayif.ad} — %${y} başarı. Buraya odaklan!</div>`;
+        return `<div style="background:rgba(239,68,68,.08);border-left:4px solid var(--err);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div><b>🎯 En zayıf konun:</b> ${enZayif.ic} ${enZayif.ad} — %${y} başarı. Buraya odaklan!</div>
+          <button class="btn btn-primary btn-small" onclick="App.zayifKonudanPratik('${enZayif.ad}')">⚡ 10 Sorulu Otomatik Pratik Başlat</button></div>`;
       })()}
       <h4 style="margin-bottom:14px;font-size:18px;font-weight:800">⏱ Konu Bazında Çalışma Süresi</h4>
       ${(()=>{
@@ -2125,14 +2186,159 @@ const App = {
     t.className='toast show '+(tip==='err'?'err':'');
     clearTimeout(this._toastTimer);
     this._toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+  },
+
+  // ─── SESLİ OKUMA (TTS) ───
+  konus(text){
+    if(!window.speechSynthesis){this.toast('Tarayıcın sesli okumayı desteklemiyor','err');return;}
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='tr-TR';u.rate=0.95;u.pitch=1;u.volume=1;
+    speechSynthesis.speak(u);
+  },
+
+  // ─── YAZDIRMA / PDF ───
+  yazdir(baslik,icerikHtml){
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>${baslik}</title>
+      <style>body{font-family:Arial,sans-serif;padding:30px;color:#222;line-height:1.6}
+      h1{font-size:20px;border-bottom:2px solid #5c5fe1;padding-bottom:10px}
+      .item{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #ddd}
+      .item b{color:#5c5fe1}
+      @media print{body{padding:10px}}</style></head><body>
+      <h1>${baslik}</h1>${icerikHtml}
+      <script>window.onload=()=>window.print()<\/script></body></html>`);
+    w.document.close();
+  },
+  bilgiYazdir(){
+    const secim=document.querySelectorAll('#bilgiListe [data-b-idx]');
+    let html='';
+    (this._bilgiSecim||[]).forEach((b,i)=>{html+=`<div class="item"><b>${i+1}. ${b.baslik}</b><p>${b.icerik}</p></div>`;});
+    this.yazdir('📘 Muhasebe Bilgileri · '+new Date().toLocaleDateString('tr-TR'),html);
+  },
+
+  // ─── FAVORİLER ───
+  favoriler(){try{return JSON.parse(localStorage.getItem('kgkFavoriler')||'{"sorular":[],"bilgi":[]}')}catch(e){return{sorular:[],bilgi:[]}}},
+  favoriKaydet(f){localStorage.setItem('kgkFavoriler',JSON.stringify(f));},
+  favoriSoruEkleCikar(konu,idx){
+    const f=this.favoriler();const key=konu+'-'+idx;
+    const pos=f.sorular.indexOf(key);
+    if(pos>=0)f.sorular.splice(pos,1);else f.sorular.push(key);
+    this.favoriKaydet(f);this.soruyuGoster();
+  },
+  favoriBilgiEkleCikar(baslik){
+    const f=this.favoriler();
+    const pos=f.bilgi.indexOf(baslik);
+    if(pos>=0)f.bilgi.splice(pos,1);else f.bilgi.push(baslik);
+    this.favoriKaydet(f);this.bilgiGoster();
+  },
+  favorilerGoster(){
+    const f=this.favoriler();
+    const el=document.getElementById('favorilerListe');if(!el)return;
+    let html='';
+    if(f.bilgi.length){
+      html+='<h4 style="margin:10px 0">📘 Favori Bilgi Kartları</h4>';
+      f.bilgi.forEach(baslik=>{
+        const b=MUHASEBE_BILGI_HAVUZU.find(x=>x.baslik===baslik);if(!b)return;
+        html+=`<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow-sm);border-left:4px solid #f59e0b">
+          <b>${b.baslik}</b><p style="margin:6px 0 0;color:var(--text-soft);font-size:13px">${b.icerik}</p></div>`;
+      });
+    }
+    if(f.sorular.length){
+      html+='<h4 style="margin:18px 0 10px">❓ Favori Sorular</h4>';
+      f.sorular.forEach(key=>{
+        const [konu,idxStr]=key.split(/-(?=\d+$)/);const idx=+idxStr;
+        const s=(SHEETS[konu]||[])[idx];if(!s)return;
+        html+=`<div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow-sm);border-left:4px solid #5c5fe1">
+          <b style="font-size:12px;color:var(--text-dim)">${konu}</b><p style="margin:6px 0 0">${s.q}</p></div>`;
+      });
+    }
+    el.innerHTML=html||'<p style="color:var(--text-dim)">Henüz favori eklemedin. Soru çözerken ⭐ ikonuna, bilgi kartlarında da ⭐ ikonuna tıklayarak ekleyebilirsin.</p>';
+  },
+
+  // ─── GENEL ARAMA (sorular + bilgi kartları) ───
+  genelAra(){
+    const q=(document.getElementById('genelAramaInput').value||'').trim().toLocaleLowerCase('tr');
+    const el=document.getElementById('genelAramaSonuc');
+    if(!q){el.style.display='none';el.innerHTML='';return;}
+    const sonucSoru=[];
+    Object.keys(SHEETS).forEach(konu=>{
+      (SHEETS[konu]||[]).forEach((s,idx)=>{
+        if((s.q||'').toLocaleLowerCase('tr').includes(q))sonucSoru.push({konu,idx,s});
+      });
+    });
+    const sonucBilgi=MUHASEBE_BILGI_HAVUZU.filter(b=>(b.baslik+' '+b.icerik).toLocaleLowerCase('tr').includes(q));
+    let html='';
+    if(sonucBilgi.length)html+='<div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-dim)">📘 BİLGİ KARTLARI ('+sonucBilgi.length+')</div>'+
+      sonucBilgi.slice(0,5).map(b=>`<div class="search-res-item" onclick="App.aramaBilgiyeGit('${b.baslik.replace(/'/g,"\\'")}')">${b.baslik}</div>`).join('');
+    if(sonucSoru.length)html+='<div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text-dim)">❓ SORULAR ('+sonucSoru.length+')</div>'+
+      sonucSoru.slice(0,8).map(r=>`<div class="search-res-item" onclick="App.aramaSoruyaGit('${r.konu}',${r.idx})">${r.konu}: ${r.s.q.slice(0,60)}...</div>`).join('');
+    el.innerHTML=html||'<div style="padding:12px;color:var(--text-dim);font-size:13px">Sonuç bulunamadı</div>';
+    el.style.display='block';
+  },
+  aramaBilgiyeGit(baslik){
+    document.getElementById('genelAramaSonuc').style.display='none';
+    document.querySelectorAll('.topnav nav a').forEach(x=>x.classList.remove('active'));
+    document.querySelector('[data-tab="bilgi"]').classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tabBilgi').classList.add('active');
+    this._bilgiSecim=[MUHASEBE_BILGI_HAVUZU.find(b=>b.baslik===baslik)].filter(Boolean);
+    this.bilgiRenderListe(this._bilgiSecim);
+  },
+  aramaSoruyaGit(konu,idx){
+    document.getElementById('genelAramaSonuc').style.display='none';
+    this.modalAc([SHEETS[konu][idx]].map(s=>({...s,_konu:konu,_konuIdx:idx})),'konu','🔍 Arama Sonucu',konu);
+  },
+
+  // ─── ZAYIF KONUDAN OTOMATİK PRATİK SETİ ───
+  zayifKonudanPratik(konuAdi){
+    const sorular=(SHEETS[konuAdi]||[]).map((s,idx)=>({...s,_konu:konuAdi,_konuIdx:idx}));
+    if(!sorular.length){this.toast('Bu konuda soru yok','err');return;}
+    const rnd=this.seedliRastgele('pratik-'+konuAdi+'-'+Date.now());
+    const secim=this.seedliKaristir(sorular,rnd).slice(0,10);
+    this.modalAc(secim,'konu',`🎯 Zayıf Konu Pratiği · ${konuAdi}`,konuAdi);
+  },
+
+  // ─── GERÇEKÇİ SINAV SİMÜLASYONU (konu ağırlıklı) ───
+  KONU_AGIRLIK:{'MUHASEBE':0.20,'DENETİM':0.15,'FİNANS':0.10,'TMS-TFRS':0.15,'VERGİ MEVZUATI':0.15,'KGK MEVZUATI':0.10,'KURUMSAL YÖNETİM':0.07,'GENEL HUKUK':0.08},
+  gercekciSimulasyonBasla(toplamSoru,dakika){
+    if(!Object.keys(SHEETS).length)this.hazirSorulariYukle();
+    const rnd=this.seedliRastgele('sim-'+Date.now());
+    let secim=[];
+    Object.keys(this.KONU_AGIRLIK).forEach(konu=>{
+      const adet=Math.max(1,Math.round(toplamSoru*this.KONU_AGIRLIK[konu]));
+      const havuz=(SHEETS[konu]||[]).map((s,idx)=>({...s,_konu:konu,_konuIdx:idx}));
+      secim.push(...this.seedliKaristir(havuz,rnd).slice(0,adet));
+    });
+    secim=this.seedliKaristir(secim,rnd).slice(0,toplamSoru);
+    if(!secim.length){this.toast('Önce soru bankasını yükle','err');return;}
+    this.modalAc(secim,'konu',`🎯 Gerçekçi Sınav Simülasyonu · ${secim.length} soru · ${dakika} dk`,null,true);
+  },
+
+  // ─── GÜNLÜK ÖZET (dünkü/bugünkü performans) ───
+  gunlukOzetHesapla(){
+    const bugun=new Date().toISOString().slice(0,10);
+    const dun=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const bugunSayi=(ISTATISTIK.bugun&&ISTATISTIK.bugun[bugun])||0;
+    const dunSayi=(ISTATISTIK.bugun&&ISTATISTIK.bugun[dun])||0;
+    const el=document.getElementById('gunlukOzetKutu');
+    if(!el)return;
+    el.innerHTML=`<span>📊 Bugün <b>${bugunSayi}</b> soru çözdün</span><span style="margin-left:14px;color:var(--text-dim)">Dün: ${dunSayi} soru</span>`;
   }
 };
 
 document.addEventListener('DOMContentLoaded',()=>App.init());
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape') App.kapat();
-  if(e.key==='ArrowRight' && document.getElementById('solverOverlay').classList.contains('show')) App.sonraki();
-  if(e.key==='ArrowLeft' && document.getElementById('solverOverlay').classList.contains('show')) App.onceki();
+  const solverAcik=document.getElementById('solverOverlay').classList.contains('show');
+  if(e.key==='ArrowRight' && solverAcik) App.sonraki();
+  if(e.key==='ArrowLeft' && solverAcik) App.onceki();
+  if(solverAcik && /^[a-eA-E1-5]$/.test(e.key) && document.activeElement.tagName!=='INPUT'){
+    const map={a:'A',b:'B',c:'C',d:'D',e:'E','1':'A','2':'B','3':'C','4':'D','5':'E'};
+    const harf=map[e.key.toLowerCase()];
+    const secenek=document.querySelector('.choice .letter');
+    if(harf && secenek && !document.querySelector('.choice.disabled')) App.cevaplaCokSec(harf);
+  }
 });
 </script>
 </body>
