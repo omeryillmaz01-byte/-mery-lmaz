@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ÖMER YILMAZ — Komut Merkezi · v400</title>
+<title>ÖMER YILMAZ — Komut Merkezi · v500</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 :root{
@@ -132,6 +132,28 @@ body{background:var(--bg);transition:background .4s}
 .rem-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:6px 9px;border-radius:8px;background:var(--glass)}
 .rem-item span{cursor:pointer;color:var(--faint)}
 
+/* Yoğun Dönem Modu */
+.yd-banner{background:linear-gradient(120deg,rgba(122,162,255,.16),rgba(94,234,212,.1));border:1px solid var(--border-hi);
+  border-radius:20px;padding:20px 24px;margin-bottom:26px;backdrop-filter:var(--blur)}
+.yd-banner-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.yd-title{font-size:16px;font-weight:800}
+.yd-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:11px;cursor:pointer;
+  background:var(--glass);border:1px solid var(--border);font-size:12.5px;font-weight:700}
+.yd-toggle.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#0a0e17;border-color:transparent}
+.yd-week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:10px}
+.yd-day{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;font-size:11px}
+.yd-day b{display:block;font-size:11px;color:var(--mut);margin-bottom:6px}
+.yd-day .marks{display:flex;justify-content:center;gap:3px;font-size:13px}
+.yd-day .marks span{opacity:.25;cursor:pointer}
+.yd-day .marks span.on{opacity:1}
+.yd-day.today{border-color:var(--acc)}
+.yd-oncelik-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.yd-oncelik-row input[type=text]{flex:1;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12.5px}
+.yd-pomo{display:flex;gap:10px;flex-wrap:wrap}
+.yd-pomo-box{flex:1;min-width:120px;background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.yd-pomo-time{font-size:22px;font-weight:800;margin:6px 0}
+.yd-quick{display:flex;gap:8px;flex-wrap:wrap}
+.yd-quick button{flex:1;min-width:110px}
 @media (max-width:640px){
   .search{width:130px}.search:focus{width:180px}
   .greet-name{font-size:28px}
@@ -141,6 +163,7 @@ body{background:var(--bg);transition:background .4s}
   .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   .tile{padding:18px 16px}
   .mini-cards{grid-template-columns:1fr}
+  .yd-week{grid-template-columns:repeat(7,1fr);font-size:9px}
 }
 
 /* görevler */
@@ -180,7 +203,7 @@ body{background:var(--bg);transition:background .4s}
       <div class="search-drop" id="aramaDrop"></div>
     </div>
     <span class="chip"><span class="dot"></span> <span id="tarih">–</span></span>
-    <span class="chip">⚡ <b>v400</b></span>
+    <span class="chip">⚡ <b>v500</b></span>
     <span class="chip" id="havaChip" style="cursor:pointer" title="Yenilemek için tıkla">🌤️ –</span>
     <button class="gbtn" id="bildirimBtn" title="Bildirimler">🔔</button>
     <button class="gbtn" id="sesBtn" title="Sesli komut: 'muhasebe panelini aç' de">🎙️</button>
@@ -195,6 +218,75 @@ body{background:var(--bg);transition:background .4s}
       <div class="greet-line">
         <div class="counter"><span class="num" id="kalan">–</span><span class="lbl">gün kaldı · KGK Sınavı</span></div>
         <div class="counter"><span class="num" id="ilerleme">–</span><span class="lbl">panel aktif</span></div>
+      </div>
+    </div>
+
+    <!-- YOĞUN DÖNEM MODU -->
+    <div class="yd-banner">
+      <div class="yd-banner-top">
+        <div>
+          <div class="yd-title" id="ydBaslik">🚀 Yoğun Dönem Modu</div>
+          <div style="font-size:12px;color:var(--mut);margin-top:2px" id="ydSayac"></div>
+        </div>
+        <div class="yd-toggle" id="ydToggle" onclick="ydModToggle()">😴 Kapalı</div>
+      </div>
+
+      <div id="ydIcerik" style="display:none">
+        <div class="yd-quick" style="margin-bottom:16px">
+          <button class="mini-btn" onclick="ydSesliBrief()">📲 Sabah Brifingi</button>
+          <button class="mini-btn" onclick="ydHizliGit('Spor & Sağlık')">🏋️ Bugünün Antrenmanı</button>
+          <button class="mini-btn" onclick="ydHizliGit('Fuat Hoca')">📚 Bugünün Konusu</button>
+          <button class="mini-btn" onclick="ydRutinUygula('is')">💼 İş Günü Şablonu</button>
+          <button class="mini-btn" onclick="ydRutinUygula('dinlenme')">🛋 Dinlenme Şablonu</button>
+        </div>
+
+        <div class="sec-label" style="margin-top:0">📅 HAFTALIK GENEL GÖRÜNÜM (İş · Spor · Ders)</div>
+        <div class="yd-week" id="ydHafta"></div>
+
+        <div class="mini-cards" style="margin-top:18px">
+          <div class="mini-card">
+            <h4>📋 Bugünün 3 Önceliği</h4>
+            <div id="ydOncelikler"></div>
+          </div>
+          <div class="mini-card">
+            <h4>🧠 Enerji & Motivasyon (bugün)</h4>
+            <div style="display:flex;gap:6px;margin:8px 0" id="ydEnerjiSec"></div>
+            <input type="text" id="ydNot" placeholder="kısa not…" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12px" onchange="ydNotKaydet(this.value)">
+          </div>
+          <div class="mini-card">
+            <h4>🛌 Uyku Takibi</h4>
+            <div class="rem-row"><input type="number" id="ydUyku" min="0" max="14" step="0.5" placeholder="saat" style="max-width:100px"><button class="mini-btn" style="flex:none" onclick="ydUykuKaydet()">Kaydet</button></div>
+            <div id="ydUykuUyari" style="font-size:11.5px;margin-top:6px;color:var(--mut)"></div>
+          </div>
+          <div class="mini-card">
+            <h4>🏆 Üçlü Streak</h4>
+            <div id="ydStreak" style="font-size:28px;font-weight:800;color:var(--acc2)">0</div>
+            <div style="font-size:11px;color:var(--mut)">gün üst üste iş+spor+ders</div>
+          </div>
+        </div>
+
+        <div class="sec-label">⏱️ 3'LÜ POMODORO</div>
+        <div class="yd-pomo">
+          <div class="yd-pomo-box"><div>💼 İş</div><div class="yd-pomo-time" id="ydPomoIsTime">25:00</div>
+            <button class="mini-btn" onclick="ydPomoBaslat('is')">▶</button><button class="mini-btn" onclick="ydPomoDurdur('is')">⏸</button></div>
+          <div class="yd-pomo-box"><div>🏋️ Spor</div><div class="yd-pomo-time" id="ydPomoSporTime">45:00</div>
+            <button class="mini-btn" onclick="ydPomoBaslat('spor')">▶</button><button class="mini-btn" onclick="ydPomoDurdur('spor')">⏸</button></div>
+          <div class="yd-pomo-box"><div>📚 Ders</div><div class="yd-pomo-time" id="ydPomoDersTime">30:00</div>
+            <button class="mini-btn" onclick="ydPomoBaslat('ders')">▶</button><button class="mini-btn" onclick="ydPomoDurdur('ders')">⏸</button></div>
+        </div>
+
+        <div class="sec-label">🥧 ZAMAN DAĞILIMI (SON 7 GÜN)</div>
+        <div class="mini-cards">
+          <div class="mini-card" style="grid-column:span 2"><canvas id="ydPasta" width="260" height="180" style="max-width:100%"></canvas></div>
+          <div class="mini-card">
+            <h4>📈 Haftalık Rapor</h4>
+            <div id="ydRaporOzet" style="font-size:12.5px;line-height:1.8"></div>
+            <button class="mini-btn" style="margin-top:8px" onclick="ydRaporYazdir()">🖨️ Yazdır</button>
+          </div>
+        </div>
+
+        <div class="sec-label">🔄 GEÇİŞ PLANI (tatilden yoğun döneme)</div>
+        <div class="mini-cards"><div class="mini-card" style="grid-column:span 2" id="ydGecisPlan"></div></div>
       </div>
     </div>
 
@@ -601,6 +693,199 @@ setTimeout(()=>{try{dilUygula(localStorage.getItem("oy_dil")||"tr")}catch(e){}},
   rec.onerror=()=>{dinliyor=false;$("sesBtn").style.color="";};
   rec.onend=()=>{dinliyor=false;$("sesBtn").style.color="";};
 })();
+
+/* ═══════════ YOĞUN DÖNEM MODU (iş · spor · ders) ═══════════ */
+const YD_BASLANGIC=new Date(2026,6,6); // 6 Temmuz 2026 Pazartesi
+function ydGunAnahtari(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function ydKayitGetir(ds){try{return JSON.parse(localStorage.getItem("oy_yd_"+ds))||{is:false,spor:false,ders:false,enerji:0,not:"",uyku:null}}catch(e){return{is:false,spor:false,ders:false,enerji:0,not:"",uyku:null};}}
+function ydKayitKaydet(ds,v){try{localStorage.setItem("oy_yd_"+ds,JSON.stringify(v))}catch(e){}}
+
+function ydModToggle(){
+  const aktif=localStorage.getItem("oy_yd_aktif")==="1";
+  const yeni=!aktif;
+  localStorage.setItem("oy_yd_aktif",yeni?"1":"0");
+  ydModUygula();
+}
+function ydModUygula(){
+  const aktif=localStorage.getItem("oy_yd_aktif")==="1";
+  $("ydToggle").textContent=aktif?"🔥 Açık":"😴 Kapalı";
+  $("ydToggle").className="yd-toggle"+(aktif?" on":"");
+  $("ydIcerik").style.display=aktif?"block":"none";
+  if(aktif)ydTumunuCiz();
+}
+function ydSayacGuncelle(){
+  const simdi=new Date();simdi.setHours(0,0,0,0);
+  const fark=Math.ceil((YD_BASLANGIC-simdi)/86400000);
+  if(fark>0)$("ydSayac").textContent="📅 6 Temmuz Pazartesi'ye "+fark+" gün kaldı — iş, spor, ders üçlüsü başlıyor";
+  else if(fark===0)$("ydSayac").textContent="🚀 Bugün başlangıç günü! Hazır mısın?";
+  else $("ydSayac").textContent="Yoğun dönem "+Math.abs(fark)+" gündür devam ediyor 💪";
+}
+function ydTumunuCiz(){
+  ydHaftaCiz();ydOncelikCiz();ydEnerjiCiz();ydUykuCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();ydGecisPlanCiz();
+}
+
+/* Haftalık genel görünüm */
+function ydHaftaGunleri(){
+  const bugun=new Date();const pzt=new Date(bugun);pzt.setDate(bugun.getDate()-((bugun.getDay()+6)%7));
+  const l=[];for(let i=0;i<7;i++){const d=new Date(pzt);d.setDate(pzt.getDate()+i);l.push(d);}return l;
+}
+function ydHaftaCiz(){
+  const gunler=ydHaftaGunleri();const isimler=["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+  const bugunAnah=ydGunAnahtari(new Date());
+  $("ydHafta").innerHTML=gunler.map((d,i)=>{
+    const ds=ydGunAnahtari(d);const k=ydKayitGetir(ds);
+    return `<div class="yd-day ${ds===bugunAnah?'today':''}"><b>${isimler[i]} ${d.getDate()}</b>
+      <div class="marks">
+        <span class="${k.is?'on':''}" onclick="ydIsaretle('${ds}','is')" title="İş">💼</span>
+        <span class="${k.spor?'on':''}" onclick="ydIsaretle('${ds}','spor')" title="Spor">🏋️</span>
+        <span class="${k.ders?'on':''}" onclick="ydIsaretle('${ds}','ders')" title="Ders">📚</span>
+      </div></div>`;
+  }).join("");
+}
+function ydIsaretle(ds,tur){
+  const k=ydKayitGetir(ds);k[tur]=!k[tur];ydKayitKaydet(ds,k);
+  ydHaftaCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();
+}
+
+/* Bugünün 3 önceliği */
+function ydOncelikCiz(){
+  const ds=ydGunAnahtari(new Date());
+  const l=JSON.parse(localStorage.getItem("oy_yd_oncelik_"+ds)||'["","",""]');
+  $("ydOncelikler").innerHTML=l.map((v,i)=>`<div class="yd-oncelik-row"><b>${i+1}.</b><input type="text" value="${(v||"").replace(/"/g,"&quot;")}" onchange="ydOncelikKaydet(${i},this.value)"></div>`).join("");
+}
+function ydOncelikKaydet(i,v){
+  const ds=ydGunAnahtari(new Date());
+  const l=JSON.parse(localStorage.getItem("oy_yd_oncelik_"+ds)||'["","",""]');
+  l[i]=v;localStorage.setItem("oy_yd_oncelik_"+ds,JSON.stringify(l));
+}
+
+/* Enerji & motivasyon */
+function ydEnerjiCiz(){
+  const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);
+  $("ydEnerjiSec").innerHTML=[1,2,3,4,5].map(n=>`<span style="cursor:pointer;font-size:20px;opacity:${k.enerji===n?1:.3}" onclick="ydEnerjiSet(${n})">⚡</span>`).join("");
+  $("ydNot").value=k.not||"";
+}
+function ydEnerjiSet(n){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);k.enerji=n;ydKayitKaydet(ds,k);ydEnerjiCiz();}
+function ydNotKaydet(v){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);k.not=v;ydKayitKaydet(ds,k);}
+
+/* Uyku takibi */
+function ydUykuCiz(){
+  const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);
+  $("ydUyku").value=k.uyku||"";
+  if(k.uyku!=null){
+    $("ydUykuUyari").innerHTML=k.uyku<6?'<span style="color:#f87171">⚠️ Az uyumuşsun, yoğun günde dikkat!</span>':k.uyku>=7?'<span style="color:#34d399">✓ Yeterli uyku</span>':'Sınırda, dikkatli ol';
+  }else $("ydUykuUyari").textContent="";
+}
+function ydUykuKaydet(){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);k.uyku=+$("ydUyku").value||0;ydKayitKaydet(ds,k);ydUykuCiz();}
+
+/* Üçlü streak */
+function ydStreakCiz(){
+  let streak=0;const d=new Date();
+  for(let i=0;i<60;i++){
+    const k=ydKayitGetir(ydGunAnahtari(d));
+    if(k.is&&k.spor&&k.ders){streak++;d.setDate(d.getDate()-1);}else break;
+  }
+  $("ydStreak").textContent=streak;
+}
+
+/* Hızlı erişim */
+function ydHizliGit(panelAdi){const i=PANELS.findIndex(p=>p.nm===panelAdi);if(i>=0)aç(i);}
+function ydSesliBrief(){
+  const ds=ydGunAnahtari(new Date());const oncelikler=JSON.parse(localStorage.getItem("oy_yd_oncelik_"+ds)||'["","",""]').filter(Boolean);
+  const gun=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"][new Date().getDay()];
+  let metin="Günaydın! Bugün "+gun+". ";
+  metin+=oncelikler.length?("Önceliklerin: "+oncelikler.join(", ")+". "):"Bugün için henüz öncelik eklemedin. ";
+  metin+="İyi bir gün geçirmen dileğiyle, haydi başlayalım!";
+  if(window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(metin);u.lang="tr-TR";u.rate=0.98;speechSynthesis.speak(u);}
+}
+
+/* Rutin şablonları */
+function ydRutinListesi(){try{return JSON.parse(localStorage.getItem("oy_yd_rutin"))||{
+  is:["Sabah işe hazırlık","Mesai görevlerini tamamla","Akşam sporu","Günün ders konusunu çöz"],
+  dinlenme:["Uzun uyku / dinlenme","Hafif egzersiz","Ders tekrarı (hafif tempo)","Aile/sosyal zaman"]
+}}catch(e){return{is:[],dinlenme:[]};}}
+function ydRutinUygula(tur){
+  const rutin=ydRutinListesi();const gorevler=rutin[tur]||[];
+  const l=todoGetir();
+  gorevler.forEach(g=>{if(!l.some(x=>x.metin===g))l.push({metin:g,oncelik:"orta",tamam:false});});
+  todoKaydet(l);if(typeof todoRender==="function")todoRender();
+  alert((tur==="is"?"💼 İş günü":"🛋 Dinlenme")+" şablonu Yapılacaklar listene eklendi.");
+}
+
+/* 3'lü Pomodoro */
+const YD_POMO_SURE={is:25*60,spor:45*60,ders:30*60};
+window._ydPomo=window._ydPomo||{is:null,spor:null,ders:null};
+window._ydPomoKalan=window._ydPomoKalan||{is:YD_POMO_SURE.is,spor:YD_POMO_SURE.spor,ders:YD_POMO_SURE.ders};
+function ydPomoFmt(s){const m=Math.floor(s/60),k=s%60;return String(m).padStart(2,"0")+":"+String(k).padStart(2,"0");}
+function ydPomoBaslat(tur){
+  if(window._ydPomo[tur])return;
+  window._ydPomo[tur]=setInterval(()=>{
+    window._ydPomoKalan[tur]--;
+    const el=document.getElementById("ydPomo"+tur.charAt(0).toUpperCase()+tur.slice(1)+"Time");
+    if(el)el.textContent=ydPomoFmt(Math.max(0,window._ydPomoKalan[tur]));
+    if(window._ydPomoKalan[tur]<=0){ydPomoDurdur(tur);window._ydPomoKalan[tur]=YD_POMO_SURE[tur];if("Notification" in window&&Notification.permission==="granted")try{new Notification("⏱️ "+tur+" bloğu bitti!");}catch(e){}}
+  },1000);
+}
+function ydPomoDurdur(tur){if(window._ydPomo[tur]){clearInterval(window._ydPomo[tur]);window._ydPomo[tur]=null;}}
+
+/* Zaman dağılımı pasta grafik (son 7 gün) */
+function ydPastaCiz(){
+  const cv=document.getElementById("ydPasta");if(!cv)return;const ctx=cv.getContext("2d");
+  const gunler=ydHaftaGunleri();
+  let is=0,spor=0,ders=0,bosGun=0;
+  gunler.forEach(d=>{const k=ydKayitGetir(ydGunAnahtari(d));if(k.is)is++;if(k.spor)spor++;if(k.ders)ders++;if(!k.is&&!k.spor&&!k.ders)bosGun++;});
+  const toplam=is+spor+ders+bosGun||1;
+  const veriler=[["İş",is,"#7aa2ff"],["Spor",spor,"#5eead4"],["Ders",ders,"#facc15"],["Boş",bosGun,"#4a5670"]];
+  ctx.clearRect(0,0,cv.width,cv.height);
+  let baslangic=-Math.PI/2;const cx=90,cy=90,r=75;
+  veriler.forEach(([ad,deger,renk])=>{
+    if(!deger)return;const aci=deger/toplam*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,baslangic,baslangic+aci);ctx.closePath();
+    ctx.fillStyle=renk;ctx.fill();baslangic+=aci;
+  });
+  let ly=20;
+  veriler.forEach(([ad,deger,renk])=>{
+    ctx.fillStyle=renk;ctx.fillRect(190,ly,10,10);
+    ctx.fillStyle="#888";ctx.font="12px sans-serif";ctx.fillText(ad+": "+deger,205,ly+9);ly+=20;
+  });
+}
+
+/* Haftalık rapor */
+function ydRaporCiz(){
+  const gunler=ydHaftaGunleri();
+  let is=0,spor=0,ders=0;
+  gunler.forEach(d=>{const k=ydKayitGetir(ydGunAnahtari(d));if(k.is)is++;if(k.spor)spor++;if(k.ders)ders++;});
+  $("ydRaporOzet").innerHTML=`💼 İş: <b>${is}/7</b> gün<br>🏋️ Spor: <b>${spor}/7</b> gün<br>📚 Ders: <b>${ders}/7</b> gün`;
+}
+function ydRaporYazdir(){
+  const gunler=ydHaftaGunleri();const isimler=["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+  let satirlar=gunler.map((d,i)=>{const k=ydKayitGetir(ydGunAnahtari(d));return `<tr><td>${isimler[i]} ${d.getDate()}</td><td>${k.is?"✓":"—"}</td><td>${k.spor?"✓":"—"}</td><td>${k.ders?"✓":"—"}</td><td>${k.enerji||"—"}</td><td>${k.uyku||"—"}</td></tr>`;}).join("");
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Haftalık Rapor</title>
+    <style>body{font-family:Arial;padding:30px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:center}</style></head>
+    <body><h2>📈 Haftalık İş-Spor-Ders Raporu</h2>
+    <table><tr><th>Gün</th><th>💼 İş</th><th>🏋️ Spor</th><th>📚 Ders</th><th>⚡ Enerji</th><th>🛌 Uyku</th></tr>${satirlar}</table>
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
+/* Kademeli geçiş planı */
+function ydGecisPlanCiz(){
+  const simdi=new Date();simdi.setHours(0,0,0,0);
+  const fark=Math.ceil((YD_BASLANGIC-simdi)/86400000);
+  let html="";
+  if(fark>3){
+    html="<div class='mini-row'>Tatilin devam ediyor — 6 Temmuz'a hazırlık için:</div><div class='mini-row'>• Son 2-3 gün uyku düzenini normale döndür</div><div class='mini-row'>• İlk hafta programını (iş saatleri, spor günleri) şimdiden planla</div>";
+  }else if(fark>0){
+    html="<div class='mini-row'><b>Son "+fark+" gün!</b> Yumuşak geçiş için:</div><div class='mini-row'>• Uyku saatini iş düzenine göre ayarla</div><div class='mini-row'>• İlk gün için 3 önceliğini şimdiden belirle</div><div class='mini-row'>• Spor programını hafif başlat, ilk hafta zorlama</div>";
+  }else{
+    html="<div class='mini-row'>🚀 Yoğun dönem başladı! İlk hafta kendine karşı sabırlı ol, üçlü streak'i bugünden başlat.</div>";
+  }
+  $("ydGecisPlan").innerHTML=html;
+}
+
+ydSayacGuncelle();ydModUygula();
+setInterval(ydSayacGuncelle,3600000);
 </script>
 </body>
 </html>
