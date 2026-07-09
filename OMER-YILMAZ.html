@@ -263,6 +263,15 @@ body{background:var(--bg);transition:background .4s}
             <div id="ydStreak" style="font-size:28px;font-weight:800;color:var(--acc2)">0</div>
             <div style="font-size:11px;color:var(--mut)">gün üst üste iş+spor+ders</div>
           </div>
+          <div class="mini-card">
+            <h4>⏳ Bugün Ne Kadar Zamanım Kaldı</h4>
+            <div id="ydKalanZaman" style="font-size:22px;font-weight:800;color:var(--acc)"></div>
+            <div style="font-size:11px;color:var(--mut)" id="ydKalanZamanAlt"></div>
+          </div>
+          <div class="mini-card" style="grid-column:span 2">
+            <h4>💬 Akşam Değerlendirmesi</h4>
+            <input type="text" id="ydAksam" placeholder="Bugün nasıl geçti? Kısaca yaz…" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12px" onchange="ydAksamKaydet(this.value)">
+          </div>
         </div>
 
         <div class="sec-label">⏱️ 3'LÜ POMODORO</div>
@@ -281,7 +290,8 @@ body{background:var(--bg);transition:background .4s}
           <div class="mini-card">
             <h4>📈 Haftalık Rapor</h4>
             <div id="ydRaporOzet" style="font-size:12.5px;line-height:1.8"></div>
-            <button class="mini-btn" style="margin-top:8px" onclick="ydRaporYazdir()">🖨️ Yazdır</button>
+            <button class="mini-btn" style="margin-top:8px" onclick="ydRaporYazdir()">🖨️ Haftalık Yazdır</button>
+            <button class="mini-btn" style="margin-top:8px" onclick="ydAylikRaporYazdir()">📅 Aylık Karne Yazdır</button>
           </div>
         </div>
 
@@ -350,6 +360,7 @@ body{background:var(--bg);transition:background .4s}
           <button class="mini-btn" id="yedekYukleBtn">📤 Yedek Yükle</button>
         </div>
         <input type="file" id="yedekDosya" accept=".json" style="display:none">
+        <div id="yedekGecmisi"></div>
       </div>
     </div>
   </div></div>
@@ -366,9 +377,12 @@ body{background:var(--bg);transition:background .4s}
 <script>
 const $=id=>document.getElementById(id);
 /* tema */
-function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("oy_theme",t)}catch(e){}}
-$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");
-try{theme(localStorage.getItem("oy_theme")||"dark")}catch(e){theme("dark")}
+function theme(t,manuel){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("oy_theme",t);if(manuel)localStorage.setItem("oy_theme_manuel","1");}catch(e){}}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark",true);
+try{
+  if(localStorage.getItem("oy_theme_manuel")==="1")theme(localStorage.getItem("oy_theme")||"dark");
+  else{const saat=new Date().getHours();theme(saat>=7&&saat<19?"light":"dark");}
+}catch(e){theme("dark")}
 
 /* tarih + selam */
 const saat=new Date().getHours();
@@ -4036,6 +4050,16 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">📈 Deneme Sonuç Grafiği</h4>
     <div id="denemeGrafik" style="overflow-x:auto"></div>
   </div>
+  <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:var(--shadow-sm);margin-top:18px">
+    <h4 style="margin-bottom:12px;font-size:15px;font-weight:800">🎯 KGK Net Hesaplayıcı (Sınav Projeksiyonu)</h4>
+    <p style="color:var(--text-soft);margin-bottom:14px;font-size:13px">Deneme sınavı geçmişinden, gerçek sınavdaki başarı ortalamanı ve tahmini netini hesaplar.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+      <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Sınavdaki toplam soru</label><input id="netSoruSayisi" type="number" value="100" style="width:110px;padding:8px;border-radius:8px;border:1px solid var(--border-soft)"></div>
+      <div><label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Yanlış katsayısı (4 yanlış 1 doğruyu götürür → 4)</label><input id="netYanlisKat" type="number" value="4" style="width:110px;padding:8px;border-radius:8px;border:1px solid var(--border-soft)"></div>
+      <button class="btn btn-primary" onclick="App.netHesapla()">Hesapla</button>
+    </div>
+    <div id="netSonuc"></div>
+  </div>
 </div>
 
 <!-- ════════ GÜNÜN SORULARI TAB ════════ -->
@@ -4329,7 +4353,10 @@ const HAZIR_SORULAR_EK = {
   {q:'Bir işletmenin nakit döngüsü (cash conversion cycle) nasıl hesaplanır?',a:'Stok Devir Süresi + Alacak Tahsil Süresi − Borç Ödeme Süresi.',anahtar:'Kısa nakit döngüsü, işletmenin daha az işletme sermayesine ihtiyaç duyduğunu gösterir.',puf:'Negatif nakit döngüsü (tedarikçiden önce müşteriden tahsilat), çok güçlü bir finansal yapı işaretidir.'},
   {q:'"Maliyet-hacim-kâr analizi" işletmelere ne sağlar?',a:'Satış hacmi, maliyet ve kâr arasındaki ilişkiyi inceleyerek başabaş noktası ve güvenlik payı gibi kararlara yardımcı olur.',anahtar:'Güvenlik payı = Gerçekleşen Satış − Başabaş Satışı.',puf:'Bu analiz, sabit-değişken maliyet ayrımının doğru yapılmasına dayanır.'},
   {q:'Bir işletmede "iç kontrol" açısından muhasebe fonksiyonunda görevler ayrılığı neden önemlidir?',a:'Aynı kişinin hem işlemi onaylaması hem kaydetmesi hem de varlığa erişmesi hata ve hile riskini artırır; görev ayrılığı bu riski azaltır.',anahtar:'Örnek: kasadan sorumlu personel ile muhasebe kaydını yapan personel farklı olmalıdır.',puf:'Küçük işletmelerde tam görev ayrılığı zor olduğundan telafi edici kontroller (yönetim gözetimi) önem kazanır.'},
-  {q:'E-fatura ve e-defter uygulaması muhasebe süreçlerini nasıl etkiler?',a:'Belge ve kayıtların elektronik ortamda düzenlenip saklanmasını sağlayarak denetlenebilirliği ve standardizasyonu artırır.',anahtar:'Belirli ciro/şartları aşan mükellefler için e-fatura/e-defter zorunludur.',puf:'E-defter berat dosyaları GİB’e/onaylı mali müşavire elektronik imzayla gönderilir.'}
+  {q:'E-fatura ve e-defter uygulaması muhasebe süreçlerini nasıl etkiler?',a:'Belge ve kayıtların elektronik ortamda düzenlenip saklanmasını sağlayarak denetlenebilirliği ve standardizasyonu artırır.',anahtar:'Belirli ciro/şartları aşan mükellefler için e-fatura/e-defter zorunludur.',puf:'E-defter berat dosyaları GİB’e/onaylı mali müşavire elektronik imzayla gönderilir.'},
+  {q:'Enflasyon düzeltmesinde "amortisman ömrü biten varlıklar" tuzağı nedir? (VUK Mük. 298/A)',a:'Tamamen amorti olmuş (net defter değeri 0 veya iz bedeli) bir varlık endekslendiğinde, varlık artışı ile birikmiş amortisman artışı normalde birbirini nötrler. Ancak geçmişte kıst amortisman uygulanmışsa veya bir yıl amortisman ayrılmayı unutulmuşsa, bu iki artış tutarı birbirini tutmaz ve aradaki fark hayali (nakit girişi olmayan) bir "Enflasyon Kârı" (648) olarak ortaya çıkar; mükellef bu kâr üzerinden fazladan kurumlar vergisi öder.',anahtar:'253/254/255 ve 257 hesapları Yİ-ÜFE ile endekslenirken, geçmiş amortisman geçmişi kuruşu kuruşuna kontrol edilmelidir.',puf:'Mizan incelemesinde faydalı ömrü biten varlıkların amortisman geçmişindeki tutarsızlıklar, dönem sonunda hayali bir enflasyon kârı ve gereksiz vergi yükü doğurur — bu yüzden özellikle eski/tam amorti varlıklar tek tek kontrol edilmelidir.'},
+  {q:'İhraç kayıtlı satışlarda (KDVK md. 11/1-c) "3 aylık süre" tuzağı nasıl işler?',a:'İmalatçı, ihracatçıya KDV hesaplamadan mal teslim eder ve bu KDV devlet tarafından tecil (ertelenmiş) edilir. İhracatçının malı teslim aldığı tarihi izleyen ay başından itibaren 3 ay içinde fiilen ihraç etmesi gerekir. Bu süre kaçırılırsa, tecil edilen KDV, vergi ziyaı cezası ve gecikme faiziyle birlikte İMALATÇIDAN geri istenir.',anahtar:'Süre dolmadan önce imalatçı veya ihracatçı vergi dairesinden "ek süre" (en fazla 3 ay daha) talep edebilir; süre geçtikten sonraki başvurular reddedilir.',puf:'Mali müşavirin ihracatçıyı düzenli arayıp "gümrük beyannamesi kapandı mı?" diye takip etmesi gereken tam da bu noktadır — 2 günlük gecikme bile faturayı imalatçıya kestirebilir.'},
+  {q:'Binek araç gider kısıtlamasında amortisman sınırı ile satış anındaki kâr/zarar hesabı nasıl ilişkilidir?',a:'Binek araçların hem giderlerine (%70 sınırı) hem amortismanlarına yıllık tebliğle belirlenen tutar sınırları vardır; sınırı aşan amortisman kısmı KKEG (kanunen kabul edilmeyen gider) olarak matraha eklenir. Araç satıldığında ise geçmiş yıllarda KKEG yapılan (yani vergi matrahından zaten bir kez indirilemeyen) amortisman tutarlarının satış kârından düşülmesi gerekir; aksi halde aynı tutar üzerinden mükerrer (iki kez) vergi ödenmiş olur.',anahtar:'Satış kaydında birikmiş amortismanın tamamını değil, sadece "kanunen kabul edilen" kısmını kâr hesabına dahil etmek gerekir.',puf:'Muhasebecilerin sık yaptığı hata: aracı satarken 257 hesaptaki birikmiş amortismanın tamamını kâr hesabına katmak — bu, geçmişte zaten gider yazılamayan (KKEG yapılan) tutarı satışta bir kez daha vergilendirir.'}
  ],
  'DENETİM':[
   {q:'Denetçinin "mesleki şüphecilik" göstermesi ne demektir?',a:'Kanıtları sorgulayıcı bir zihinle değerlendirmesi, hata/hile olabileceğini sürekli göz önünde tutmasıdır.',anahtar:'TDS 200.',puf:'Yönetime güven, kanıt toplamayı azaltmanın gerekçesi olamaz.'},
@@ -5097,7 +5124,10 @@ const MUHASEBE_BILGI_HAVUZU=[
 {baslik:'Beklenen Kredi Zararı (ECL) Modeli (TFRS 9)',icerik:'Eski "gerçekleşen zarar" modelinin aksine, henüz gerçekleşmemiş ama gelecekte beklenen kredi zararlarının da öngörülerek karşılık ayrılmasını gerektiren bir modeldir. Bu değişiklik, 2008 küresel finans krizinde "çok geç, çok az" karşılık ayrılması eleştirisine cevaben getirilmiştir. Model, üç aşamalı bir yapı (12 aylık beklenen zarar / ömür boyu beklenen zarar) kullanır.'},
 {baslik:'Faaliyet Döngüsü ile Nakit Döngüsü Farkı',icerik:'Faaliyet döngüsü, stok devir süresi ile alacak tahsil süresinin toplamıdır — hammaddenin nakde dönüşme süresini gösterir. Nakit döngüsü ise bu süreden, tedarikçilere borç ödeme süresinin çıkarılmasıyla bulunur. Negatif bir nakit döngüsü (tedarikçiye ödemeden önce müşteriden tahsil edebilme), işletmenin çok güçlü bir finansal yapıya sahip olduğunun göstergesidir.'},
 {baslik:'Değişken Maliyet ile Sabit Maliyet Ayrımı',icerik:'Değişken maliyetler, üretim/satış hacmiyle doğru orantılı değişir (hammadde gibi); sabit maliyetler ise hacimden bağımsızdır (kira gibi). Bu ayrım, başabaş noktası analizinin temelini oluşturur: Başabaş Miktarı = Toplam Sabit Gider / (Satış Fiyatı − Birim Değişken Maliyet). Birim sabit maliyet, üretim hacmi arttıkça azalır, bu da ölçek ekonomisinin bir kaynağıdır.'},
-{baslik:'Standart Maliyet Sistemi ve Sapma Analizi',icerik:'Önceden belirlenen (standart) maliyetlerle, gerçekleşen (fiili) maliyetlerin karşılaştırılarak aradaki farkın (sapmanın) analiz edildiği bir maliyet muhasebesi sistemidir. Sapmalar genellikle fiyat sapması (girdi fiyatındaki fark) ve miktar sapması (kullanılan miktardaki fark) olarak ikiye ayrılır. Bu analiz, işletmelerin maliyet kontrolünü ve verimliliğini izlemesine yardımcı olur.'}
+{baslik:'Standart Maliyet Sistemi ve Sapma Analizi',icerik:'Önceden belirlenen (standart) maliyetlerle, gerçekleşen (fiili) maliyetlerin karşılaştırılarak aradaki farkın (sapmanın) analiz edildiği bir maliyet muhasebesi sistemidir. Sapmalar genellikle fiyat sapması (girdi fiyatındaki fark) ve miktar sapması (kullanılan miktardaki fark) olarak ikiye ayrılır. Bu analiz, işletmelerin maliyet kontrolünü ve verimliliğini izlemesine yardımcı olur.'},
+{baslik:'🚨 Enflasyon Düzeltmesinde "Tamamen Amorti Varlık" Tuzağı',icerik:'<div style="background:#eef2ff;border-left:4px solid #6366f1;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>📐 Mantık:</b> Enflasyon düzeltmesinde 253/254/255 (duran varlık) ve 257 (birikmiş amortisman) hesapları Yİ-ÜFE ile endekslenir.</div><div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>⚠️ Tuzak:</b> Tamamen amorti olmuş (net değeri 0/iz bedeli) bir varlıkta, geçmişte kıst amortisman uygulanmışsa veya bir yıl amortisman unutulmuşsa, varlık artışı ile amortisman artışı birbirini tutmaz.</div><div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>💸 Sonuç:</b> Aradaki fark, nakit girişi olmayan hayali bir "Enflasyon Kârı" (648) doğurur — mükellef gereksiz kurumlar vergisi öder.</div><div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:10px 12px"><b>✅ Çözüm:</b> Faydalı ömrü biten varlıkların amortisman geçmişini kuruşu kuruşuna kontrol et.</div>'},
+{baslik:'🚨 İhraç Kayıtlı Satışta "3 Aylık Süre" Çıkmazı',icerik:'<div style="background:#eef2ff;border-left:4px solid #6366f1;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>📐 Mantık:</b> İmalatçı, ihracatçıya KDVsiz (KDVK 11/1-c) mal teslim eder; bu KDV devletçe tecil edilir.</div><div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>⚠️ Tuzak:</b> İhracatçı, malı teslim aldığı ayı izleyen aydan itibaren 3 ay içinde fiilen ihraç etmezse süre kaçırılmış olur.</div><div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>💸 Sonuç:</b> Tecil edilen KDV, ceza ve gecikme faiziyle birlikte İMALATÇIDAN geri istenir.</div><div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:10px 12px"><b>✅ Çözüm:</b> Süre dolmadan önce vergi dairesinden "ek süre" (en fazla 3 ay) talep et — süre geçince başvuru reddedilir.</div>'},
+{baslik:'🚨 Binek Araç Amortisman Sınırı ve Satışta Mükerrer Vergi',icerik:'<div style="background:#eef2ff;border-left:4px solid #6366f1;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>📐 Mantık:</b> Binek araçların gider (%70 sınırı) ve amortismanına yıllık tebliğle tutar sınırı konur; aşan kısım KKEG olur.</div><div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>⚠️ Tuzak:</b> Araç satılırken birikmiş amortismanın TAMAMI kâr hesabına katılırsa, geçmişte zaten KKEG yapılan (gider yazılamayan) tutar bir kez daha vergilendirilir.</div><div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>💸 Sonuç:</b> Mükellef aynı tutar üzerinden iki kez vergi ödemiş olur (mükerrer vergilendirme).</div><div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:10px 12px"><b>✅ Çözüm:</b> Satış kaydında sadece "kanunen kabul edilen" amortisman kısmını kâr hesabına dahil et, KKEG kısmını düş.</div>'}
 ];
 const BILGI_KUYRUK_HASH=(s)=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
 function bilgiSeedliKaristir(arr,seed){
@@ -5732,6 +5762,39 @@ const App = {
     // Süre limit göster (basitleştirilmiş)
   },
 
+  netHesapla(){
+    const gecmis=this.denemeGecmisi();
+    const el=document.getElementById('netSonuc');
+    if(!gecmis.length){el.innerHTML='<p style="color:var(--text-dim)">Henüz deneme sınavı çözmedin. Önce "Deneme Sınavı" veya "Gerçekçi Sınav Simülasyonu" ile birkaç deneme çöz.</p>';return;}
+    const sonNDeneme=gecmis.slice(-5);
+    const ortYuzde=sonNDeneme.reduce((s,d)=>s+d.yuzde,0)/sonNDeneme.length;
+    const soruSayisi=+document.getElementById('netSoruSayisi').value||100;
+    const yanlisKat=+document.getElementById('netYanlisKat').value||4;
+    const tahminiDogru=Math.round(soruSayisi*ortYuzde/100);
+    const tahminiYanlis=soruSayisi-tahminiDogru;
+    const net=(tahminiDogru-tahminiYanlis/yanlisKat).toFixed(2);
+    const trend=sonNDeneme.length>=2?(sonNDeneme[sonNDeneme.length-1].yuzde-sonNDeneme[0].yuzde):0;
+    el.innerHTML=\`
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px">
+        <div style="background:rgba(92,95,225,.08);padding:16px;border-radius:12px;border-left:4px solid var(--primary,#5c5fe1)">
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700">SON \${sonNDeneme.length} DENEME ORTALAMASI</div>
+          <div style="font-size:28px;font-weight:800;color:var(--primary,#5c5fe1)">%\${ortYuzde.toFixed(1)}</div>
+        </div>
+        <div style="background:rgba(16,185,129,.08);padding:16px;border-radius:12px;border-left:4px solid var(--ok)">
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700">TAHMİNİ DOĞRU / YANLIŞ</div>
+          <div style="font-size:28px;font-weight:800;color:var(--ok)">\${tahminiDogru} / \${tahminiYanlis}</div>
+        </div>
+        <div style="background:rgba(245,158,11,.08);padding:16px;border-radius:12px;border-left:4px solid var(--warn)">
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700">TAHMİNİ NET</div>
+          <div style="font-size:28px;font-weight:800;color:var(--warn)">\${net}</div>
+        </div>
+        <div style="background:rgba(\${trend>=0?'16,185,129':'239,68,68'},.08);padding:16px;border-radius:12px;border-left:4px solid \${trend>=0?'var(--ok)':'var(--err)'}">
+          <div style="font-size:11px;color:var(--text-dim);font-weight:700">TREND</div>
+          <div style="font-size:28px;font-weight:800;color:\${trend>=0?'var(--ok)':'var(--err)'}">\${trend>=0?'▲':'▼'} %\${Math.abs(trend).toFixed(1)}</div>
+        </div>
+      </div>
+      <p style="margin-top:14px;font-size:12px;color:var(--text-dim)">Bu bir tahmindir, gerçek sınav sonucunu garanti etmez — konu ağırlıklı gerçekçi sınav simülasyonunu düzenli çözerek tahmini daha isabetli hale getirebilirsin.</p>\`;
+  },
   denemeGecmisi(){try{return JSON.parse(localStorage.getItem('kgkDenemeGecmisi')||'[]')}catch(e){return[]}},
   denemeKaydet(dogru,toplam){
     const l=this.denemeGecmisi();
@@ -5833,7 +5896,7 @@ const App = {
           <button title="Sesli oku" onclick="App.konus('\${(b.baslik+'. '+b.icerik).replace(/'/g,"\\\\'")}')" style="background:none;border:none;cursor:pointer;font-size:16px">🔊</button>
           <button title="Favori" onclick="App.favoriBilgiEkleCikar('\${b.baslik.replace(/'/g,"\\\\'")}')" style="background:none;border:none;cursor:pointer;font-size:16px">\${fav?'⭐':'☆'}</button>
         </div>
-        <p style="margin:0;color:var(--text-soft);line-height:1.7;font-size:13.5px">\${b.icerik}</p>
+        <div style="margin:0;color:var(--text-soft);line-height:1.7;font-size:13.5px">\${b.icerik}</div>
       </div>\`;
     }).join('');
   },
@@ -6692,6 +6755,42 @@ function pomoBasla(){if(window._pomoTimer)return;window._pomoTimer=setInterval(f
 function pomoDur(){if(window._pomoTimer){clearInterval(window._pomoTimer);window._pomoTimer=null;var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Durdu";}}
 function pomoSifirla(){pomoDur();window._pomoKalan=25*60;var el=document.getElementById("pomoSayac");if(el)el.textContent="25:00";var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Hazır";}
 
+function infografikHtml(){
+  const bloklar=[
+    {baslik:"Tevkifata Tabi Ücretlerin Beyanı",renk:"#0e9488",icon:"💼",metin:"İşveren tarafından stopaj yoluyla vergisi kesilen ücretler — genel olarak yıllık beyannameye dahil edilmez."},
+    {baslik:"Tevkifata Tabi Olmayan Ücretlerin Beyanı",renk:"#2563eb",icon:"📝",metin:"Yurt dışından alınan veya stopaja tabi tutulmamış ücretler — tutarına bakılmaksızın yıllık beyanname ile beyan edilir."},
+    {baslik:"Tek/Birden Fazla İşverenden Alınan Ücretin Beyanı",renk:"#dc2626",icon:"👥",metin:"İkinci işverenden alınan ücretler toplamı, GVK'da belirlenen beyan sınırını aşarsa tamamı beyan edilir."}
+  ];
+  const adimlar=[
+    "Ücret gelirinin tevkifata tabi olup olmadığını belirle",
+    "Birden fazla işverenden ücret alınıyorsa sınırı kontrol et",
+    "Beyan sınırını aşan tutar varsa yıllık beyanname ver",
+    "Beyanname dönemi: takip eden yılın Mart ayı (bazı durumlarda Şubat)"
+  ];
+  return \`<div style="background:linear-gradient(135deg,#fafbfc,#eef1f6);border:1px solid #dfe4ea;border-radius:16px;padding:20px 22px;margin-bottom:16px;color:#1a2230">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="background:#dc2626;color:#fff;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;letter-spacing:.5px">İNFOGRAFİKLERLE VERGİ</span>
+    </div>
+    <h2 style="margin:8px 0 16px;font-size:19px;font-weight:800">📊 Ücret Gelirlerinin Beyanına İlişkin Açıklamalar</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px">
+      \${bloklar.map(b=>\`<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)">
+        <div style="background:\${b.renk};color:#fff;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px">\${b.icon} \${b.baslik}</div>
+        <div style="padding:14px;font-size:12.5px;line-height:1.6;color:#3a4556">\${b.metin}</div>
+      </div>\`).join("")}
+    </div>
+    <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,.06)">
+      <h4 style="margin:0 0 10px;font-size:13px;color:#1a2230">🧭 Adım Adım Beyan Süreci</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        \${adimlar.map((a,i)=>\`<div style="display:flex;align-items:center;gap:8px">
+          <div style="background:#eef1f6;border:1px solid #dfe4ea;border-radius:10px;padding:8px 12px;font-size:11.5px;max-width:200px">
+            <b style="color:#dc2626">\${i+1}.</b> \${a}
+          </div>\${i<adimlar.length-1?'<span style="color:#c3cad6;font-size:16px">➜</span>':''}
+        </div>\`).join("")}
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:#8a95a5">Kaynak: Gelir İdaresi Başkanlığı (GİB) infografikler bölümünden esinlenerek hazırlanmıştır — güncel/resmi rakamlar için <a href="https://www.gib.gov.tr" target="_blank">gib.gov.tr</a>'yi kontrol et.</div>
+  </div>\`;
+}
 function dovizKartHtml(){
   return '<div id="dovizKart" style="background:linear-gradient(135deg,#132436,#1a3348);border:1px solid #2d3a4d;border-radius:14px;padding:16px 18px;margin-bottom:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
@@ -6836,7 +6935,7 @@ function renderGundem(){
       ["YouTube — Benim Hocam","https://www.youtube.com/results?search_query=benim+hocam+kpss","Benim Hocam KPSS"]
     ]
   };
-  let html='<div style="padding:18px 22px 0;max-width:1400px">'+dovizKartHtml()+haberKartHtml()+'</div>';
+  let html='<div style="padding:18px 22px 0;max-width:1400px">'+infografikHtml()+dovizKartHtml()+haberKartHtml()+'</div>';
   html+='<div style="padding:0 22px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1400px">';
   Object.entries(KAYNAKLAR).forEach(([baslik,linkler])=>{
     html+='<div style="background:var(--bg-card,#1a2230);border:1px solid var(--border,#2d3a4d);border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.15)">';
@@ -7841,7 +7940,12 @@ th{color:var(--mut);font-weight:700}
   <div class="card">
     <h2>🛒 Alışveriş Listesi</h2>
     <textarea id="menuAlisveris" rows="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:inherit;font-family:inherit" placeholder="ör. Yumurta, tavuk göğsü, yulaf, sebze…"></textarea>
-    <div class="row" style="margin-top:8px"><button class="btn" id="alisverisKaydet">💾 Kaydet</button></div>
+    <div class="row" style="margin-top:8px;gap:8px;align-items:center">
+      <button class="btn" id="alisverisKaydet">💾 Kaydet</button>
+      <input type="number" id="alisverisButce" placeholder="Tahmini bütçe (₺)" style="max-width:160px">
+      <button class="btn alt" id="alisverisMuhasebeyeEkle">📤 Muhasebe'ye Gider Olarak Ekle</button>
+    </div>
+    <div class="mut" id="alisverisDurum" style="margin-top:6px;font-size:12px"></div>
   </div>
 </section>
 
@@ -7883,6 +7987,16 @@ $("menuKaydet").onclick=()=>{
   set("menuPlan",plan);$("menuDurum").textContent="✓ Kaydedildi";setTimeout(()=>$("menuDurum").textContent="",2000);
 };
 $("alisverisKaydet").onclick=()=>{set("alisveris",$("menuAlisveris").value);};
+$("alisverisMuhasebeyeEkle").onclick=()=>{
+  const tutar=+$("alisverisButce").value;
+  const liste=$("menuAlisveris").value.trim();
+  if(!tutar||tutar<=0){alert("Tahmini bütçe tutarını gir.");return;}
+  let islemler=[];try{islemler=JSON.parse(localStorage.getItem("muh_islemler")||"[]");}catch(e){}
+  islemler.push({tip:"gider",aciklama:"Haftalık alışveriş"+(liste?" ("+liste.slice(0,40)+(liste.length>40?"…":"")+")":""),tutar,kategori:"Gıda",tarih:new Date().toISOString().slice(0,10),fis:null});
+  localStorage.setItem("muh_islemler",JSON.stringify(islemler));
+  $("alisverisDurum").textContent="✓ Muhasebe panelindeki gider listesine eklendi ("+tutar+" ₺)";
+  setTimeout(()=>$("alisverisDurum").textContent="",4000);
+};
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
@@ -10785,6 +10899,7 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
         </select>
       </div>
       <div class="fld" style="max-width:145px"><label>TARİH</label><input id="tarihInp" type="date" /></div>
+      <div class="fld" style="max-width:170px"><label>FİŞ/FATURA (opsiyonel)</label><input id="fisInp" type="file" accept="image/*" /></div>
       <button class="btn btn-g" id="ekleBtn">Ekle</button>
     </div>
   </div>
@@ -10850,6 +10965,12 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
           <button class="btn btn-g" id="butceKaydet">Kaydet</button>
         </div>
         <div id="butceUyari" style="font-size:13px"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>🔔 Vergi/SGK Takvimi Hatırlatıcıları</h2>
+        <p style="font-size:12px;color:var(--mut);margin-bottom:10px">Tek tıkla ana ekranın Hatırlatıcılar listesine KDV, muhtasar ve geçici vergi son günleri otomatik eklenir.</p>
+        <button class="btn btn-g" id="vergiTakvimEkle">🔔 Hatırlatıcıları Ekle</button>
+        <div id="vergiTakvimDurum" style="font-size:12px;margin-top:8px;color:var(--acc)"></div>
       </div>
     </div>
   </div>
@@ -10938,7 +11059,7 @@ function renderIslemler(){
       <td style="font-size:12px;color:var(--mut)">\${item.kategori}</td>
       <td>\${badge}</td>
       <td style="text-align:right;font-weight:800" class="\${renk}">\${item.tip==="gider"?"-":"+"} \${fmt(item.tutar)}</td>
-      <td>\${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}<button class="del-btn" data-idx="\${idx}">✕</button></td>
+      <td>\${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}\${item.fis?'<button class="del-btn" title="Fişi Gör" onclick="fisGoster('+idx+')" style="margin-right:4px">📎</button>':""}<button class="del-btn" data-idx="\${idx}">✕</button></td>
     </tr>\`;
   }).join("");
   document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{islemler.splice(+b.dataset.idx,1);save("muh_islemler",islemler);render()});
@@ -11195,20 +11316,47 @@ function madenRender(){
   }
 }
 
+/* ───── VERGİ/SGK TAKVİMİ HATIRLATICILARI (hub ile paylaşılan oy_reminders) ───── */
+$("vergiTakvimEkle").onclick=()=>{
+  let l=[];try{l=JSON.parse(localStorage.getItem("oy_reminders")||"[]");}catch(e){}
+  const yeni=[
+    {saat:"10:00",metin:"KDV Beyannamesi son günü (ayın 26'sı)",tekrar:"aylik",son:"",ayGunu:26,haftaGunu:new Date().getDay()},
+    {saat:"10:00",metin:"Muhtasar Beyanname son günü (ayın 26'sı)",tekrar:"aylik",son:"",ayGunu:26,haftaGunu:new Date().getDay()},
+    {saat:"10:00",metin:"Geçici Vergi son günü (ayın 17'si — üçer aylık)",tekrar:"aylik",son:"",ayGunu:17,haftaGunu:new Date().getDay()}
+  ];
+  let eklendi=0;
+  yeni.forEach(y=>{if(!l.some(x=>x.metin===y.metin)){l.push(y);eklendi++;}});
+  localStorage.setItem("oy_reminders",JSON.stringify(l));
+  $("vergiTakvimDurum").textContent=eklendi?("✓ "+eklendi+" hatırlatıcı eklendi — Ana ekran › Hatırlatıcılar bölümünde görebilirsin."):"Zaten tüm vergi hatırlatıcıları ekli.";
+};
+
 function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender()}
 
-$("ekleBtn").onclick=()=>{
+function islemEkleTamamla(fisFoto){
   const tip=$("tipSel").value;
   const aciklama=$("aciklamaInp").value.trim();
   const tutar=parseFloat($("tutarInp").value);
   const kategori=$("katSel").value;
   const tarih=$("tarihInp").value;
   if(!aciklama||!tutar||tutar<=0){alert("Açıklama ve geçerli bir tutar girin.");return;}
-  islemler.push({tip,aciklama,tutar,kategori,tarih});
+  islemler.push({tip,aciklama,tutar,kategori,tarih,fis:fisFoto||null});
   save("muh_islemler",islemler);
-  $("aciklamaInp").value="";$("tutarInp").value="";
+  $("aciklamaInp").value="";$("tutarInp").value="";$("fisInp").value="";
   render();
+}
+$("ekleBtn").onclick=()=>{
+  const dosya=$("fisInp").files[0];
+  if(dosya){
+    const r=new FileReader();
+    r.onload=()=>islemEkleTamamla(r.result);
+    r.readAsDataURL(dosya);
+  }else islemEkleTamamla(null);
 };
+function fisGoster(idx){
+  const it=islemler[idx];if(!it||!it.fis)return;
+  const w=window.open("","_blank");
+  w.document.write('<title>Fiş/Fatura</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+it.fis+'" style="max-width:100%;max-height:100vh"></body>');
+}
 
 $("hedefEkle").onclick=()=>{
   const ad=$("hedefAdi").value.trim();
@@ -11330,6 +11478,25 @@ function set(k,v){try{localStorage.setItem("kb_"+k,JSON.stringify(v))}catch(e){}
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;"}[c]));}
+function sifreGucuHesapla(s){
+  if(!s)return 0;
+  let p=0;
+  if(s.length>=8)p++;if(s.length>=12)p++;
+  if(/[a-z]/.test(s)&&/[A-Z]/.test(s))p++;
+  if(/[0-9]/.test(s))p++;
+  if(/[^a-zA-Z0-9]/.test(s))p++;
+  return Math.min(4,p);
+}
+function sifreGucuHtml(s){
+  if(!s)return"";
+  const p=sifreGucuHesapla(s);
+  const renkler=["#ef4444","#f97316","#f59e0b","#22c55e","#16a34a"];
+  const etiket=["Çok Zayıf","Zayıf","Orta","İyi","Güçlü"][p];
+  return '<b style="color:'+renkler[p]+';font-size:11px">● '+etiket+'</b>';
+}
+function sifreGucuGoster(input){
+  const span=input.nextElementSibling;if(span&&span.classList.contains("sifre-gucu"))span.innerHTML=sifreGucuHtml(input.value);
+}
 
 /* ============ GİYİM MAĞAZALARI (Türkiye) ============ */
 const GIYIM_VARSAYILAN=[
@@ -11444,7 +11611,7 @@ function renderGiyim(){
     <td><b>\${esc(g.ad)}</b></td>
     <td><a class="site-link" href="\${esc(g.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
     <td><input class="mini-in" value="\${esc(g.eposta)}" placeholder="e-posta" oninput="giyimGuncelle(\${g.idx},'eposta',this.value)"></td>
-    <td><input class="mini-in" value="\${esc(g.sifre)}" placeholder="şifre" oninput="giyimGuncelle(\${g.idx},'sifre',this.value)"></td>
+    <td><input class="mini-in" value="\${esc(g.sifre)}" placeholder="şifre" oninput="giyimGuncelle(\${g.idx},'sifre',this.value);sifreGucuGoster(this)"> <span class="sifre-gucu">\${sifreGucuHtml(g.sifre)}</span></td>
     <td><span class="badge \${g.eposta||g.sifre?'dolu':'bos'}">\${g.eposta||g.sifre?'✓ Dolu':'Boş'}</span></td>
     <td><button class="iconbtn" onclick="giyimSil(\${g.idx})" title="sil">🗑</button></td>
   </tr>\`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
@@ -11489,7 +11656,7 @@ function renderDiger(){
     <td><b>\${esc(d.ad)}</b></td>
     <td><a class="site-link" href="\${esc(d.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
     <td><input class="mini-in" value="\${esc(d.eposta)}" placeholder="e-posta" oninput="digerGuncelle(\${d.idx},'eposta',this.value)"></td>
-    <td><input class="mini-in" value="\${esc(d.sifre)}" placeholder="şifre" oninput="digerGuncelle(\${d.idx},'sifre',this.value)"></td>
+    <td><input class="mini-in" value="\${esc(d.sifre)}" placeholder="şifre" oninput="digerGuncelle(\${d.idx},'sifre',this.value);sifreGucuGoster(this)"> <span class="sifre-gucu">\${sifreGucuHtml(d.sifre)}</span></td>
     <td><button class="iconbtn" onclick="digerSil(\${d.idx})">🗑</button></td>
   </tr>\`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
 }
@@ -11663,12 +11830,27 @@ function ozetOlustur(){
 ozetOlustur();
 
 /* ───── YEDEKLEME ───── */
+function yedekGecmisiEkle(){
+  try{
+    const l=JSON.parse(localStorage.getItem("oy_yedek_gecmisi")||"[]");
+    l.unshift(new Date().toLocaleString("tr-TR"));
+    localStorage.setItem("oy_yedek_gecmisi",JSON.stringify(l.slice(0,20)));
+    yedekGecmisiGoster();
+  }catch(e){}
+}
+function yedekGecmisiGoster(){
+  const el=document.getElementById("yedekGecmisi");if(!el)return;
+  const l=JSON.parse(localStorage.getItem("oy_yedek_gecmisi")||"[]");
+  el.innerHTML=l.length?("<div style='font-size:11px;color:var(--faint);margin-top:8px'>Son yedeklemeler: "+l.slice(0,5).join(" · ")+"</div>"):"";
+}
 $("yedekAl").onclick=()=>{
   const veri={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);veri[k]=localStorage.getItem(k);}
   const blob=new Blob([JSON.stringify(veri,null,0)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="omer-yilmaz-yedek-"+new Date().toISOString().slice(0,10)+".json";a.click();
+  yedekGecmisiEkle();
 };
+yedekGecmisiGoster();
 $("yedekYukleBtn").onclick=()=>$("yedekDosya").click();
 $("yedekDosya").onchange=e=>{
   const f=e.target.files[0];if(!f)return;
@@ -11727,6 +11909,7 @@ const DINI_GUNLER_MINI=[
  {ad:"Kurban Bayramı",tarih:"2027-05-27"},{ad:"Regaib Kandili",tarih:"2026-12-31"},
  {ad:"Mirac Kandili",tarih:"2027-01-19"},{ad:"Berat Kandili",tarih:"2027-02-03"},{ad:"Kadir Gecesi",tarih:"2027-03-16"}
 ];
+let _ydTakvimOlaylari=[];
 function takvimRenderMini(){
   const bugun=new Date();bugun.setHours(0,0,0,0);
   const olaylar=[];
@@ -11736,8 +11919,21 @@ function takvimRenderMini(){
   const beyanKalemleri=[{ad:"KDV Beyannamesi",gun:26},{ad:"Muhtasar Beyanname",gun:26},{ad:"Geçici Vergi",gun:17}];
   beyanKalemleri.forEach(b=>{let t=new Date(bugun.getFullYear(),bugun.getMonth(),b.gun);if(t<bugun)t=new Date(bugun.getFullYear(),bugun.getMonth()+1,b.gun);olaylar.push({ad:"📑 "+b.ad,tarih:t});});
   const yakin=olaylar.map(o=>({...o,gun:Math.ceil((o.tarih-bugun)/86400000)})).filter(o=>o.gun>=0).sort((a,b)=>a.gun-b.gun).slice(0,8);
+  _ydTakvimOlaylari=yakin;
   $("takvimCard").innerHTML="<h4>📅 Yaklaşan Önemli Tarihler</h4>"+
-    (yakin.map(o=>`<div class="mini-row">${o.ad} <b>${o.gun===0?"Bugün":o.gun+" gün"}</b></div>`).join("")||'<div class="mini-row" style="color:var(--faint)">Yaklaşan özel tarih yok.</div>');
+    (yakin.map(o=>`<div class="mini-row">${o.ad} <b>${o.gun===0?"Bugün":o.gun+" gün"}</b></div>`).join("")||'<div class="mini-row" style="color:var(--faint)">Yaklaşan özel tarih yok.</div>')
+    +'<button class="mini-btn" style="margin-top:10px" onclick="takvimIcsIndir()">📆 Takvime Aktar (.ics)</button>';
+}
+function takvimIcsIndir(){
+  function icsTarih(d){return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");}
+  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Omer Yilmaz Komut Merkezi//TR\r\n";
+  _ydTakvimOlaylari.forEach(o=>{
+    const t=icsTarih(o.tarih);
+    ics+="BEGIN:VEVENT\r\nUID:"+t+"-"+Math.random().toString(36).slice(2)+"@omeryilmaz\r\nDTSTART;VALUE=DATE:"+t+"\r\nSUMMARY:"+o.ad.replace(/[^\x20-\x7E]/g,"").trim()+"\r\nEND:VEVENT\r\n";
+  });
+  ics+="END:VCALENDAR";
+  const blob=new Blob([ics],{type:"text/calendar"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="omer-yilmaz-takvim.ics";a.click();
 }
 takvimRenderMini();
 
@@ -11860,7 +12056,27 @@ function ydSayacGuncelle(){
   else $("ydSayac").textContent="Yoğun dönem "+Math.abs(fark)+" gündür devam ediyor 💪";
 }
 function ydTumunuCiz(){
-  ydHaftaCiz();ydOncelikCiz();ydEnerjiCiz();ydUykuCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();ydGecisPlanCiz();
+  ydHaftaCiz();ydOncelikCiz();ydEnerjiCiz();ydUykuCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();ydGecisPlanCiz();ydKalanZamanCiz();ydAksamCiz();
+}
+setInterval(()=>{if(localStorage.getItem("oy_yd_aktif")==="1")ydKalanZamanCiz();},60000);
+function ydKalanZamanCiz(){
+  const el=document.getElementById("ydKalanZaman");if(!el)return;
+  const simdi=new Date();const gunSonu=new Date(simdi);gunSonu.setHours(23,59,59,999);
+  const kalanMs=gunSonu-simdi;const saat=Math.floor(kalanMs/3600000);const dk=Math.floor((kalanMs%3600000)/60000);
+  el.textContent=saat+" sa "+dk+" dk";
+  document.getElementById("ydKalanZamanAlt").textContent="Bugün bitmeden önce kalan süre — önceliklerini unutma";
+}
+function ydAksamCiz(){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);const el=document.getElementById("ydAksam");if(el)el.value=k.aksam||"";}
+function ydAksamKaydet(v){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);k.aksam=v;ydKayitKaydet(ds,k);}
+/* Kişisel Gelişim habit tracker ile senkron */
+function ydHabitSenkronla(ds,tur,deger){
+  try{
+    const habitAdlari={is:"İş/mesai tamamlandı",spor:"Spor yaptım",ders:"Mevzuat öğrendim"};
+    const ad=habitAdlari[tur];if(!ad)return;
+    const gg=JSON.parse(localStorage.getItem("kg_gun_"+ds))||{namaz:{},kaza:0,kuran:0,su:0,kitap:0,habits:{},not:""};
+    gg.habits=gg.habits||{};gg.habits[ad]=deger;
+    localStorage.setItem("kg_gun_"+ds,JSON.stringify(gg));
+  }catch(e){}
 }
 
 /* Haftalık genel görünüm */
@@ -11883,6 +12099,7 @@ function ydHaftaCiz(){
 }
 function ydIsaretle(ds,tur){
   const k=ydKayitGetir(ds);k[tur]=!k[tur];ydKayitKaydet(ds,k);
+  ydHabitSenkronla(ds,tur,k[tur]);
   ydHaftaCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();
 }
 
@@ -11958,6 +12175,7 @@ window._ydPomoKalan=window._ydPomoKalan||{is:YD_POMO_SURE.is,spor:YD_POMO_SURE.s
 function ydPomoFmt(s){const m=Math.floor(s/60),k=s%60;return String(m).padStart(2,"0")+":"+String(k).padStart(2,"0");}
 function ydPomoBaslat(tur){
   if(window._ydPomo[tur])return;
+  if(tur!=="spor")alert("🔕 Telefonu sessize al, "+(tur==="is"?"iş":"ders")+" bloğuna odaklanma zamanı!");
   window._ydPomo[tur]=setInterval(()=>{
     window._ydPomoKalan[tur]--;
     const el=document.getElementById("ydPomo"+tur.charAt(0).toUpperCase()+tur.slice(1)+"Time");
@@ -12004,6 +12222,35 @@ function ydRaporYazdir(){
     <style>body{font-family:Arial;padding:30px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:center}</style></head>
     <body><h2>📈 Haftalık İş-Spor-Ders Raporu</h2>
     <table><tr><th>Gün</th><th>💼 İş</th><th>🏋️ Spor</th><th>📚 Ders</th><th>⚡ Enerji</th><th>🛌 Uyku</th></tr>${satirlar}</table>
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+function ydAylikRaporYazdir(){
+  const bugun=new Date();let is=0,spor=0,ders=0,enerjiToplam=0,enerjiSayi=0,uykuToplam=0,uykuSayi=0;
+  for(let i=0;i<30;i++){
+    const d=new Date(bugun);d.setDate(bugun.getDate()-i);
+    const k=ydKayitGetir(ydGunAnahtari(d));
+    if(k.is)is++;if(k.spor)spor++;if(k.ders)ders++;
+    if(k.enerji){enerjiToplam+=k.enerji;enerjiSayi++;}
+    if(k.uyku){uykuToplam+=k.uyku;uykuSayi++;}
+  }
+  const islemler=(()=>{try{return JSON.parse(localStorage.getItem("muh_islemler")||"[]")}catch(e){return[]}})();
+  const ayBasi=new Date(bugun.getFullYear(),bugun.getMonth(),1);
+  const buAyIslemler=islemler.filter(x=>new Date(x.tarih)>=ayBasi);
+  const gelir=buAyIslemler.filter(x=>x.tip==="gelir").reduce((s,x)=>s+(+x.tutar||0),0);
+  const gider=buAyIslemler.filter(x=>x.tip==="gider").reduce((s,x)=>s+(+x.tutar||0),0);
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Aylık Karne</title>
+    <style>body{font-family:Arial;padding:30px}h2{border-bottom:2px solid #5c5fe1;padding-bottom:10px}.k{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}</style></head>
+    <body><h2>📅 Aylık Genel Performans Karnesi — ${bugun.toLocaleDateString("tr-TR",{month:"long",year:"numeric"})}</h2>
+    <div class="k"><span>💼 İş yapılan gün</span><b>${is} / 30</b></div>
+    <div class="k"><span>🏋️ Spor yapılan gün</span><b>${spor} / 30</b></div>
+    <div class="k"><span>📚 Ders çalışılan gün</span><b>${ders} / 30</b></div>
+    <div class="k"><span>⚡ Ortalama enerji</span><b>${enerjiSayi?(enerjiToplam/enerjiSayi).toFixed(1):"—"} / 5</b></div>
+    <div class="k"><span>🛌 Ortalama uyku</span><b>${uykuSayi?(uykuToplam/uykuSayi).toFixed(1):"—"} saat</b></div>
+    <div class="k"><span>💰 Bu ay gelir</span><b>${gelir.toLocaleString("tr-TR")} ₺</b></div>
+    <div class="k"><span>💸 Bu ay gider</span><b>${gider.toLocaleString("tr-TR")} ₺</b></div>
+    <div class="k"><span>💳 Net</span><b>${(gelir-gider).toLocaleString("tr-TR")} ₺</b></div>
     <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
 }

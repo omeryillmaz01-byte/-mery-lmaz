@@ -608,6 +608,42 @@ function pomoBasla(){if(window._pomoTimer)return;window._pomoTimer=setInterval(f
 function pomoDur(){if(window._pomoTimer){clearInterval(window._pomoTimer);window._pomoTimer=null;var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Durdu";}}
 function pomoSifirla(){pomoDur();window._pomoKalan=25*60;var el=document.getElementById("pomoSayac");if(el)el.textContent="25:00";var elm=document.getElementById("pomoMod");if(elm)elm.textContent="Hazır";}
 
+function infografikHtml(){
+  const bloklar=[
+    {baslik:"Tevkifata Tabi Ücretlerin Beyanı",renk:"#0e9488",icon:"💼",metin:"İşveren tarafından stopaj yoluyla vergisi kesilen ücretler — genel olarak yıllık beyannameye dahil edilmez."},
+    {baslik:"Tevkifata Tabi Olmayan Ücretlerin Beyanı",renk:"#2563eb",icon:"📝",metin:"Yurt dışından alınan veya stopaja tabi tutulmamış ücretler — tutarına bakılmaksızın yıllık beyanname ile beyan edilir."},
+    {baslik:"Tek/Birden Fazla İşverenden Alınan Ücretin Beyanı",renk:"#dc2626",icon:"👥",metin:"İkinci işverenden alınan ücretler toplamı, GVK'da belirlenen beyan sınırını aşarsa tamamı beyan edilir."}
+  ];
+  const adimlar=[
+    "Ücret gelirinin tevkifata tabi olup olmadığını belirle",
+    "Birden fazla işverenden ücret alınıyorsa sınırı kontrol et",
+    "Beyan sınırını aşan tutar varsa yıllık beyanname ver",
+    "Beyanname dönemi: takip eden yılın Mart ayı (bazı durumlarda Şubat)"
+  ];
+  return `<div style="background:linear-gradient(135deg,#fafbfc,#eef1f6);border:1px solid #dfe4ea;border-radius:16px;padding:20px 22px;margin-bottom:16px;color:#1a2230">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="background:#dc2626;color:#fff;font-weight:800;font-size:11px;padding:4px 10px;border-radius:20px;letter-spacing:.5px">İNFOGRAFİKLERLE VERGİ</span>
+    </div>
+    <h2 style="margin:8px 0 16px;font-size:19px;font-weight:800">📊 Ücret Gelirlerinin Beyanına İlişkin Açıklamalar</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px">
+      ${bloklar.map(b=>`<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)">
+        <div style="background:${b.renk};color:#fff;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px">${b.icon} ${b.baslik}</div>
+        <div style="padding:14px;font-size:12.5px;line-height:1.6;color:#3a4556">${b.metin}</div>
+      </div>`).join("")}
+    </div>
+    <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,.06)">
+      <h4 style="margin:0 0 10px;font-size:13px;color:#1a2230">🧭 Adım Adım Beyan Süreci</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        ${adimlar.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px">
+          <div style="background:#eef1f6;border:1px solid #dfe4ea;border-radius:10px;padding:8px 12px;font-size:11.5px;max-width:200px">
+            <b style="color:#dc2626">${i+1}.</b> ${a}
+          </div>${i<adimlar.length-1?'<span style="color:#c3cad6;font-size:16px">➜</span>':''}
+        </div>`).join("")}
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:#8a95a5">Kaynak: Gelir İdaresi Başkanlığı (GİB) infografikler bölümünden esinlenerek hazırlanmıştır — güncel/resmi rakamlar için <a href="https://www.gib.gov.tr" target="_blank">gib.gov.tr</a>'yi kontrol et.</div>
+  </div>`;
+}
 function dovizKartHtml(){
   return '<div id="dovizKart" style="background:linear-gradient(135deg,#132436,#1a3348);border:1px solid #2d3a4d;border-radius:14px;padding:16px 18px;margin-bottom:16px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
@@ -752,7 +788,7 @@ function renderGundem(){
       ["YouTube — Benim Hocam","https://www.youtube.com/results?search_query=benim+hocam+kpss","Benim Hocam KPSS"]
     ]
   };
-  let html='<div style="padding:18px 22px 0;max-width:1400px">'+dovizKartHtml()+haberKartHtml()+'</div>';
+  let html='<div style="padding:18px 22px 0;max-width:1400px">'+infografikHtml()+dovizKartHtml()+haberKartHtml()+'</div>';
   html+='<div style="padding:0 22px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;max-width:1400px">';
   Object.entries(KAYNAKLAR).forEach(([baslik,linkler])=>{
     html+='<div style="background:var(--bg-card,#1a2230);border:1px solid var(--border,#2d3a4d);border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.15)">';

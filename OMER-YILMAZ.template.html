@@ -263,6 +263,15 @@ body{background:var(--bg);transition:background .4s}
             <div id="ydStreak" style="font-size:28px;font-weight:800;color:var(--acc2)">0</div>
             <div style="font-size:11px;color:var(--mut)">gün üst üste iş+spor+ders</div>
           </div>
+          <div class="mini-card">
+            <h4>⏳ Bugün Ne Kadar Zamanım Kaldı</h4>
+            <div id="ydKalanZaman" style="font-size:22px;font-weight:800;color:var(--acc)"></div>
+            <div style="font-size:11px;color:var(--mut)" id="ydKalanZamanAlt"></div>
+          </div>
+          <div class="mini-card" style="grid-column:span 2">
+            <h4>💬 Akşam Değerlendirmesi</h4>
+            <input type="text" id="ydAksam" placeholder="Bugün nasıl geçti? Kısaca yaz…" style="width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-family:inherit;font-size:12px" onchange="ydAksamKaydet(this.value)">
+          </div>
         </div>
 
         <div class="sec-label">⏱️ 3'LÜ POMODORO</div>
@@ -281,7 +290,8 @@ body{background:var(--bg);transition:background .4s}
           <div class="mini-card">
             <h4>📈 Haftalık Rapor</h4>
             <div id="ydRaporOzet" style="font-size:12.5px;line-height:1.8"></div>
-            <button class="mini-btn" style="margin-top:8px" onclick="ydRaporYazdir()">🖨️ Yazdır</button>
+            <button class="mini-btn" style="margin-top:8px" onclick="ydRaporYazdir()">🖨️ Haftalık Yazdır</button>
+            <button class="mini-btn" style="margin-top:8px" onclick="ydAylikRaporYazdir()">📅 Aylık Karne Yazdır</button>
           </div>
         </div>
 
@@ -350,6 +360,7 @@ body{background:var(--bg);transition:background .4s}
           <button class="mini-btn" id="yedekYukleBtn">📤 Yedek Yükle</button>
         </div>
         <input type="file" id="yedekDosya" accept=".json" style="display:none">
+        <div id="yedekGecmisi"></div>
       </div>
     </div>
   </div></div>
@@ -366,9 +377,12 @@ body{background:var(--bg);transition:background .4s}
 <script>
 const $=id=>document.getElementById(id);
 /* tema */
-function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("oy_theme",t)}catch(e){}}
-$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");
-try{theme(localStorage.getItem("oy_theme")||"dark")}catch(e){theme("dark")}
+function theme(t,manuel){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("oy_theme",t);if(manuel)localStorage.setItem("oy_theme_manuel","1");}catch(e){}}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark",true);
+try{
+  if(localStorage.getItem("oy_theme_manuel")==="1")theme(localStorage.getItem("oy_theme")||"dark");
+  else{const saat=new Date().getHours();theme(saat>=7&&saat<19?"light":"dark");}
+}catch(e){theme("dark")}
 
 /* tarih + selam */
 const saat=new Date().getHours();
@@ -524,12 +538,27 @@ function ozetOlustur(){
 ozetOlustur();
 
 /* ───── YEDEKLEME ───── */
+function yedekGecmisiEkle(){
+  try{
+    const l=JSON.parse(localStorage.getItem("oy_yedek_gecmisi")||"[]");
+    l.unshift(new Date().toLocaleString("tr-TR"));
+    localStorage.setItem("oy_yedek_gecmisi",JSON.stringify(l.slice(0,20)));
+    yedekGecmisiGoster();
+  }catch(e){}
+}
+function yedekGecmisiGoster(){
+  const el=document.getElementById("yedekGecmisi");if(!el)return;
+  const l=JSON.parse(localStorage.getItem("oy_yedek_gecmisi")||"[]");
+  el.innerHTML=l.length?("<div style='font-size:11px;color:var(--faint);margin-top:8px'>Son yedeklemeler: "+l.slice(0,5).join(" · ")+"</div>"):"";
+}
 $("yedekAl").onclick=()=>{
   const veri={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);veri[k]=localStorage.getItem(k);}
   const blob=new Blob([JSON.stringify(veri,null,0)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="omer-yilmaz-yedek-"+new Date().toISOString().slice(0,10)+".json";a.click();
+  yedekGecmisiEkle();
 };
+yedekGecmisiGoster();
 $("yedekYukleBtn").onclick=()=>$("yedekDosya").click();
 $("yedekDosya").onchange=e=>{
   const f=e.target.files[0];if(!f)return;
@@ -588,6 +617,7 @@ const DINI_GUNLER_MINI=[
  {ad:"Kurban Bayramı",tarih:"2027-05-27"},{ad:"Regaib Kandili",tarih:"2026-12-31"},
  {ad:"Mirac Kandili",tarih:"2027-01-19"},{ad:"Berat Kandili",tarih:"2027-02-03"},{ad:"Kadir Gecesi",tarih:"2027-03-16"}
 ];
+let _ydTakvimOlaylari=[];
 function takvimRenderMini(){
   const bugun=new Date();bugun.setHours(0,0,0,0);
   const olaylar=[];
@@ -597,8 +627,21 @@ function takvimRenderMini(){
   const beyanKalemleri=[{ad:"KDV Beyannamesi",gun:26},{ad:"Muhtasar Beyanname",gun:26},{ad:"Geçici Vergi",gun:17}];
   beyanKalemleri.forEach(b=>{let t=new Date(bugun.getFullYear(),bugun.getMonth(),b.gun);if(t<bugun)t=new Date(bugun.getFullYear(),bugun.getMonth()+1,b.gun);olaylar.push({ad:"📑 "+b.ad,tarih:t});});
   const yakin=olaylar.map(o=>({...o,gun:Math.ceil((o.tarih-bugun)/86400000)})).filter(o=>o.gun>=0).sort((a,b)=>a.gun-b.gun).slice(0,8);
+  _ydTakvimOlaylari=yakin;
   $("takvimCard").innerHTML="<h4>📅 Yaklaşan Önemli Tarihler</h4>"+
-    (yakin.map(o=>`<div class="mini-row">${o.ad} <b>${o.gun===0?"Bugün":o.gun+" gün"}</b></div>`).join("")||'<div class="mini-row" style="color:var(--faint)">Yaklaşan özel tarih yok.</div>');
+    (yakin.map(o=>`<div class="mini-row">${o.ad} <b>${o.gun===0?"Bugün":o.gun+" gün"}</b></div>`).join("")||'<div class="mini-row" style="color:var(--faint)">Yaklaşan özel tarih yok.</div>')
+    +'<button class="mini-btn" style="margin-top:10px" onclick="takvimIcsIndir()">📆 Takvime Aktar (.ics)</button>';
+}
+function takvimIcsIndir(){
+  function icsTarih(d){return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");}
+  let ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Omer Yilmaz Komut Merkezi//TR\r\n";
+  _ydTakvimOlaylari.forEach(o=>{
+    const t=icsTarih(o.tarih);
+    ics+="BEGIN:VEVENT\r\nUID:"+t+"-"+Math.random().toString(36).slice(2)+"@omeryilmaz\r\nDTSTART;VALUE=DATE:"+t+"\r\nSUMMARY:"+o.ad.replace(/[^\x20-\x7E]/g,"").trim()+"\r\nEND:VEVENT\r\n";
+  });
+  ics+="END:VCALENDAR";
+  const blob=new Blob([ics],{type:"text/calendar"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="omer-yilmaz-takvim.ics";a.click();
 }
 takvimRenderMini();
 
@@ -721,7 +764,27 @@ function ydSayacGuncelle(){
   else $("ydSayac").textContent="Yoğun dönem "+Math.abs(fark)+" gündür devam ediyor 💪";
 }
 function ydTumunuCiz(){
-  ydHaftaCiz();ydOncelikCiz();ydEnerjiCiz();ydUykuCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();ydGecisPlanCiz();
+  ydHaftaCiz();ydOncelikCiz();ydEnerjiCiz();ydUykuCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();ydGecisPlanCiz();ydKalanZamanCiz();ydAksamCiz();
+}
+setInterval(()=>{if(localStorage.getItem("oy_yd_aktif")==="1")ydKalanZamanCiz();},60000);
+function ydKalanZamanCiz(){
+  const el=document.getElementById("ydKalanZaman");if(!el)return;
+  const simdi=new Date();const gunSonu=new Date(simdi);gunSonu.setHours(23,59,59,999);
+  const kalanMs=gunSonu-simdi;const saat=Math.floor(kalanMs/3600000);const dk=Math.floor((kalanMs%3600000)/60000);
+  el.textContent=saat+" sa "+dk+" dk";
+  document.getElementById("ydKalanZamanAlt").textContent="Bugün bitmeden önce kalan süre — önceliklerini unutma";
+}
+function ydAksamCiz(){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);const el=document.getElementById("ydAksam");if(el)el.value=k.aksam||"";}
+function ydAksamKaydet(v){const ds=ydGunAnahtari(new Date());const k=ydKayitGetir(ds);k.aksam=v;ydKayitKaydet(ds,k);}
+/* Kişisel Gelişim habit tracker ile senkron */
+function ydHabitSenkronla(ds,tur,deger){
+  try{
+    const habitAdlari={is:"İş/mesai tamamlandı",spor:"Spor yaptım",ders:"Mevzuat öğrendim"};
+    const ad=habitAdlari[tur];if(!ad)return;
+    const gg=JSON.parse(localStorage.getItem("kg_gun_"+ds))||{namaz:{},kaza:0,kuran:0,su:0,kitap:0,habits:{},not:""};
+    gg.habits=gg.habits||{};gg.habits[ad]=deger;
+    localStorage.setItem("kg_gun_"+ds,JSON.stringify(gg));
+  }catch(e){}
 }
 
 /* Haftalık genel görünüm */
@@ -744,6 +807,7 @@ function ydHaftaCiz(){
 }
 function ydIsaretle(ds,tur){
   const k=ydKayitGetir(ds);k[tur]=!k[tur];ydKayitKaydet(ds,k);
+  ydHabitSenkronla(ds,tur,k[tur]);
   ydHaftaCiz();ydStreakCiz();ydPastaCiz();ydRaporCiz();
 }
 
@@ -819,6 +883,7 @@ window._ydPomoKalan=window._ydPomoKalan||{is:YD_POMO_SURE.is,spor:YD_POMO_SURE.s
 function ydPomoFmt(s){const m=Math.floor(s/60),k=s%60;return String(m).padStart(2,"0")+":"+String(k).padStart(2,"0");}
 function ydPomoBaslat(tur){
   if(window._ydPomo[tur])return;
+  if(tur!=="spor")alert("🔕 Telefonu sessize al, "+(tur==="is"?"iş":"ders")+" bloğuna odaklanma zamanı!");
   window._ydPomo[tur]=setInterval(()=>{
     window._ydPomoKalan[tur]--;
     const el=document.getElementById("ydPomo"+tur.charAt(0).toUpperCase()+tur.slice(1)+"Time");
@@ -865,6 +930,35 @@ function ydRaporYazdir(){
     <style>body{font-family:Arial;padding:30px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:center}</style></head>
     <body><h2>📈 Haftalık İş-Spor-Ders Raporu</h2>
     <table><tr><th>Gün</th><th>💼 İş</th><th>🏋️ Spor</th><th>📚 Ders</th><th>⚡ Enerji</th><th>🛌 Uyku</th></tr>${satirlar}</table>
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+function ydAylikRaporYazdir(){
+  const bugun=new Date();let is=0,spor=0,ders=0,enerjiToplam=0,enerjiSayi=0,uykuToplam=0,uykuSayi=0;
+  for(let i=0;i<30;i++){
+    const d=new Date(bugun);d.setDate(bugun.getDate()-i);
+    const k=ydKayitGetir(ydGunAnahtari(d));
+    if(k.is)is++;if(k.spor)spor++;if(k.ders)ders++;
+    if(k.enerji){enerjiToplam+=k.enerji;enerjiSayi++;}
+    if(k.uyku){uykuToplam+=k.uyku;uykuSayi++;}
+  }
+  const islemler=(()=>{try{return JSON.parse(localStorage.getItem("muh_islemler")||"[]")}catch(e){return[]}})();
+  const ayBasi=new Date(bugun.getFullYear(),bugun.getMonth(),1);
+  const buAyIslemler=islemler.filter(x=>new Date(x.tarih)>=ayBasi);
+  const gelir=buAyIslemler.filter(x=>x.tip==="gelir").reduce((s,x)=>s+(+x.tutar||0),0);
+  const gider=buAyIslemler.filter(x=>x.tip==="gider").reduce((s,x)=>s+(+x.tutar||0),0);
+  const w=window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Aylık Karne</title>
+    <style>body{font-family:Arial;padding:30px}h2{border-bottom:2px solid #5c5fe1;padding-bottom:10px}.k{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}</style></head>
+    <body><h2>📅 Aylık Genel Performans Karnesi — ${bugun.toLocaleDateString("tr-TR",{month:"long",year:"numeric"})}</h2>
+    <div class="k"><span>💼 İş yapılan gün</span><b>${is} / 30</b></div>
+    <div class="k"><span>🏋️ Spor yapılan gün</span><b>${spor} / 30</b></div>
+    <div class="k"><span>📚 Ders çalışılan gün</span><b>${ders} / 30</b></div>
+    <div class="k"><span>⚡ Ortalama enerji</span><b>${enerjiSayi?(enerjiToplam/enerjiSayi).toFixed(1):"—"} / 5</b></div>
+    <div class="k"><span>🛌 Ortalama uyku</span><b>${uykuSayi?(uykuToplam/uykuSayi).toFixed(1):"—"} saat</b></div>
+    <div class="k"><span>💰 Bu ay gelir</span><b>${gelir.toLocaleString("tr-TR")} ₺</b></div>
+    <div class="k"><span>💸 Bu ay gider</span><b>${gider.toLocaleString("tr-TR")} ₺</b></div>
+    <div class="k"><span>💳 Net</span><b>${(gelir-gider).toLocaleString("tr-TR")} ₺</b></div>
     <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
 }

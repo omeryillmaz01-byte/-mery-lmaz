@@ -161,6 +161,7 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
         </select>
       </div>
       <div class="fld" style="max-width:145px"><label>TARİH</label><input id="tarihInp" type="date" /></div>
+      <div class="fld" style="max-width:170px"><label>FİŞ/FATURA (opsiyonel)</label><input id="fisInp" type="file" accept="image/*" /></div>
       <button class="btn btn-g" id="ekleBtn">Ekle</button>
     </div>
   </div>
@@ -226,6 +227,12 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
           <button class="btn btn-g" id="butceKaydet">Kaydet</button>
         </div>
         <div id="butceUyari" style="font-size:13px"></div>
+      </div>
+      <div class="panel" style="margin-bottom:16px">
+        <h2>🔔 Vergi/SGK Takvimi Hatırlatıcıları</h2>
+        <p style="font-size:12px;color:var(--mut);margin-bottom:10px">Tek tıkla ana ekranın Hatırlatıcılar listesine KDV, muhtasar ve geçici vergi son günleri otomatik eklenir.</p>
+        <button class="btn btn-g" id="vergiTakvimEkle">🔔 Hatırlatıcıları Ekle</button>
+        <div id="vergiTakvimDurum" style="font-size:12px;margin-top:8px;color:var(--acc)"></div>
       </div>
     </div>
   </div>
@@ -314,7 +321,7 @@ function renderIslemler(){
       <td style="font-size:12px;color:var(--mut)">${item.kategori}</td>
       <td>${badge}</td>
       <td style="text-align:right;font-weight:800" class="${renk}">${item.tip==="gider"?"-":"+"} ${fmt(item.tutar)}</td>
-      <td>${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}<button class="del-btn" data-idx="${idx}">✕</button></td>
+      <td>${item.tip==="gider"?'<a href="https://www.gib.gov.tr/arama?key='+encodeURIComponent(item.kategori||item.aciklama)+'" target="_blank" title="Mevzuat ara" style="margin-right:8px;text-decoration:none">🔗</a>':""}${item.fis?'<button class="del-btn" title="Fişi Gör" onclick="fisGoster('+idx+')" style="margin-right:4px">📎</button>':""}<button class="del-btn" data-idx="${idx}">✕</button></td>
     </tr>`;
   }).join("");
   document.querySelectorAll(".del-btn").forEach(b=>b.onclick=()=>{islemler.splice(+b.dataset.idx,1);save("muh_islemler",islemler);render()});
@@ -571,20 +578,47 @@ function madenRender(){
   }
 }
 
+/* ───── VERGİ/SGK TAKVİMİ HATIRLATICILARI (hub ile paylaşılan oy_reminders) ───── */
+$("vergiTakvimEkle").onclick=()=>{
+  let l=[];try{l=JSON.parse(localStorage.getItem("oy_reminders")||"[]");}catch(e){}
+  const yeni=[
+    {saat:"10:00",metin:"KDV Beyannamesi son günü (ayın 26'sı)",tekrar:"aylik",son:"",ayGunu:26,haftaGunu:new Date().getDay()},
+    {saat:"10:00",metin:"Muhtasar Beyanname son günü (ayın 26'sı)",tekrar:"aylik",son:"",ayGunu:26,haftaGunu:new Date().getDay()},
+    {saat:"10:00",metin:"Geçici Vergi son günü (ayın 17'si — üçer aylık)",tekrar:"aylik",son:"",ayGunu:17,haftaGunu:new Date().getDay()}
+  ];
+  let eklendi=0;
+  yeni.forEach(y=>{if(!l.some(x=>x.metin===y.metin)){l.push(y);eklendi++;}});
+  localStorage.setItem("oy_reminders",JSON.stringify(l));
+  $("vergiTakvimDurum").textContent=eklendi?("✓ "+eklendi+" hatırlatıcı eklendi — Ana ekran › Hatırlatıcılar bölümünde görebilirsin."):"Zaten tüm vergi hatırlatıcıları ekli.";
+};
+
 function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender()}
 
-$("ekleBtn").onclick=()=>{
+function islemEkleTamamla(fisFoto){
   const tip=$("tipSel").value;
   const aciklama=$("aciklamaInp").value.trim();
   const tutar=parseFloat($("tutarInp").value);
   const kategori=$("katSel").value;
   const tarih=$("tarihInp").value;
   if(!aciklama||!tutar||tutar<=0){alert("Açıklama ve geçerli bir tutar girin.");return;}
-  islemler.push({tip,aciklama,tutar,kategori,tarih});
+  islemler.push({tip,aciklama,tutar,kategori,tarih,fis:fisFoto||null});
   save("muh_islemler",islemler);
-  $("aciklamaInp").value="";$("tutarInp").value="";
+  $("aciklamaInp").value="";$("tutarInp").value="";$("fisInp").value="";
   render();
+}
+$("ekleBtn").onclick=()=>{
+  const dosya=$("fisInp").files[0];
+  if(dosya){
+    const r=new FileReader();
+    r.onload=()=>islemEkleTamamla(r.result);
+    r.readAsDataURL(dosya);
+  }else islemEkleTamamla(null);
 };
+function fisGoster(idx){
+  const it=islemler[idx];if(!it||!it.fis)return;
+  const w=window.open("","_blank");
+  w.document.write('<title>Fiş/Fatura</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+it.fis+'" style="max-width:100%;max-height:100vh"></body>');
+}
 
 $("hedefEkle").onclick=()=>{
   const ad=$("hedefAdi").value.trim();

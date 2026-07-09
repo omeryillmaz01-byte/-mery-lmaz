@@ -369,7 +369,12 @@ th{color:var(--mut);font-weight:700}
   <div class="card">
     <h2>🛒 Alışveriş Listesi</h2>
     <textarea id="menuAlisveris" rows="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:inherit;font-family:inherit" placeholder="ör. Yumurta, tavuk göğsü, yulaf, sebze…"></textarea>
-    <div class="row" style="margin-top:8px"><button class="btn" id="alisverisKaydet">💾 Kaydet</button></div>
+    <div class="row" style="margin-top:8px;gap:8px;align-items:center">
+      <button class="btn" id="alisverisKaydet">💾 Kaydet</button>
+      <input type="number" id="alisverisButce" placeholder="Tahmini bütçe (₺)" style="max-width:160px">
+      <button class="btn alt" id="alisverisMuhasebeyeEkle">📤 Muhasebe'ye Gider Olarak Ekle</button>
+    </div>
+    <div class="mut" id="alisverisDurum" style="margin-top:6px;font-size:12px"></div>
   </div>
 </section>
 
@@ -411,6 +416,16 @@ $("menuKaydet").onclick=()=>{
   set("menuPlan",plan);$("menuDurum").textContent="✓ Kaydedildi";setTimeout(()=>$("menuDurum").textContent="",2000);
 };
 $("alisverisKaydet").onclick=()=>{set("alisveris",$("menuAlisveris").value);};
+$("alisverisMuhasebeyeEkle").onclick=()=>{
+  const tutar=+$("alisverisButce").value;
+  const liste=$("menuAlisveris").value.trim();
+  if(!tutar||tutar<=0){alert("Tahmini bütçe tutarını gir.");return;}
+  let islemler=[];try{islemler=JSON.parse(localStorage.getItem("muh_islemler")||"[]");}catch(e){}
+  islemler.push({tip:"gider",aciklama:"Haftalık alışveriş"+(liste?" ("+liste.slice(0,40)+(liste.length>40?"…":"")+")":""),tutar,kategori:"Gıda",tarih:new Date().toISOString().slice(0,10),fis:null});
+  localStorage.setItem("muh_islemler",JSON.stringify(islemler));
+  $("alisverisDurum").textContent="✓ Muhasebe panelindeki gider listesine eklendi ("+tutar+" ₺)";
+  setTimeout(()=>$("alisverisDurum").textContent="",4000);
+};
 
 /* ---------- Tabs ---------- */
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{

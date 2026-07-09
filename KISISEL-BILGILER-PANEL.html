@@ -96,6 +96,25 @@ function set(k,v){try{localStorage.setItem("kb_"+k,JSON.stringify(v))}catch(e){}
 function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";set("theme",t)}
 $("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");theme(get("theme","dark"));
 function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+function sifreGucuHesapla(s){
+  if(!s)return 0;
+  let p=0;
+  if(s.length>=8)p++;if(s.length>=12)p++;
+  if(/[a-z]/.test(s)&&/[A-Z]/.test(s))p++;
+  if(/[0-9]/.test(s))p++;
+  if(/[^a-zA-Z0-9]/.test(s))p++;
+  return Math.min(4,p);
+}
+function sifreGucuHtml(s){
+  if(!s)return"";
+  const p=sifreGucuHesapla(s);
+  const renkler=["#ef4444","#f97316","#f59e0b","#22c55e","#16a34a"];
+  const etiket=["Çok Zayıf","Zayıf","Orta","İyi","Güçlü"][p];
+  return '<b style="color:'+renkler[p]+';font-size:11px">● '+etiket+'</b>';
+}
+function sifreGucuGoster(input){
+  const span=input.nextElementSibling;if(span&&span.classList.contains("sifre-gucu"))span.innerHTML=sifreGucuHtml(input.value);
+}
 
 /* ============ GİYİM MAĞAZALARI (Türkiye) ============ */
 const GIYIM_VARSAYILAN=[
@@ -210,7 +229,7 @@ function renderGiyim(){
     <td><b>${esc(g.ad)}</b></td>
     <td><a class="site-link" href="${esc(g.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
     <td><input class="mini-in" value="${esc(g.eposta)}" placeholder="e-posta" oninput="giyimGuncelle(${g.idx},'eposta',this.value)"></td>
-    <td><input class="mini-in" value="${esc(g.sifre)}" placeholder="şifre" oninput="giyimGuncelle(${g.idx},'sifre',this.value)"></td>
+    <td><input class="mini-in" value="${esc(g.sifre)}" placeholder="şifre" oninput="giyimGuncelle(${g.idx},'sifre',this.value);sifreGucuGoster(this)"> <span class="sifre-gucu">${sifreGucuHtml(g.sifre)}</span></td>
     <td><span class="badge ${g.eposta||g.sifre?'dolu':'bos'}">${g.eposta||g.sifre?'✓ Dolu':'Boş'}</span></td>
     <td><button class="iconbtn" onclick="giyimSil(${g.idx})" title="sil">🗑</button></td>
   </tr>`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
@@ -255,7 +274,7 @@ function renderDiger(){
     <td><b>${esc(d.ad)}</b></td>
     <td><a class="site-link" href="${esc(d.link)}" target="_blank" rel="noopener">🔗 Aç</a></td>
     <td><input class="mini-in" value="${esc(d.eposta)}" placeholder="e-posta" oninput="digerGuncelle(${d.idx},'eposta',this.value)"></td>
-    <td><input class="mini-in" value="${esc(d.sifre)}" placeholder="şifre" oninput="digerGuncelle(${d.idx},'sifre',this.value)"></td>
+    <td><input class="mini-in" value="${esc(d.sifre)}" placeholder="şifre" oninput="digerGuncelle(${d.idx},'sifre',this.value);sifreGucuGoster(this)"> <span class="sifre-gucu">${sifreGucuHtml(d.sifre)}</span></td>
     <td><button class="iconbtn" onclick="digerSil(${d.idx})">🗑</button></td>
   </tr>`).join("")||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Sonuç yok</td></tr>';
 }
