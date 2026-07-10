@@ -228,6 +228,7 @@ body.odak-modu #havaChip{display:none}
       <div id="kullanimGunSayaci" style="margin-top:6px;font-size:11.5px;color:var(--mut)"></div>
       <button class="gbtn" style="margin-top:10px" onclick="neYapmaliyimGoster()">🧭 Bugün Ne Yapmalıyım?</button>
       <div id="neYapmaliyimKutu" style="display:none;margin-top:10px;padding:10px 14px;background:var(--card2,#1c2130);border-radius:10px;font-size:13px;line-height:1.7"></div>
+      <div id="streakAlan" style="margin-top:18px"></div>
     </div>
 
     <!-- YOĞUN DÖNEM MODU -->
@@ -607,6 +608,33 @@ function bildirimGecmisiGoster(){
     if(el)el.textContent="📅 Panel "+l.length+" farklı gün kullanıldı";
   }catch(e){}
 })();
+
+/* ───── STREAK ISI HARİTASI (son 90 gün) (v1000) ───── */
+function streakCiz(){
+  const alan=$("streakAlan");if(!alan)return;
+  let gunler=[];try{gunler=JSON.parse(localStorage.getItem("oy_kullanim_gunleri")||"[]");}catch(e){}
+  const set=new Set(gunler);
+  // güncel streak hesabı
+  let streak=0;const d=new Date();
+  for(;;){const ds=d.toISOString().slice(0,10);if(set.has(ds)){streak++;d.setDate(d.getDate()-1);}else break;}
+  // en uzun streak
+  const sirali=[...set].sort();let enUzun=0,gecici=0,onceki=null;
+  sirali.forEach(g=>{const t=new Date(g).getTime();if(onceki!==null&&t-onceki===86400000)gecici++;else gecici=1;if(gecici>enUzun)enUzun=gecici;onceki=t;});
+  let kareler="";
+  for(let i=89;i>=0;i--){
+    const dt=new Date();dt.setDate(dt.getDate()-i);const ds=dt.toISOString().slice(0,10);
+    const aktif=set.has(ds);
+    kareler+=`<span title="${ds}" style="width:11px;height:11px;border-radius:3px;background:${aktif?'#22c55e':'rgba(255,255,255,.08)'}"></span>`;
+  }
+  alan.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--mut)">🔥 Çalışma Serisi</div>
+      <div style="font-size:12px"><b style="color:#22c55e">${streak}</b> gün güncel · en uzun <b>${enUzun}</b></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(30,1fr);gap:3px;max-width:440px">${kareler}</div>
+    <div style="font-size:10.5px;color:var(--mut);margin-top:6px">Son 90 gün · her gün paneli açtığında bir kare yeşile döner</div>`;
+}
+streakCiz();
 
 /* ───── ERİŞİLEBİLİRLİK: YAZI BOYUTU (v1000) ───── */
 function yaziBoyutAyarla(delta){

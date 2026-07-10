@@ -242,6 +242,8 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="bilgi">📘 Muhasebe Bilgileri</a>
     <a data-tab="flashcard">🎴 Flashcard</a>
     <a data-tab="infografik">📊 İnfografik</a>
+    <a data-tab="referans">📚 Referans</a>
+    <a data-tab="simulasyon">⏱️ Simülasyon</a>
     <a data-tab="favoriler">⭐ Favoriler</a>
     <a data-tab="yanlislarim">❌ Yanlışlarım</a>
     <a data-tab="analiz">Analiz</a>
@@ -429,6 +431,7 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
   <p style="color:var(--text-soft);margin-bottom:12px">muhasebeTR · alomaliye · verginet tarzı <b>özet konu kartları</b>. Ön yüzde kavram/konu, karta tıkla → arka yüzde kısa öz anlatım. Her gün farklı deste, mükerrer değil. Bildiklerini "biliyorum", çalışman gerekenleri "tekrar" olarak işaretle.</p>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
     <button class="btn btn-outline btn-small" onclick="App.flashKaristir()">🔀 Yeni Deste Karıştır</button>
+    <button class="btn btn-outline btn-small" onclick="App.flashSesliOzet()">🔊 Sesli Özet</button>
     <span id="flashSayac" style="font-size:13px;color:var(--text-soft)"></span>
   </div>
   <div id="flashKartAlan"></div>
@@ -440,6 +443,40 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
   <p style="color:var(--text-soft);margin-bottom:16px">Karmaşık mevzuat konularını tek bakışta kavramak için görsel özetler. GİB paylaşımları tarzında, renkli ve akış şemalı.</p>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="infografikSecim"></div>
   <div id="infografikAlan"></div>
+</div>
+
+<!-- ════════ REFERANS TAB ════════ -->
+<div class="tab-pane" id="tabReferans">
+  <div class="section-h"><h3>📚 Referans Merkezi</h3><span class="line"></span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px" id="refSecim">
+    <button class="btn btn-small btn-primary" data-ref="0" onclick="App.refSec(0)">📉 Amortisman Süreleri</button>
+    <button class="btn btn-small btn-outline" data-ref="1" onclick="App.refSec(1)">🧮 Formül Kasası</button>
+    <button class="btn btn-small btn-outline" data-ref="2" onclick="App.refSec(2)">📋 Tek Düzen Hesap Planı</button>
+    <button class="btn btn-small btn-outline" data-ref="3" onclick="App.refSec(3)">📆 Beyanname Takvimi</button>
+  </div>
+  <div id="refAlan"></div>
+</div>
+
+<!-- ════════ SİMÜLASYON TAB ════════ -->
+<div class="tab-pane" id="tabSimulasyon">
+  <div class="section-h"><h3>⏱️ Simülasyon Sınavı</h3><span class="line"></span></div>
+  <div id="simKurulum">
+    <p style="color:var(--text-soft);margin-bottom:14px">Gerçek sınav formatında, <b>süre sayaçlı</b> deneme. Sorular tüm konu bankasından rastgele seçilir. Süre bitince veya bitir dediğinde <b>karne</b> çıkar.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <label style="font-size:13px">Soru sayısı:
+        <select id="simSoruSayi" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-soft)">
+          <option value="10">10</option><option value="25" selected>25</option><option value="50">50</option>
+        </select>
+      </label>
+      <label style="font-size:13px">Süre (dk):
+        <select id="simSure" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-soft)">
+          <option value="15">15</option><option value="30" selected>30</option><option value="60">60</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" onclick="App.simBaslat()">🚀 Sınavı Başlat</button>
+    </div>
+  </div>
+  <div id="simAlan"></div>
 </div>
 
 <!-- ════════ FAVORİLER TAB ════════ -->
@@ -1622,6 +1659,63 @@ const INFOGRAFIKLER=[
     </div>
     <div style="background:#f1f5f9;border-radius:12px;padding:14px;margin-top:12px;font-size:12.5px;color:#334155;line-height:1.6"><b>Zaman çizgisi:</b> Normal alacak → (ödeme gecikir, dava açılır) → <b>Şüpheli</b> → (tahsil imkânı tamamen biter) → <b>Değersiz</b></div>`},
 ];
+/* ═══ REFERANS: Amortisman süreleri (VUK genel tebliğ örnekleri) ═══ */
+const AMORTISMAN_TABLO=[
+  {kiymet:'Binalar (betonarme iş yeri)',omur:50,oran:'%2'},
+  {kiymet:'Binalar (kagir/ahşap)',omur:'25-40',oran:'%2,5-4'},
+  {kiymet:'Mobilya, mefruşat, büro malzemesi',omur:5,oran:'%20'},
+  {kiymet:'Bilgisayar ve çevre birimleri',omur:4,oran:'%25'},
+  {kiymet:'Cep telefonu / tablet',omur:3,oran:'%33,33'},
+  {kiymet:'Binek otomobil',omur:5,oran:'%20'},
+  {kiymet:'Kamyon / kamyonet (yük)',omur:'4-5',oran:'%20-25'},
+  {kiymet:'Yazılım (bilgisayar programı)',omur:3,oran:'%33,33'},
+  {kiymet:'Makine ve tesisler (genel)',omur:10,oran:'%10'},
+  {kiymet:'Klima / ısıtma cihazları',omur:5,oran:'%20'},
+  {kiymet:'Fotokopi / yazıcı',omur:5,oran:'%20'},
+  {kiymet:'Demirbaş (genel alet-edevat)',omur:'5-10',oran:'%10-20'},
+  {kiymet:'Web sitesi / internet altyapısı',omur:3,oran:'%33,33'},
+  {kiymet:'Özel maliyetler (kira süresince)',omur:'kira süresi',oran:'kalan süreye göre'},
+];
+/* ═══ REFERANS: Formül kasası ═══ */
+const FORMUL_KASASI=[
+  {ad:'Cari Oran',formul:'Dönen Varlıklar / Kısa Vadeli Yabancı Kaynaklar',yorum:'Kısa vadeli borç ödeme gücü. İdeal ≈ 2.',kat:'Likidite'},
+  {ad:'Asit-Test (Likidite) Oranı',formul:'(Dönen Varlıklar − Stoklar) / KVYK',yorum:'Stok hariç likidite. İdeal ≥ 1.',kat:'Likidite'},
+  {ad:'Nakit Oranı',formul:'(Hazır Değerler + Menkul Kıymet) / KVYK',yorum:'En dar likidite ölçüsü.',kat:'Likidite'},
+  {ad:'Kaldıraç Oranı',formul:'Toplam Yabancı Kaynak / Toplam Varlık',yorum:'Varlıkların ne kadarı borçla finanse edilmiş. Düşük daha güvenli.',kat:'Finansal Yapı'},
+  {ad:'Özkaynak / Toplam Varlık',formul:'Özkaynaklar / Toplam Varlıklar',yorum:'Mali bağımsızlık göstergesi.',kat:'Finansal Yapı'},
+  {ad:'ROE (Özkaynak Kârlılığı)',formul:'Net Kâr / Özkaynaklar',yorum:'Ortakların koyduğu sermayenin verimi.',kat:'Kârlılık'},
+  {ad:'ROA (Aktif Kârlılığı)',formul:'Net Kâr / Toplam Varlıklar',yorum:'Varlıkların kâr yaratma verimi.',kat:'Kârlılık'},
+  {ad:'Net Kâr Marjı',formul:'Net Kâr / Net Satışlar',yorum:'Her 1 TL satıştan kalan net kâr.',kat:'Kârlılık'},
+  {ad:'DuPont Analizi',formul:'ROE = Net Kâr Marjı × Aktif Devir Hızı × Finansal Kaldıraç',yorum:'ROE\'yi 3 sürücüye ayırır.',kat:'Kârlılık'},
+  {ad:'Stok Devir Hızı',formul:'SMM / Ortalama Stok',yorum:'Stok yılda kaç kez döndü. Yüksek daha iyi.',kat:'Faaliyet'},
+  {ad:'Alacak Devir Hızı',formul:'Net Satışlar / Ortalama Ticari Alacak',yorum:'Alacakların tahsil hızı.',kat:'Faaliyet'},
+  {ad:'NPV (Net Bugünkü Değer)',formul:'Σ [Nakit Akışı_t / (1+r)^t] − İlk Yatırım',yorum:'NPV > 0 → yatırım kabul edilir.',kat:'Yatırım'},
+  {ad:'IRR (İç Verim Oranı)',formul:'NPV = 0 yapan iskonto oranı (r)',yorum:'IRR > sermaye maliyeti → kabul.',kat:'Yatırım'},
+  {ad:'Sürdürülebilir Büyüme Oranı',formul:'ROE × (1 − Temettü Dağıtım Oranı)',yorum:'Dış finansman olmadan büyüyebilme oranı.',kat:'Yatırım'},
+];
+/* ═══ REFERANS: Tek Düzen Hesap Planı (ana gruplar) ═══ */
+const HESAP_PLANI=[
+  {kod:'1',ad:'DÖNEN VARLIKLAR',ornek:'100 Kasa · 102 Bankalar · 120 Alıcılar · 153 Ticari Mallar'},
+  {kod:'2',ad:'DURAN VARLIKLAR',ornek:'252 Binalar · 253 Tesis Makine · 255 Demirbaşlar · 257 Birikmiş Amort.'},
+  {kod:'3',ad:'KISA VADELİ YABANCI KAYNAKLAR',ornek:'300 Banka Kredileri · 320 Satıcılar · 360 Ödenecek Vergi'},
+  {kod:'4',ad:'UZUN VADELİ YABANCI KAYNAKLAR',ornek:'400 Banka Kredileri · 420 Satıcılar · 472 Kıdem Tazm. Karşılığı'},
+  {kod:'5',ad:'ÖZKAYNAKLAR',ornek:'500 Sermaye · 570 Geçmiş Yıl Kârları · 590 Dönem Net Kârı'},
+  {kod:'6',ad:'GELİR TABLOSU HESAPLARI',ornek:'600 Yurtiçi Satışlar · 621 SMM · 632 Genel Yön. Gid. · 690 Dönem Kâr/Zararı'},
+  {kod:'7',ad:'MALİYET HESAPLARI',ornek:'710 Direkt İlk Madde · 720 Direkt İşçilik · 730 Genel Üretim Gid.'},
+  {kod:'8',ad:'(Serbest)',ornek:'İşletmelerin ihtiyaca göre kullanımına bırakılmıştır.'},
+  {kod:'9',ad:'NAZIM HESAPLAR',ornek:'Teminat, kefalet, emanet gibi bilanço dışı takip.'},
+];
+/* ═══ REFERANS: Beyanname takvimi ═══ */
+const BEYAN_TAKVIM=[
+  {beyan:'KDV Beyannamesi',donem:'Aylık',tarih:'İzleyen ayın 28\'ine kadar',renk:'#2563eb'},
+  {beyan:'Muhtasar ve Prim Hizmet',donem:'Aylık',tarih:'İzleyen ayın 26\'sına kadar',renk:'#7c3aed'},
+  {beyan:'Geçici Vergi',donem:'3 Aylık',tarih:'Dönemi izleyen 2. ayın 17\'sine kadar',renk:'#0891b2'},
+  {beyan:'Damga Vergisi',donem:'Aylık',tarih:'İzleyen ayın 26\'sına kadar',renk:'#ca8a04'},
+  {beyan:'Yıllık Gelir Vergisi',donem:'Yıllık',tarih:'İzleyen yıl Mart ayı sonuna kadar',renk:'#16a34a'},
+  {beyan:'Yıllık Kurumlar Vergisi',donem:'Yıllık',tarih:'İzleyen yıl Nisan ayı sonuna kadar',renk:'#dc2626'},
+  {beyan:'BA-BS Formları',donem:'Aylık',tarih:'İzleyen ayın son gününe kadar',renk:'#0d9488'},
+  {beyan:'E-Defter Berat Yükleme',donem:'Aylık/3 Aylık',tarih:'İlgili döneme göre GİB takvimi',renk:'#9333ea'},
+];
 const BILGI_KUYRUK_HASH=(s)=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
 function bilgiSeedliKaristir(arr,seed){
   const a=arr.slice();let s=BILGI_KUYRUK_HASH(seed);
@@ -1830,6 +1924,7 @@ const App = {
         if(a.dataset.tab==='bilgi') this.bilgiGoster();
         if(a.dataset.tab==='flashcard') this.flashGoster();
         if(a.dataset.tab==='infografik') this.infografikGoster();
+        if(a.dataset.tab==='referans') this.refGoster();
         if(a.dataset.tab==='favoriler') this.favorilerGoster();
         if(a.dataset.tab==='yanlislarim') this.yanlislarimGoster();
       });
@@ -2440,6 +2535,19 @@ const App = {
     dur[on]=durum;localStorage.setItem('fh_flash_durum',JSON.stringify(dur));
     this.flashRender();this.toast(durum==='bil'?'✅ Biliyorum işaretlendi':'🔁 Tekrar listesine eklendi','ok');
   },
+  flashSesliOzet(){
+    if(!('speechSynthesis'in window)){this.toast('Tarayıcı sesli okumayı desteklemiyor','err');return;}
+    if(speechSynthesis.speaking){speechSynthesis.cancel();this.toast('Sesli özet durduruldu','ok');return;}
+    const deste=this._flashDeste||[];if(!deste.length)return;
+    const tmp=document.createElement('div');
+    deste.forEach((k,i)=>{
+      tmp.innerHTML=k.arka;
+      const metin=`${i+1}. ${k.on}. ${tmp.textContent}`;
+      const u=new SpeechSynthesisUtterance(metin);u.lang='tr-TR';u.rate=.95;
+      speechSynthesis.speak(u);
+    });
+    this.toast('🔊 '+deste.length+' kart sesli okunuyor... (durdurmak için tekrar bas)','ok');
+  },
 
   // ─── İNFOGRAFİK ───
   infografikGoster(){
@@ -2452,6 +2560,87 @@ const App = {
     const alan=document.getElementById('infografikAlan');
     if(alan)alan.innerHTML=`<div style="background:#fff;border-radius:14px;padding:20px;box-shadow:var(--shadow-sm)">${INFOGRAFIKLER[i].html}</div>`;
   },
+
+  // ─── REFERANS MERKEZİ ───
+  refGoster(){this.refSec(this._refAktif||0);},
+  refSec(i){
+    this._refAktif=i;
+    document.querySelectorAll('#refSecim [data-ref]').forEach((b,j)=>{b.className='btn btn-small '+(j===i?'btn-primary':'btn-outline');});
+    const alan=document.getElementById('refAlan');if(!alan)return;
+    const box=(inner)=>`<div style="background:#fff;border-radius:14px;padding:20px;box-shadow:var(--shadow-sm)">${inner}</div>`;
+    if(i===0){
+      alan.innerHTML=box(`<input id="amortAra" placeholder="🔍 Kıymet ara..." oninput="App.amortFiltre()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border-soft);margin-bottom:12px">
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px" id="amortTablo">
+        <thead><tr style="text-align:left;border-bottom:2px solid var(--border-soft)"><th style="padding:8px">Kıymet</th><th style="padding:8px">Faydalı Ömür</th><th style="padding:8px">Oran</th></tr></thead>
+        <tbody>${AMORTISMAN_TABLO.map(r=>`<tr class="amort-r" data-ad="${r.kiymet.toLocaleLowerCase('tr')}" style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px;font-weight:600">${r.kiymet}</td><td style="padding:8px">${r.omur} yıl</td><td style="padding:8px;color:var(--primary,#5c5fe1);font-weight:700">${r.oran}</td></tr>`).join('')}</tbody>
+      </table></div><p style="font-size:11.5px;color:var(--text-soft);margin-top:10px">⚠️ Örnek/genel değerlerdir. Güncel süreler için VUK Amortisman Listesi (GİB) esastır.</p>`);
+    }else if(i===1){
+      const kats=[...new Set(FORMUL_KASASI.map(f=>f.kat))];
+      alan.innerHTML=box(kats.map(kat=>`<div style="margin-bottom:16px"><div style="font-weight:800;color:var(--primary,#5c5fe1);margin-bottom:8px;font-size:14px">${kat}</div>${FORMUL_KASASI.filter(f=>f.kat===kat).map(f=>`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--primary,#5c5fe1)"><div style="font-weight:700;font-size:13.5px">${f.ad}</div><div style="font-family:monospace;font-size:12.5px;color:#334155;margin:4px 0;background:#fff;padding:6px 8px;border-radius:6px">${f.formul}</div><div style="font-size:12px;color:var(--text-soft)">${f.yorum}</div></div>`).join('')}</div>`).join(''));
+    }else if(i===2){
+      alan.innerHTML=box(`<div style="display:flex;flex-direction:column;gap:8px">${HESAP_PLANI.map(h=>`<div style="display:flex;gap:12px;align-items:flex-start;background:#f8fafc;border-radius:10px;padding:12px 14px"><span style="flex:none;width:34px;height:34px;border-radius:8px;background:var(--primary,#5c5fe1);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px">${h.kod}</span><div><div style="font-weight:800;font-size:13.5px">${h.ad}</div><div style="font-size:12px;color:var(--text-soft);margin-top:2px">${h.ornek}</div></div></div>`).join('')}</div>`);
+    }else if(i===3){
+      alan.innerHTML=box(`<div style="display:flex;flex-direction:column;gap:10px">${BEYAN_TAKVIM.map(b=>`<div style="display:flex;gap:12px;align-items:center;background:${b.renk}0d;border-left:4px solid ${b.renk};border-radius:10px;padding:12px 14px"><div style="flex:1"><div style="font-weight:800;font-size:13.5px;color:${b.renk}">${b.beyan}</div><div style="font-size:12px;color:var(--text-soft)">${b.donem}</div></div><div style="font-size:12.5px;font-weight:600;text-align:right;max-width:190px">${b.tarih}</div></div>`).join('')}</div><p style="font-size:11.5px;color:var(--text-soft);margin-top:10px">⚠️ Tarihler genel kuraldır; resmi tatil/uzatma durumunda GİB duyuruları esastır.</p>`);
+    }
+  },
+  amortFiltre(){
+    const q=(document.getElementById('amortAra').value||'').toLocaleLowerCase('tr');
+    document.querySelectorAll('#amortTablo .amort-r').forEach(r=>{r.style.display=r.dataset.ad.includes(q)?'':'none';});
+  },
+
+  // ─── SİMÜLASYON SINAVI ───
+  simBaslat(){
+    if(!Object.keys(SHEETS).length)this.hazirSorulariYukle();
+    const adet=parseInt(document.getElementById('simSoruSayi').value,10);
+    const dk=parseInt(document.getElementById('simSure').value,10);
+    let havuz=[];
+    Object.keys(SHEETS).forEach(k=>(SHEETS[k]||[]).forEach((s,idx)=>havuz.push({...s,_konuAdi:s._konuAdi||k,_konuIdx:s._idx??idx})));
+    if(havuz.length<3){this.toast('Önce soru bankasını yükle (Ana Sayfa)','err');return;}
+    const rnd=this.seedliRastgele('sim-'+Date.now());
+    this._simSorular=this.seedliKaristir(havuz,rnd).slice(0,Math.min(adet,havuz.length));
+    this._simCevap={};this._simBitis=Date.now()+dk*60000;
+    document.getElementById('simKurulum').style.display='none';
+    this.simRender();
+    clearInterval(this._simTimer);
+    this._simTimer=setInterval(()=>{
+      const kalan=this._simBitis-Date.now();
+      const el=document.getElementById('simSayac');
+      if(kalan<=0){this.simBitir();return;}
+      if(el){const m=Math.floor(kalan/60000),s=Math.floor((kalan%60000)/1000);el.textContent=`⏱️ ${m}:${String(s).padStart(2,'0')}`;el.style.color=kalan<60000?'#ef4444':'';}
+    },500);
+  },
+  simRender(){
+    const alan=document.getElementById('simAlan');
+    alan.innerHTML=`<div style="position:sticky;top:0;background:var(--bg,#fff);padding:10px 0;z-index:5;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-soft);margin-bottom:14px">
+      <b id="simSayac" style="font-size:18px;font-family:monospace">⏱️ --:--</b>
+      <button class="btn btn-primary btn-small" onclick="App.simBitir()">✅ Sınavı Bitir</button></div>
+      <div style="display:flex;flex-direction:column;gap:16px">${this._simSorular.map((s,i)=>`
+        <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-sm)">
+          <div style="font-size:11px;color:var(--text-soft);font-weight:700;margin-bottom:4px">SORU ${i+1} · ${s._konuAdi}</div>
+          <div style="font-weight:600;margin-bottom:10px">${s.q}</div>
+          <textarea id="simCvp${i}" oninput="App._simCevap[${i}]=this.value" placeholder="Cevabını yaz (kendini değerlendireceksin)..." style="width:100%;min-height:60px;padding:8px 10px;border-radius:8px;border:1px solid var(--border-soft);font-family:inherit;font-size:13px">${this._simCevap[i]||''}</textarea>
+        </div>`).join('')}</div>`;
+  },
+  simBitir(){
+    clearInterval(this._simTimer);
+    const alan=document.getElementById('simAlan');
+    alan.innerHTML=`<div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:14px;padding:24px;text-align:center;margin-bottom:18px">
+      <div style="font-size:15px;opacity:.9">Simülasyon Karnesi</div>
+      <div style="font-size:34px;font-weight:800;margin:6px 0">${this._simSorular.length} Soru</div>
+      <div style="font-size:13px;opacity:.9">Cevaplarını doğru cevaplarla karşılaştır, kendini puanla 👇</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btn-primary btn-small" onclick="App.simYeniden()">🔄 Yeni Simülasyon</button></div>
+    <div style="display:flex;flex-direction:column;gap:14px">${this._simSorular.map((s,i)=>`
+      <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;color:var(--text-soft);font-weight:700;margin-bottom:4px">SORU ${i+1} · ${s._konuAdi}</div>
+        <div style="font-weight:600;margin-bottom:8px">${s.q}</div>
+        <div style="background:#f1f5f9;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12.5px"><b>Senin cevabın:</b> ${this._simCevap[i]?this._simCevap[i]:'<i style="color:#94a3b8">boş</i>'}</div>
+        <div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:8px;padding:8px 10px;font-size:12.5px"><b>✅ Doğru cevap:</b> ${s.a||'-'}</div>
+        ${s.anahtar?`<div style="font-size:11.5px;color:var(--text-soft);margin-top:5px">🔑 ${s.anahtar}</div>`:''}
+      </div>`).join('')}</div>`;
+    document.getElementById('simKurulum').style.display='block';
+  },
+  simYeniden(){document.getElementById('simAlan').innerHTML='';document.getElementById('simKurulum').style.display='block';window.scrollTo(0,0);},
 
   // ─── ANALİZ ───
   analizCiz(){
