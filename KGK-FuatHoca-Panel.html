@@ -220,6 +220,12 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
 /* Tab içeriği gizleme */
 .tab-pane{display:none}
 .tab-pane.active{display:block}
+.flash-ic{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flash-kart.flip .flash-ic{transform:rotateY(180deg)}
+.flash-on,.flash-arka{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;padding:14px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.flash-on{background:#fff}
+.flash-arka{transform:rotateY(180deg)}
+.flash-kart.flash-bil .flash-on{opacity:.55}
 </style>
 </head>
 <body>
@@ -234,6 +240,8 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="deneme">Deneme Sınavı</a>
     <a data-tab="gunun">📅 Günün Soruları</a>
     <a data-tab="bilgi">📘 Muhasebe Bilgileri</a>
+    <a data-tab="flashcard">🎴 Flashcard</a>
+    <a data-tab="infografik">📊 İnfografik</a>
     <a data-tab="favoriler">⭐ Favoriler</a>
     <a data-tab="yanlislarim">❌ Yanlışlarım</a>
     <a data-tab="analiz">Analiz</a>
@@ -413,6 +421,25 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
   <p style="color:var(--text-soft);margin-bottom:12px">Sınav sorusu değil — genel bilgi seviyeni geliştirmek için her gün <b>10 farklı, kısa ve öz konu notu</b>. Örtülü sermaye, transfer fiyatlandırması gibi güncel/sık karışan konuları anlatır. Sorularla karışmaz, ayrı bir bilgi köşesidir.</p>
   <button class="btn btn-outline btn-small" onclick="App.bilgiYazdir()" style="margin-bottom:16px">🖨️ Yazdır / PDF</button>
   <div id="bilgiListe" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+
+<!-- ════════ FLASHCARD TAB ════════ -->
+<div class="tab-pane" id="tabFlashcard">
+  <div class="section-h"><h3>🎴 Flashcard · Konu Kartları</h3><span class="badge" id="flashTarih"></span><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:12px">muhasebeTR · alomaliye · verginet tarzı <b>özet konu kartları</b>. Ön yüzde kavram/konu, karta tıkla → arka yüzde kısa öz anlatım. Her gün farklı deste, mükerrer değil. Bildiklerini "biliyorum", çalışman gerekenleri "tekrar" olarak işaretle.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+    <button class="btn btn-outline btn-small" onclick="App.flashKaristir()">🔀 Yeni Deste Karıştır</button>
+    <span id="flashSayac" style="font-size:13px;color:var(--text-soft)"></span>
+  </div>
+  <div id="flashKartAlan"></div>
+</div>
+
+<!-- ════════ İNFOGRAFİK TAB ════════ -->
+<div class="tab-pane" id="tabInfografik">
+  <div class="section-h"><h3>📊 İnfografik · Görsel Özetler</h3><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:16px">Karmaşık mevzuat konularını tek bakışta kavramak için görsel özetler. GİB paylaşımları tarzında, renkli ve akış şemalı.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="infografikSecim"></div>
+  <div id="infografikAlan"></div>
 </div>
 
 <!-- ════════ FAVORİLER TAB ════════ -->
@@ -1480,6 +1507,121 @@ const MUHASEBE_BILGI_HAVUZU=[
 {baslik:'🚨 İhraç Kayıtlı Satışta "3 Aylık Süre" Çıkmazı',icerik:'<div style="background:#eef2ff;border-left:4px solid #6366f1;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>📐 Mantık:</b> İmalatçı, ihracatçıya KDVsiz (KDVK 11/1-c) mal teslim eder; bu KDV devletçe tecil edilir.</div><div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>⚠️ Tuzak:</b> İhracatçı, malı teslim aldığı ayı izleyen aydan itibaren 3 ay içinde fiilen ihraç etmezse süre kaçırılmış olur.</div><div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>💸 Sonuç:</b> Tecil edilen KDV, ceza ve gecikme faiziyle birlikte İMALATÇIDAN geri istenir.</div><div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:10px 12px"><b>✅ Çözüm:</b> Süre dolmadan önce vergi dairesinden "ek süre" (en fazla 3 ay) talep et — süre geçince başvuru reddedilir.</div>'},
 {baslik:'🚨 Binek Araç Amortisman Sınırı ve Satışta Mükerrer Vergi',icerik:'<div style="background:#eef2ff;border-left:4px solid #6366f1;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>📐 Mantık:</b> Binek araçların gider (%70 sınırı) ve amortismanına yıllık tebliğle tutar sınırı konur; aşan kısım KKEG olur.</div><div style="background:#fef2f2;border-left:4px solid #ef4444;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>⚠️ Tuzak:</b> Araç satılırken birikmiş amortismanın TAMAMI kâr hesabına katılırsa, geçmişte zaten KKEG yapılan (gider yazılamayan) tutar bir kez daha vergilendirilir.</div><div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px"><b>💸 Sonuç:</b> Mükellef aynı tutar üzerinden iki kez vergi ödemiş olur (mükerrer vergilendirme).</div><div style="background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;padding:10px 12px"><b>✅ Çözüm:</b> Satış kaydında sadece "kanunen kabul edilen" amortisman kısmını kâr hesabına dahil et, KKEG kısmını düş.</div>'}
 ];
+/* ═══ FLASHCARD KONU KARTLARI (muhasebeTR · alomaliye · verginet tarzı özet) ═══ */
+const KONU_KARTLARI=[
+  {on:'Örtülü Sermaye',arka:'Ortak veya ilişkili kişiden alınan borç, öz sermayenin <b>3 katını</b> aşarsa aşan kısım örtülü sermaye sayılır. Bu kısma ait faiz/kur farkı gideri KKEG olur, dağıtılmış kâr payı gibi vergilenir.',kat:'Vergi'},
+  {on:'Transfer Fiyatlandırması',arka:'İlişkili kişilerle yapılan işlemlerde <b>emsallere uygunluk</b> ilkesi esastır. Emsale aykırı fiyat → örtülü kazanç dağıtımı. Yöntemler: KFY, MSMY, MMY, kâr bölüşüm, işleme dayalı net kâr marjı.',kat:'Vergi'},
+  {on:'Reeskont',arka:'Vadeli senetli alacak/borçların dönem sonunda <b>bugünkü değere</b> indirgenmesidir. Senetli olması ve vade içermesi şart. Alacak reeskontu gider, borç reeskontu gelir yazılır; ertesi yıl ters kayıtla iptal edilir.',kat:'Muhasebe'},
+  {on:'Şüpheli Alacak Karşılığı',arka:'Dava/icra safhasındaki ya da protesto edilmiş, yazı ile birden fazla istenmiş küçük alacaklar için ayrılır. Karşılık gider yazılır (VUK 323). Teminatlı kısma karşılık ayrılamaz.',kat:'Vergi'},
+  {on:'Değersiz Alacak',arka:'Tahsili imkânsız hale gelen, kazai bir hükme veya kanaat verici vesikaya bağlanan alacaktır (VUK 322). Doğrudan zarar yazılır; şüpheli alacaktan farkı: tahsil imkânı tamamen bitmiştir.',kat:'Vergi'},
+  {on:'Amortisman Yöntemleri',arka:'Normal (eşit tutarlı) ve azalan bakiyeler (hızlandırılmış) yöntemi. Azalan bakiyede oran normal oranın 2 katı, en fazla %50. Yönteme sonradan normale dönülebilir ama tersi olmaz.',kat:'Muhasebe'},
+  {on:'Binek Araç Gider Kısıtı',arka:'Kira, ÖTV+KDV, amortisman ve genel giderlerde tutar/oran sınırı vardır. Akaryakıt-bakım gibi giderlerin en çok <b>%70</b>\'i indirilebilir; sınırı aşan kısım KKEG.',kat:'Vergi'},
+  {on:'KDV Tevkifatı',arka:'Alıcının, satıcıya ödemesi gereken KDV\'nin bir kısmını kesip doğrudan vergi dairesine yatırmasıdır (kısmi/tam). Örnek: temizlik, danışmanlık, yapım işleri. Amaç kayıt dışını önlemek.',kat:'Vergi'},
+  {on:'Ertelenmiş Vergi (TMS 12)',arka:'Muhasebe kârı ile vergi matrahı arasındaki <b>geçici farklardan</b> doğar. İndirilebilir fark → ertelenmiş vergi varlığı, vergilendirilebilir fark → ertelenmiş vergi yükümlülüğü. Kalıcı farklar ertelenmiş vergi yaratmaz.',kat:'TMS/TFRS'},
+  {on:'Kıst Amortisman',arka:'Binek otomobillerde, satın alındığı yıl için <b>ay kesri tam ay sayılarak</b> kalan aylara isabet eden amortisman ayrılır. İlk yıl ayrılamayan kısım son yıla eklenir.',kat:'Vergi'},
+  {on:'Enflasyon Düzeltmesi',arka:'Parasal olmayan kıymetlerin (stok, duran varlık, öz sermaye) Yİ-ÜFE ile düzeltilmesidir. Parasal kıymetler (kasa, banka, alacak/borç) düzeltilmez. Net parasal pozisyon kâr/zararı 648/658\'e yazılır.',kat:'Muhasebe'},
+  {on:'Yıllara Yaygın İnşaat',arka:'Birden fazla takvim yılına sarkan taahhüt işlerinde kâr/zarar <b>işin bittiği yıl</b> beyan edilir (GVK 42). İstihkaklardan %5 gelir vergisi tevkifatı yapılır, bitince mahsup edilir.',kat:'Vergi'},
+  {on:'İştirak Kazançları İstisnası',arka:'Tam mükellef bir kurumun başka bir tam mükellef kurumdan aldığı kâr payı, mükerrer vergilemeyi önlemek için kurumlar vergisinden istisnadır (KVK 5/1-a).',kat:'Vergi'},
+  {on:'Değerleme Ölçüleri (VUK)',arka:'Maliyet bedeli, borsa rayici, tasarruf değeri, mukayyet değer, itibari değer, vergi değeri, rayiç bedel, emsal bedel. Stoklar maliyet, alacak/borç mukayyet, menkul kıymet genelde alış bedeli ile değerlenir.',kat:'Vergi'},
+  {on:'Karşılıklar (TMS 37)',arka:'Geçmiş olaydan doğan mevcut yükümlülük + kaynak çıkışı muhtemel + güvenilir tahmin → karşılık ayrılır. Koşullu yükümlülük muhasebeleştirilmez, dipnotta açıklanır.',kat:'TMS/TFRS'},
+  {on:'Hasılat (TFRS 15)',arka:'5 aşamalı model: (1) sözleşmeyi belirle (2) edim yükümlülüklerini ayır (3) işlem bedelini belirle (4) bedeli dağıt (5) edim yerine getirilince hasılatı muhasebeleştir.',kat:'TMS/TFRS'},
+  {on:'Kur Farkı KDV\'si',arka:'Bedelin döviz cinsinden belirlendiği vadeli satışlarda, ödeme tarihindeki kur farkı da <b>KDV\'ye tabidir</b>. Lehte kur farkı için fatura düzenlenip KDV hesaplanır.',kat:'Vergi'},
+  {on:'Finansal Kiralama (TFRS 16)',arka:'Kiracı, kiralamaları bilançoya <b>kullanım hakkı varlığı</b> + <b>kira yükümlülüğü</b> olarak alır. İstisna: kısa süreli (≤12 ay) ve düşük değerli kiralamalar. Amortisman + faiz gideri ayrışır.',kat:'TMS/TFRS'},
+  {on:'Vergi Ziyaı Cezası',arka:'Verginin zamanında tahakkuk ettirilmemesi/eksik tahakkuku halinde kaybolan verginin <b>1 katı</b> kesilir. Vergi ziyaına kaçakçılık suçuyla sebebiyet verilirse 3 kat uygulanır.',kat:'Vergi'},
+  {on:'Maddi Duran Varlık (TMS 16)',arka:'İlk kayıt maliyet bedeliyle. Sonradan maliyet modeli veya yeniden değerleme modeli seçilebilir. Yeniden değerleme artışı özkaynakta "değer artış fonu"na yazılır.',kat:'TMS/TFRS'},
+  {on:'Geçici Vergi',arka:'Kurum/gelir vergisi mükelleflerinin cari dönem kazançları üzerinden 3 aylık dönemlerde peşin ödediği vergidir. Yıllık beyanda hesaplanan vergiden mahsup edilir; fazlası iade/mahsup edilir.',kat:'Vergi'},
+  {on:'Konsolide Finansal Tablo',arka:'Ana ortaklık ve bağlı ortaklıkların tek bir işletme gibi sunulmasıdır (TFRS 10 kontrol modeli). Grup içi işlemler ve bakiyeler elimine edilir. Kontrol = getirilere maruz kalma + yönlendirme gücü.',kat:'TMS/TFRS'},
+  {on:'Damga Vergisi',arka:'Sözleşme, taahhütname, kira kontratı gibi kâğıtların düzenlenmesinden doğar. Nispi (bedele göre binde) veya maktu olabilir. Kâğıdı imzalayan taraflar müteselsilen sorumludur.',kat:'Vergi'},
+  {on:'Serbest Meslek Kazancı',arka:'Sermayeden çok <b>şahsi mesaiye</b>, ilmi/mesleki bilgiye dayanan kazançtır (GVK 65). Tahsil esası geçerlidir. SM makbuzu düzenlenir, %20 stopaj yapılır.',kat:'Vergi'},
+];
+const INFOGRAFIKLER=[
+  {id:'ucret-beyan',baslik:'📋 Ücret Gelirlerinin Beyanı',renk:'#2563eb',html:`
+    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:19px;font-weight:800;margin-bottom:4px">2025 Ücret Gelirleri Beyanı</div>
+      <div style="opacity:.85;font-size:13px">Hangi ücret geliri beyan edilir, hangisi edilmez?</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div style="background:#dcfce7;border-radius:12px;padding:16px;border-top:4px solid #16a34a">
+        <div style="font-size:15px;font-weight:800;color:#166534;margin-bottom:6px">✅ TEK İŞVEREN</div>
+        <div style="font-size:13px;color:#166534;line-height:1.6">Tek işverenden alınan ücret <b>230.000 TL</b>\'yi (2025 sınırı) aşmıyorsa beyan edilmez. Stopajla vergilendirilmiş sayılır.</div>
+      </div>
+      <div style="background:#fee2e2;border-radius:12px;padding:16px;border-top:4px solid #dc2626">
+        <div style="font-size:15px;font-weight:800;color:#991b1b;margin-bottom:6px">⚠️ BİRDEN FAZLA İŞVEREN</div>
+        <div style="font-size:13px;color:#991b1b;line-height:1.6">Birinci işveren hariç, diğerlerinin toplamı <b>alt sınırı</b> aşıyorsa TÜM ücretler beyan edilir.</div>
+      </div>
+    </div>
+    <div style="background:#eff6ff;border-radius:12px;padding:16px">
+      <div style="font-weight:800;color:#1e40af;margin-bottom:10px">🔄 Beyan Akışı</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px">
+        <span style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:20px">1 · Ücretleri topla</span><span>→</span>
+        <span style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:20px">2 · Sınırı kontrol et</span><span>→</span>
+        <span style="background:#2563eb;color:#fff;padding:6px 12px;border-radius:20px">3 · Gerekliyse yıllık beyanname</span><span>→</span>
+        <span style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:20px">4 · Stopajı mahsup et</span>
+      </div>
+    </div>`},
+  {id:'kdv-tevkifat',baslik:'✂️ KDV Tevkifatı Mantığı',renk:'#7c3aed',html:`
+    <div style="background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:19px;font-weight:800">✂️ KDV Tevkifatı Nasıl İşler?</div>
+      <div style="opacity:.85;font-size:13px;margin-top:4px">Alıcı, KDV\'nin bir kısmını kesip devlete öder</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+      <div style="display:flex;gap:12px;align-items:center;background:#f5f3ff;border-radius:12px;padding:14px">
+        <span style="font-size:26px">🏢</span>
+        <div style="font-size:13px"><b>Satıcı</b> 100 TL mal + 20 TL KDV fatura eder</div>
+      </div>
+      <div style="text-align:center;color:#7c3aed;font-size:18px">↓</div>
+      <div style="display:flex;gap:12px;align-items:center;background:#f5f3ff;border-radius:12px;padding:14px">
+        <span style="font-size:26px">🧾</span>
+        <div style="font-size:13px"><b>Alıcı</b> (örn. 4/10 tevkifat) → 12 TL\'yi satıcıya, <b>8 TL KDV\'yi doğrudan vergi dairesine</b> öder</div>
+      </div>
+      <div style="text-align:center;color:#7c3aed;font-size:18px">↓</div>
+      <div style="display:flex;gap:12px;align-items:center;background:#ede9fe;border-radius:12px;padding:14px">
+        <span style="font-size:26px">🎯</span>
+        <div style="font-size:13px"><b>Amaç:</b> KDV\'nin bir kısmını kaynağında toplayıp kayıt dışını önlemek</div>
+      </div>
+    </div>
+    <div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#92400e"><b>Örnek işler:</b> Yapım işleri, temizlik, danışmanlık, işgücü temini, servis taşımacılığı.</div>`},
+  {id:'amortisman',baslik:'📉 Amortisman Yöntemleri',renk:'#0891b2',html:`
+    <div style="background:linear-gradient(135deg,#0e7490,#0891b2);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:19px;font-weight:800">📉 Amortisman: Normal vs Azalan Bakiyeler</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#ecfeff;border-radius:12px;padding:16px;border-top:4px solid #0891b2">
+        <div style="font-weight:800;color:#155e75;margin-bottom:8px">📏 NORMAL (Eşit Tutarlı)</div>
+        <ul style="margin:0;padding-left:18px;font-size:12.5px;color:#155e75;line-height:1.7">
+          <li>Her yıl <b>eşit</b> tutar</li>
+          <li>Oran = 1 / faydalı ömür</li>
+          <li>Basit ve öngörülebilir</li>
+          <li>Örnek: 5 yıl → yılda %20</li>
+        </ul>
+      </div>
+      <div style="background:#fff7ed;border-radius:12px;padding:16px;border-top:4px solid #ea580c">
+        <div style="font-weight:800;color:#9a3412;margin-bottom:8px">⚡ AZALAN BAKİYELER</div>
+        <ul style="margin:0;padding-left:18px;font-size:12.5px;color:#9a3412;line-height:1.7">
+          <li>İlk yıllar <b>daha yüksek</b></li>
+          <li>Oran = normal oranın <b>2 katı</b></li>
+          <li>En fazla <b>%50</b></li>
+          <li>Net değer üzerinden hesaplanır</li>
+        </ul>
+      </div>
+    </div>
+    <div style="background:#f0fdfa;border-left:4px solid #0891b2;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#155e75;margin-top:12px"><b>Kural:</b> Azalan bakiyelerden normale geçilebilir, ama normalden azalana <b>geçilemez</b>.</div>`},
+  {id:'karsilik-alacak',baslik:'💳 Şüpheli vs Değersiz Alacak',renk:'#dc2626',html:`
+    <div style="background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff;border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:19px;font-weight:800">💳 Şüpheli mi, Değersiz mi?</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#fef9c3;border-radius:12px;padding:16px;border-top:4px solid #ca8a04">
+        <div style="font-weight:800;color:#854d0e;margin-bottom:8px">⏳ ŞÜPHELİ ALACAK</div>
+        <div style="font-size:12.5px;color:#854d0e;line-height:1.7">Tahsili <b>şüpheli</b> hale gelmiş. Dava/icra safhasında ya da protestoya rağmen ödenmeyen küçük alacak. <b>Karşılık ayrılır</b> (henüz silinmez).</div>
+      </div>
+      <div style="background:#fee2e2;border-radius:12px;padding:16px;border-top:4px solid #dc2626">
+        <div style="font-weight:800;color:#991b1b;margin-bottom:8px">❌ DEĞERSİZ ALACAK</div>
+        <div style="font-size:12.5px;color:#991b1b;line-height:1.7">Tahsili <b>imkânsız</b>. Kazai hüküm veya kanaat verici vesikaya bağlı. <b>Doğrudan zarar</b> yazılır, kayıttan silinir.</div>
+      </div>
+    </div>
+    <div style="background:#f1f5f9;border-radius:12px;padding:14px;margin-top:12px;font-size:12.5px;color:#334155;line-height:1.6"><b>Zaman çizgisi:</b> Normal alacak → (ödeme gecikir, dava açılır) → <b>Şüpheli</b> → (tahsil imkânı tamamen biter) → <b>Değersiz</b></div>`},
+];
 const BILGI_KUYRUK_HASH=(s)=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
 function bilgiSeedliKaristir(arr,seed){
   const a=arr.slice();let s=BILGI_KUYRUK_HASH(seed);
@@ -1686,6 +1828,8 @@ const App = {
         if(a.dataset.tab==='deneme') this.denemeGrafikCiz();
         if(a.dataset.tab==='gunun') this.gununSorulariGoster();
         if(a.dataset.tab==='bilgi') this.bilgiGoster();
+        if(a.dataset.tab==='flashcard') this.flashGoster();
+        if(a.dataset.tab==='infografik') this.infografikGoster();
         if(a.dataset.tab==='favoriler') this.favorilerGoster();
         if(a.dataset.tab==='yanlislarim') this.yanlislarimGoster();
       });
@@ -2251,6 +2395,62 @@ const App = {
         <div style="margin:0;color:var(--text-soft);line-height:1.7;font-size:13.5px">${b.icerik}</div>
       </div>`;
     }).join('');
+  },
+
+  // ─── FLASHCARD (konu kartları, çevirmeli) ───
+  flashGoster(){
+    document.getElementById('flashTarih').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+    const tarih=this.bugunAnahtari();
+    this._flashDeste=bilgiSeedliKaristir(KONU_KARTLARI,'flash-'+tarih).slice(0,12);
+    this.flashRender();
+  },
+  flashKaristir(){
+    this._flashDeste=bilgiSeedliKaristir(KONU_KARTLARI,'flash-'+Date.now()).slice(0,12);
+    this.flashRender();
+  },
+  flashRender(){
+    const alan=document.getElementById('flashKartAlan');if(!alan)return;
+    const deste=this._flashDeste||[];
+    let dur={};try{dur=JSON.parse(localStorage.getItem('fh_flash_durum')||'{}');}catch(e){}
+    const biliyorum=deste.filter(k=>dur[k.on]==='bil').length;
+    const KAT_RENK={'Vergi':'#dc2626','Muhasebe':'#2563eb','TMS/TFRS':'#7c3aed'};
+    document.getElementById('flashSayac').textContent=`${deste.length} kart · ${biliyorum} biliyorum ✅`;
+    alan.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">'+deste.map((k,i)=>{
+      const d=dur[k.on];const rk=KAT_RENK[k.kat]||'#5c5fe1';
+      return `<div class="flash-kart${d==='bil'?' flash-bil':''}" onclick="this.classList.toggle('flip')" style="cursor:pointer;perspective:1000px;height:190px">
+        <div class="flash-ic">
+          <div class="flash-on" style="border-top:4px solid ${rk}">
+            <span style="align-self:flex-start;font-size:10px;font-weight:800;color:${rk};background:${rk}18;padding:2px 8px;border-radius:10px">${k.kat}</span>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px;font-weight:800;color:#1e293b">${k.on}</div>
+            <span style="font-size:10.5px;color:#94a3b8;text-align:center">👆 çevir</span>
+          </div>
+          <div class="flash-arka" style="background:${rk}">
+            <div style="flex:1;overflow:auto;font-size:12.5px;line-height:1.6;color:#fff">${k.arka}</div>
+            <div style="display:flex;gap:6px;margin-top:8px" onclick="event.stopPropagation()">
+              <button onclick="App.flashIsaret('${k.on.replace(/'/g,"\\'")}','bil')" style="flex:1;background:#fff;color:#16a34a;border:none;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">✅ Biliyorum</button>
+              <button onclick="App.flashIsaret('${k.on.replace(/'/g,"\\'")}','tekrar')" style="flex:1;background:rgba(255,255,255,.25);color:#fff;border:none;border-radius:6px;padding:5px;font-size:11px;font-weight:700;cursor:pointer">🔁 Tekrar</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+  },
+  flashIsaret(on,durum){
+    let dur={};try{dur=JSON.parse(localStorage.getItem('fh_flash_durum')||'{}');}catch(e){}
+    dur[on]=durum;localStorage.setItem('fh_flash_durum',JSON.stringify(dur));
+    this.flashRender();this.toast(durum==='bil'?'✅ Biliyorum işaretlendi':'🔁 Tekrar listesine eklendi','ok');
+  },
+
+  // ─── İNFOGRAFİK ───
+  infografikGoster(){
+    const sec=document.getElementById('infografikSecim');
+    if(sec)sec.innerHTML=INFOGRAFIKLER.map((g,i)=>`<button class="btn btn-small ${i===0?'btn-primary':'btn-outline'}" data-ig="${i}" onclick="App.infografikSec(${i})">${g.baslik}</button>`).join('');
+    this.infografikSec(0);
+  },
+  infografikSec(i){
+    document.querySelectorAll('#infografikSecim [data-ig]').forEach((b,j)=>{b.className='btn btn-small '+(j===i?'btn-primary':'btn-outline');});
+    const alan=document.getElementById('infografikAlan');
+    if(alan)alan.innerHTML=`<div style="background:#fff;border-radius:14px;padding:20px;box-shadow:var(--shadow-sm)">${INFOGRAFIKLER[i].html}</div>`;
   },
 
   // ─── ANALİZ ───
