@@ -229,6 +229,13 @@ body.odak-modu #havaChip{display:none}
       <button class="gbtn" style="margin-top:10px" onclick="neYapmaliyimGoster()">🧭 Bugün Ne Yapmalıyım?</button>
       <div id="neYapmaliyimKutu" style="display:none;margin-top:10px;padding:10px 14px;background:var(--card2,#1c2130);border-radius:10px;font-size:13px;line-height:1.7"></div>
       <div id="streakAlan" style="margin-top:18px"></div>
+      <div style="margin-top:18px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <input id="notGiris" placeholder="📌 hızlı not ekle (Enter)" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--txt);font-size:13px" onkeydown="if(event.key==='Enter')notEkle()">
+          <button class="gbtn" onclick="notEkle()">➕</button>
+        </div>
+        <div id="notlarAlan" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+      </div>
     </div>
 
     <!-- YOĞUN DÖNEM MODU -->
@@ -635,6 +642,26 @@ function streakCiz(){
     <div style="font-size:10.5px;color:var(--mut);margin-top:6px">Son 90 gün · her gün paneli açtığında bir kare yeşile döner</div>`;
 }
 streakCiz();
+
+/* ───── YAPIŞKAN NOTLAR (v1000) ───── */
+const NOT_RENKLERI=["#fef08a","#bfdbfe","#bbf7d0","#fbcfe8","#fed7aa","#ddd6fe"];
+function notlar(){try{return JSON.parse(localStorage.getItem("oy_yapiskan_notlar")||"[]");}catch(e){return[];}}
+function notlarKaydet(l){localStorage.setItem("oy_yapiskan_notlar",JSON.stringify(l));}
+function notEkle(){
+  const inp=$("notGiris");if(!inp)return;const v=(inp.value||"").trim();if(!v)return;
+  const l=notlar();l.unshift({id:Date.now(),metin:v,renk:NOT_RENKLERI[l.length%NOT_RENKLERI.length]});
+  notlarKaydet(l);inp.value="";notlarCiz();
+}
+function notSil(id){notlarKaydet(notlar().filter(n=>n.id!==id));notlarCiz();}
+function notlarCiz(){
+  const alan=$("notlarAlan");if(!alan)return;const l=notlar();
+  alan.innerHTML=l.length?l.map(n=>`
+    <div style="position:relative;background:${n.renk};color:#1f2937;border-radius:10px;padding:12px 26px 12px 12px;min-width:110px;max-width:200px;font-size:12.5px;line-height:1.5;box-shadow:0 3px 10px rgba(0,0,0,.15);word-break:break-word">
+      ${n.metin.replace(/</g,"&lt;")}
+      <span onclick="notSil(${n.id})" title="Sil" style="position:absolute;top:4px;right:6px;cursor:pointer;font-size:14px;color:#6b7280">✕</span>
+    </div>`).join(''):'<div style="font-size:11.5px;color:var(--mut)">Henüz not yok — yukarıdan ekle.</div>';
+}
+notlarCiz();
 
 /* ───── ERİŞİLEBİLİRLİK: YAZI BOYUTU (v1000) ───── */
 function yaziBoyutAyarla(delta){

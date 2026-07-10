@@ -243,6 +243,7 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="flashcard">🎴 Flashcard</a>
     <a data-tab="infografik">📊 İnfografik</a>
     <a data-tab="referans">📚 Referans</a>
+    <a data-tab="sozluk">📖 Sözlük</a>
     <a data-tab="simulasyon">⏱️ Simülasyon</a>
     <a data-tab="favoriler">⭐ Favoriler</a>
     <a data-tab="yanlislarim">❌ Yanlışlarım</a>
@@ -455,6 +456,14 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <button class="btn btn-small btn-outline" data-ref="3" onclick="App.refSec(3)">📆 Beyanname Takvimi</button>
   </div>
   <div id="refAlan"></div>
+</div>
+
+<!-- ════════ SÖZLÜK TAB ════════ -->
+<div class="tab-pane" id="tabSozluk">
+  <div class="section-h"><h3>📖 Mevzuat & Muhasebe Sözlüğü</h3><span class="badge" id="sozlukSayac"></span><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:12px">Sınavda karşına çıkan terimlerin kısa ve net tanımları. Ara, harfe göre süz — hızlı hatırlama için.</p>
+  <input id="sozlukAra" placeholder="🔍 Terim ara (örn: reeskont, tevkifat, aval...)" oninput="App.sozlukRender()" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-soft);margin-bottom:12px">
+  <div id="sozlukListe" style="display:flex;flex-direction:column;gap:8px"></div>
 </div>
 
 <!-- ════════ SİMÜLASYON TAB ════════ -->
@@ -1716,6 +1725,53 @@ const BEYAN_TAKVIM=[
   {beyan:'BA-BS Formları',donem:'Aylık',tarih:'İzleyen ayın son gününe kadar',renk:'#0d9488'},
   {beyan:'E-Defter Berat Yükleme',donem:'Aylık/3 Aylık',tarih:'İlgili döneme göre GİB takvimi',renk:'#9333ea'},
 ];
+/* ═══ SÖZLÜK (mevzuat & muhasebe terimleri) ═══ */
+const SOZLUK=[
+  {t:'Reeskont',a:'Vadeli senetli alacak/borçların dönem sonunda bugünkü değere indirgenmesi.'},
+  {t:'Tevkifat',a:'Verginin, ödemeyi yapan tarafça kaynağında kesilip vergi dairesine yatırılması (stopaj).'},
+  {t:'Amortisman',a:'Duran varlıkların yıpranma payının, faydalı ömrü boyunca gider yazılması.'},
+  {t:'KKEG',a:'Kanunen Kabul Edilmeyen Gider — vergi matrahından indirilemeyen, matraha eklenen gider.'},
+  {t:'Örtülü Sermaye',a:'İlişkili kişiden alınan, öz sermayenin 3 katını aşan borç; aşan kısmın faizi KKEG olur.'},
+  {t:'Transfer Fiyatlandırması',a:'İlişkili kişilerle işlemlerde emsallere uygunluk ilkesinin uygulanması.'},
+  {t:'Emsal Bedel',a:'Gerçek bedeli belli olmayan bir malın, aynı cins/nitelikteki malların rayicine göre değeri.'},
+  {t:'Mukayyet Değer',a:'Bir kıymetin muhasebe kayıtlarında (defterde) yazılı olan değeri.'},
+  {t:'Şüpheli Alacak',a:'Dava/icra safhasındaki veya protesto edilmiş, tahsili şüpheli hale gelmiş alacak.'},
+  {t:'Değersiz Alacak',a:'Kazai hüküm/kanaat verici vesikaya göre tahsili imkânsız hale gelen alacak.'},
+  {t:'Vazgeçilen Alacak',a:'Alacaklının, konkordato/sulh yoluyla tahsilinden vazgeçtiği alacak.'},
+  {t:'Aval',a:'Bir bono/poliçe borcunu, borçlu ile birlikte ödemeyi kefil gibi taahhüt etme.'},
+  {t:'Ciro',a:'Emre yazılı senedin arkasına yazılan beyanla başkasına devredilmesi.'},
+  {t:'Protesto',a:'Senedin ödenmediğinin/kabul edilmediğinin resmi olarak (noter aracılığıyla) tespiti.'},
+  {t:'Konkordato',a:'Borçlunun, alacaklılarıyla mahkeme gözetiminde borçlarını yeniden yapılandırma anlaşması.'},
+  {t:'Tasfiye',a:'Sona eren şirketin mal varlığının paraya çevrilip borçların ödenmesi, kalanın dağıtılması.'},
+  {t:'Ertelenmiş Vergi',a:'Muhasebe kârı ile vergi matrahı arasındaki geçici farklardan doğan vergi etkisi (TMS 12).'},
+  {t:'Geçici Fark',a:'Bir gelir/giderin muhasebe ile vergi arasında farklı dönemde dikkate alınmasından doğan, zamanla kapanan fark.'},
+  {t:'Kalıcı Fark',a:'Hiçbir zaman kapanmayan (örn. KKEG, istisna kazanç), ertelenmiş vergi yaratmayan fark.'},
+  {t:'Şerefiye (Goodwill)',a:'Bir işletmenin, net varlıklarının gerçeğe uygun değerinin üzerinde satın alınmasından doğan tutar.'},
+  {t:'Değer Düşüklüğü',a:'Bir varlığın defter değerinin, geri kazanılabilir tutarının altına inmesi (TMS 36).'},
+  {t:'Karşılık',a:'Gerçekleşmesi muhtemel gider/zararlar için ayrılan, tutarı/zamanı belirsiz yükümlülük (TMS 37).'},
+  {t:'Koşullu Yükümlülük',a:'Gerçekleşmesi belirsiz olayların doğuracağı olası yükümlülük; muhasebeleştirilmez, dipnotta açıklanır.'},
+  {t:'Kıst Amortisman',a:'Binek otomobillerde, alındığı yıl kalan aylara isabet eden kısmi amortisman.'},
+  {t:'İhtiyatlılık',a:'Belirsizlik durumunda varlık/geliri olduğundan fazla, borç/gideri az göstermeme ilkesi.'},
+  {t:'Tahakkuk Esası',a:'Gelir/giderin, nakit hareketine bakılmaksızın doğduğu dönemde kaydedilmesi.'},
+  {t:'Dönemsellik',a:'İşletme faaliyetlerinin belirli dönemlere bölünerek her döneme ait sonucun ayrı ölçülmesi.'},
+  {t:'Süreklilik (Going Concern)',a:'İşletmenin öngörülebilir gelecekte faaliyetini sürdüreceği varsayımı.'},
+  {t:'Özün Önceliği',a:'İşlemlerin hukuki biçiminden çok ekonomik özüne göre muhasebeleştirilmesi.'},
+  {t:'Mesleki Şüphecilik',a:'Denetçinin, kanıtları sorgulayıcı bir zihinle, hata/hile ihtimalini göz önünde tutarak değerlendirmesi.'},
+  {t:'Önemlilik (Materiality)',a:'Bir bilginin, kullanıcıların kararlarını etkileyebilecek büyüklükte olması.'},
+  {t:'Yaygınlık (Pervasiveness)',a:'Bir yanlışlığın finansal tablolara ne kadar geniş yayıldığı; denetim görüş türünü belirler.'},
+  {t:'Tözel Test',a:'Hesap bakiyelerindeki maddi yanlışlıkları doğrudan tespit etmeye yönelik denetim prosedürü.'},
+  {t:'Analitik Prosedür',a:'Verilerin makul ilişkilerini/oranlarını inceleyerek olağandışılıkları tespit etme.'},
+  {t:'Çalışma Kâğıtları',a:'Denetçinin yaptığı işi, elde ettiği kanıtı ve ulaştığı sonucu belgeleyen dosya.'},
+  {t:'Görev Ayrılığı',a:'İşlemi onaylama, kaydetme ve varlığa erişimin farklı kişilerde olması (iç kontrol).'},
+  {t:'Hile Üçgeni',a:'Hileye zemin hazırlayan üç unsur: baskı, fırsat ve haklı gösterme (rasyonalizasyon).'},
+  {t:'Geçici Vergi',a:'Kazanç üzerinden 3 aylık dönemlerde peşin ödenip yıllık vergiden mahsup edilen vergi.'},
+  {t:'İştirak Kazancı İstisnası',a:'Tam mükellef kurumdan alınan kâr payının, mükerrer vergilemeyi önlemek için istisna olması.'},
+  {t:'Damga Vergisi',a:'Sözleşme, taahhütname gibi kâğıtların düzenlenmesinden alınan vergi (nispi/maktu).'},
+  {t:'Vergi Ziyaı',a:'Verginin zamanında/eksiksiz tahakkuk ettirilmemesi nedeniyle oluşan vergi kaybı.'},
+  {t:'İhtirazi Kayıt',a:'Beyannameyi verirken, dava açma hakkını saklı tutmak için konulan çekince.'},
+  {t:'Emsallere Uygunluk',a:'İlişkili kişilerle yapılan işlemlerin, ilişkisiz kişilerle yapılıyormuş gibi fiyatlanması.'},
+  {t:'Yİ-ÜFE',a:'Yurt İçi Üretici Fiyat Endeksi; enflasyon düzeltmesi ve reeskont/gecikme hesaplarında kullanılır.'},
+];
 const BILGI_KUYRUK_HASH=(s)=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
 function bilgiSeedliKaristir(arr,seed){
   const a=arr.slice();let s=BILGI_KUYRUK_HASH(seed);
@@ -1925,6 +1981,7 @@ const App = {
         if(a.dataset.tab==='flashcard') this.flashGoster();
         if(a.dataset.tab==='infografik') this.infografikGoster();
         if(a.dataset.tab==='referans') this.refGoster();
+        if(a.dataset.tab==='sozluk') this.sozlukRender();
         if(a.dataset.tab==='favoriler') this.favorilerGoster();
         if(a.dataset.tab==='yanlislarim') this.yanlislarimGoster();
       });
@@ -2586,6 +2643,23 @@ const App = {
   amortFiltre(){
     const q=(document.getElementById('amortAra').value||'').toLocaleLowerCase('tr');
     document.querySelectorAll('#amortTablo .amort-r').forEach(r=>{r.style.display=r.dataset.ad.includes(q)?'':'none';});
+  },
+
+  // ─── SÖZLÜK ───
+  sozlukRender(){
+    const q=(document.getElementById('sozlukAra')?.value||'').toLocaleLowerCase('tr').trim();
+    const liste=SOZLUK.filter(s=>!q||(s.t+' '+s.a).toLocaleLowerCase('tr').includes(q)).sort((a,b)=>a.t.localeCompare(b.t,'tr'));
+    const sc=document.getElementById('sozlukSayac');if(sc)sc.textContent=liste.length+' terim';
+    const el=document.getElementById('sozlukListe');if(!el)return;
+    const vur=(txt)=>q?txt.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#fde68a">$1</mark>'):txt;
+    el.innerHTML=liste.length?liste.map(s=>`
+      <div style="background:#fff;border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-sm);border-left:3px solid var(--primary,#5c5fe1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <b style="font-size:14px;color:var(--primary,#5c5fe1)">${vur(s.t)}</b>
+          <button title="Sesli oku" onclick="App.konus('${(s.t+'. '+s.a).replace(/'/g,"\\'")}')" style="background:none;border:none;cursor:pointer;font-size:15px">🔊</button>
+        </div>
+        <div style="font-size:13px;color:var(--text-soft);margin-top:3px;line-height:1.6">${vur(s.a)}</div>
+      </div>`).join(''):'<p style="color:var(--text-soft)">Eşleşen terim yok.</p>';
   },
 
   // ─── SİMÜLASYON SINAVI ───
