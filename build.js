@@ -25,14 +25,23 @@ let srcdocEntries = panelFiles.map(f => {
 
 const srcdocBlock = `const SRCDOC={\n${srcdocEntries}\n};\n`;
 
-if (!template.includes('function aç(i)')) {
-  throw new Error('anchor function aç(i) not found in template');
+// Inject SRCDOC block right before the aç function definition, and switch
+// the panel loader from src=file to srcdoc=embedded content.
+const anchor = 'function aç(i){';
+if (!template.includes(anchor)) {
+  throw new Error('anchor "function aç(i){" not found in template');
 }
-
+if (!template.includes('$("frame").src=p.src;')) {
+  throw new Error('panel loader "$("frame").src=p.src;" not found in template');
+}
+template = template.replace(anchor, srcdocBlock + anchor);
 template = template.replace(
-  'function aç(i){const p=PANELS[i];$("vtitle").textContent=p.ic+"  "+p.nm;$("frame").src=p.src;$("home").style.display="none";$("viewer").style.display="flex";}',
-  srcdocBlock + 'function aç(i){const p=PANELS[i];$("vtitle").textContent=p.ic+"  "+p.nm;$("frame").removeAttribute("src");$("frame").srcdoc=SRCDOC[p.src]||"Panel bulunamadi";$("home").style.display="none";$("viewer").style.display="flex";}'
+  '$("frame").src=p.src;',
+  '$("frame").removeAttribute("src");$("frame").srcdoc=SRCDOC[p.src]||"Panel bulunamadi";'
 );
 
+const before = fs.existsSync(path + '/OMER-YILMAZ.html') ? fs.statSync(path + '/OMER-YILMAZ.html').size : 0;
+if (!template.includes('const SRCDOC={')) throw new Error('SRCDOC injection failed');
+if (template.length < 3000000) throw new Error('bundle suspiciously small: ' + template.length);
 fs.writeFileSync(path + '/OMER-YILMAZ.html', template);
 console.log('bundled OK, size:', template.length);

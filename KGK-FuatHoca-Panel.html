@@ -2703,6 +2703,16 @@ const App = {
       <div style="font-size:34px;font-weight:800;margin:6px 0">${this._simSorular.length} Soru</div>
       <div style="font-size:13px;opacity:.9">Cevaplarını doğru cevaplarla karşılaştır, kendini puanla 👇</div>
     </div>
+    <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:16px">
+      <div style="font-weight:700;margin-bottom:8px">✍️ Kendini puanla → karne arşivine kaydet</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:13px">Kaç doğru?</span>
+        <input id="simDogruSayi" type="number" min="0" max="${this._simSorular.length}" value="0" style="width:80px;padding:6px 8px;border-radius:8px;border:1px solid var(--border-soft)">
+        <span style="font-size:13px">/ ${this._simSorular.length}</span>
+        <button class="btn btn-primary btn-small" onclick="App.simKaydet()">💾 Karneye Kaydet</button>
+      </div>
+      <div id="simArsivAlan" style="margin-top:14px"></div>
+    </div>
     <div style="display:flex;gap:8px;margin-bottom:16px"><button class="btn btn-primary btn-small" onclick="App.simYeniden()">🔄 Yeni Simülasyon</button></div>
     <div style="display:flex;flex-direction:column;gap:14px">${this._simSorular.map((s,i)=>`
       <div style="background:#fff;border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-sm)">
@@ -2713,6 +2723,36 @@ const App = {
         ${s.anahtar?`<div style="font-size:11.5px;color:var(--text-soft);margin-top:5px">🔑 ${s.anahtar}</div>`:''}
       </div>`).join('')}</div>`;
     document.getElementById('simKurulum').style.display='block';
+    this.simArsivCiz();
+  },
+  simArsiv(){try{return JSON.parse(localStorage.getItem('fh_sim_arsiv')||'[]');}catch(e){return[];}},
+  simKaydet(){
+    const dogru=parseInt(document.getElementById('simDogruSayi').value,10)||0;
+    const toplam=this._simSorular.length;
+    if(dogru>toplam){this.toast('Doğru sayısı toplamdan fazla olamaz','err');return;}
+    const l=this.simArsiv();
+    l.push({tarih:new Date().toISOString(),dogru,toplam,yuzde:Math.round(dogru/toplam*100)});
+    localStorage.setItem('fh_sim_arsiv',JSON.stringify(l.slice(-50)));
+    this.toast('💾 Karne arşive kaydedildi','ok');this.simArsivCiz();
+  },
+  simArsivCiz(){
+    const alan=document.getElementById('simArsivAlan');if(!alan)return;
+    const l=this.simArsiv();
+    if(!l.length){alan.innerHTML='<div style="font-size:12px;color:var(--text-soft)">Henüz kayıtlı karne yok. İlk denemeni kaydet, trendini göreceksin.</div>';return;}
+    const son=l.slice(-10);
+    const ort=Math.round(l.reduce((s,x)=>s+x.yuzde,0)/l.length);
+    const enIyi=Math.max(...l.map(x=>x.yuzde));
+    const renk=y=>y>=70?'#16a34a':y>=50?'#f59e0b':'#ef4444';
+    alan.innerHTML=`
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:12.5px">
+        <span>📊 Toplam deneme: <b>${l.length}</b></span>
+        <span>Ortalama: <b style="color:${renk(ort)}">%${ort}</b></span>
+        <span>En iyi: <b style="color:#16a34a">%${enIyi}</b></span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:5px;height:70px;padding:6px 0;border-bottom:1px solid var(--border-soft)">
+        ${son.map(x=>`<div title="${new Date(x.tarih).toLocaleDateString('tr-TR')} · ${x.dogru}/${x.toplam}" style="flex:1;min-width:10px;background:${renk(x.yuzde)};height:${Math.max(6,x.yuzde)}%;border-radius:3px 3px 0 0"></div>`).join('')}
+      </div>
+      <div style="font-size:10.5px;color:var(--text-soft);margin-top:4px;text-align:center">Son ${son.length} deneme başarı trendi (%)</div>`;
   },
   simYeniden(){document.getElementById('simAlan').innerHTML='';document.getElementById('simKurulum').style.display='block';window.scrollTo(0,0);},
 

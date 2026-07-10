@@ -236,6 +236,11 @@ body.odak-modu #havaChip{display:none}
         </div>
         <div id="notlarAlan" style="display:flex;flex-wrap:wrap;gap:10px"></div>
       </div>
+      <div id="calismaIstatistik" style="margin-top:20px"></div>
+      <div style="margin-top:14px">
+        <button class="gbtn" onclick="haftalikRaporGoster()">📊 Haftalık Özet Raporu</button>
+        <div id="haftalikRaporKutu" style="display:none;margin-top:12px"></div>
+      </div>
     </div>
 
     <!-- YOĞUN DÖNEM MODU -->
@@ -435,8 +440,22 @@ document.querySelectorAll(".tile").forEach(b=>{
   b.onclick=()=>aç(+b.dataset.i);
   b.onmousemove=e=>{const r=b.getBoundingClientRect();b.style.setProperty("--mx",(e.clientX-r.left)+"px");b.style.setProperty("--my",(e.clientY-r.top)+"px");};
 });
-function aç(i){const p=PANELS[i];$("vtitle").textContent=p.ic+"  "+p.nm;$("frame").src=p.src;$("home").style.display="none";$("viewer").style.display="flex";}
-$("back").onclick=()=>{$("viewer").style.display="none";$("home").style.display="block";$("frame").src="about:blank";};
+let _panelBaslangic=0,_panelAktifAd="";
+function sureKaydet(){
+  if(!_panelBaslangic||!_panelAktifAd)return;
+  const sn=Math.round((Date.now()-_panelBaslangic)/1000);
+  _panelBaslangic=0;
+  if(sn<3)return; // 3 sn altı sayma
+  try{
+    const bugun=new Date().toISOString().slice(0,10);
+    const d=JSON.parse(localStorage.getItem("oy_panel_sure")||"{}");
+    d[bugun]=d[bugun]||{};d[bugun][_panelAktifAd]=(d[bugun][_panelAktifAd]||0)+sn;
+    localStorage.setItem("oy_panel_sure",JSON.stringify(d));
+  }catch(e){}
+}
+function aç(i){const p=PANELS[i];$("vtitle").textContent=p.ic+"  "+p.nm;$("frame").src=p.src;$("home").style.display="none";$("viewer").style.display="flex";_panelBaslangic=Date.now();_panelAktifAd=p.nm;}
+$("back").onclick=()=>{sureKaydet();$("viewer").style.display="none";$("home").style.display="block";$("frame").src="about:blank";calismaIstatistikCiz();};
+window.addEventListener("beforeunload",sureKaydet);
 $("full").onclick=()=>$("frame").requestFullscreen?.();
 
 /* görevler */
@@ -662,6 +681,70 @@ function notlarCiz(){
     </div>`).join(''):'<div style="font-size:11.5px;color:var(--mut)">Henüz not yok — yukarıdan ekle.</div>';
 }
 notlarCiz();
+
+/* ───── ÇALIŞMA İSTATİSTİĞİ (panel bazlı süre, son 7 gün) (v1000) ───── */
+function panelSureVerisi(gunSayisi){
+  let d={};try{d=JSON.parse(localStorage.getItem("oy_panel_sure")||"{}");}catch(e){}
+  const toplam={};let genelToplam=0;
+  for(let i=0;i<gunSayisi;i++){
+    const dt=new Date();dt.setDate(dt.getDate()-i);const ds=dt.toISOString().slice(0,10);
+    if(d[ds])Object.keys(d[ds]).forEach(p=>{toplam[p]=(toplam[p]||0)+d[ds][p];genelToplam+=d[ds][p];});
+  }
+  return{toplam,genelToplam};
+}
+function sureFmt(sn){const dk=Math.round(sn/60);if(dk<60)return dk+" dk";return Math.floor(dk/60)+" sa "+(dk%60)+" dk";}
+function calismaIstatistikCiz(){
+  const alan=$("calismaIstatistik");if(!alan)return;
+  const{toplam,genelToplam}=panelSureVerisi(7);
+  const RENK=["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#06b6d4","#ef4444","#84cc16"];
+  const siralı=Object.entries(toplam).sort((a,b)=>b[1]-a[1]);
+  if(!siralı.length){alan.innerHTML='<div style="font-size:12px;color:var(--mut)">📊 Çalışma istatistiği: panelleri kullandıkça burada süre dağılımın oluşacak.</div>';return;}
+  alan.innerHTML=`<div style="font-size:12px;color:var(--mut);margin-bottom:8px">📊 Son 7 gün · panel süre dağılımı · toplam <b style="color:var(--txt)">${sureFmt(genelToplam)}</b></div>`+
+    siralı.map(([ad,sn],i)=>{
+      const yuzde=genelToplam?Math.round(sn/genelToplam*100):0;const rk=RENK[i%RENK.length];
+      return `<div style="margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${ad}</span><b>${sureFmt(sn)} · %${yuzde}</b></div>
+        <div style="height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden"><div style="width:${yuzde}%;height:100%;background:${rk}"></div></div>
+      </div>`;
+    }).join('');
+}
+calismaIstatistikCiz();
+
+/* ───── HAFTALIK OTOMATİK ÖZET RAPORU (v1000) ───── */
+function haftalikRaporGoster(){
+  const kutu=$("haftalikRaporKutu");if(!kutu)return;
+  if(kutu.style.display==="block"){kutu.style.display="none";return;}
+  const{toplam,genelToplam}=panelSureVerisi(7);
+  const enCok=Object.entries(toplam).sort((a,b)=>b[1]-a[1])[0];
+  let gunler=[];try{gunler=JSON.parse(localStorage.getItem("oy_kullanim_gunleri")||"[]");}catch(e){}
+  const set=new Set(gunler);let streak=0;const d=new Date();
+  for(;;){const ds=d.toISOString().slice(0,10);if(set.has(ds)){streak++;d.setDate(d.getDate()-1);}else break;}
+  const son7=[];for(let i=0;i<7;i++){const dt=new Date();dt.setDate(dt.getDate()-i);son7.push(dt.toISOString().slice(0,10));}
+  const aktifGun=son7.filter(g=>set.has(g)).length;
+  let notAdet=0,remAdet=0;
+  try{notAdet=JSON.parse(localStorage.getItem("oy_yapiskan_notlar")||"[]").length;}catch(e){}
+  try{remAdet=(JSON.parse(localStorage.getItem("oy_reminders")||"[]")).filter(r=>!r.tamam).length;}catch(e){}
+  let gelir=0,gider=0;
+  try{
+    const ay=new Date().toISOString().slice(0,7);
+    (JSON.parse(localStorage.getItem("muh_islemler")||"[]")).forEach(x=>{
+      if((x.tarih||"").slice(0,7)===ay){if(x.tip==="gelir")gelir+=+x.tutar||0;else gider+=+x.tutar||0;}
+    });
+  }catch(e){}
+  const SINAV=new Date("2026-07-06");const kalanGun=Math.ceil((SINAV-new Date())/86400000);
+  const fmtTL=n=>Number(n).toLocaleString("tr-TR")+" ₺";
+  const satir=(ik,mtn)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:16px">${ik}</span><div style="font-size:12.5px;line-height:1.5">${mtn}</div></div>`;
+  kutu.innerHTML=`<div style="background:var(--card2,#1c2130);border-radius:12px;padding:16px 18px">
+    <div style="font-weight:800;font-size:14px;margin-bottom:10px">📊 Bu Haftanın Özeti · ${new Date().toLocaleDateString("tr-TR")}</div>
+    ${satir("🔥",`Çalışma serin: <b>${streak} gün</b> üst üste · son 7 günün <b>${aktifGun}/7</b>'inde aktiftin`)}
+    ${satir("⏱️",genelToplam?`Toplam <b>${sureFmt(genelToplam)}</b> panel kullanımı${enCok?` · en çok <b>${enCok[0]}</b> (${sureFmt(enCok[1])})`:''}`:'Bu hafta panel süresi kaydı yok')}
+    ${satir("💰",`Bu ay gelir <b style="color:#22c55e">${fmtTL(gelir)}</b> · gider <b style="color:#ef4444">${fmtTL(gider)}</b> · net <b>${fmtTL(gelir-gider)}</b>`)}
+    ${satir("📌",`<b>${notAdet}</b> yapışkan not · <b>${remAdet}</b> aktif hatırlatıcı`)}
+    ${satir("🎓",kalanGun>0?`KGK sınavına <b>${kalanGun} gün</b> kaldı — tempoyu koru!`:`KGK hedef tarihi geçti`)}
+    <div style="margin-top:10px;font-size:11.5px;color:var(--mut);font-style:italic">${aktifGun>=5?'Harika bir hafta, böyle devam! 💪':aktifGun>=3?'İyi gidiyorsun, biraz daha istikrar 👊':'Bu hafta biraz yavaştı — yarın küçük bir adımla başla 🌱'}</div>
+  </div>`;
+  kutu.style.display="block";
+}
 
 /* ───── ERİŞİLEBİLİRLİK: YAZI BOYUTU (v1000) ───── */
 function yaziBoyutAyarla(delta){
