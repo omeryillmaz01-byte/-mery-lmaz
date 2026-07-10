@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📰 Güncel Mevzuat · Soru-Cevap · v1000</title>
+<style>
+:root{--bg:#0f1419;--panel:#1a2332;--panel2:#243447;--acc:#4fc3f7;--acc2:#29b6f6;--txt:#e8eef5;--mut:#8b9bb0;--line:#2d3e54;--ok:#66bb6a;--warn:#ffb74d;--err:#ef5350}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5}
+body[data-theme=light]{--bg:#f4f7fb;--panel:#fff;--panel2:#eef3fb;--txt:#1a2332;--mut:#5b6b7d;--line:#d8e2ef}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#1a2332,#243447);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-size:19px;font-weight:800}
+.spacer{flex:1}
+.gbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px;font-weight:600}
+.gbtn:hover{border-color:var(--acc)}
+nav{display:flex;gap:6px;padding:12px 20px;flex-wrap:wrap;border-bottom:1px solid var(--line);position:sticky;top:57px;background:var(--bg);z-index:9}
+nav a{padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--mut);border:1px solid transparent}
+nav a.active{background:var(--panel2);color:var(--acc);border-color:var(--line)}
+main{padding:20px;max-width:900px;margin:0 auto}
+.pane{display:none}.pane.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.badge{background:var(--acc);color:#04121c;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:800}
+.tag{display:inline-block;background:var(--panel2);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;margin-bottom:4px}
+input,select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;width:100%}
+.qitem{border-bottom:1px solid var(--line);padding:12px 0}
+.qitem:last-child{border-bottom:none}
+.q{font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.q .no{flex:none;width:24px;height:24px;border-radius:6px;background:var(--panel2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.a{margin:8px 0 0 32px;color:var(--mut);font-size:13.5px;line-height:1.65;display:none}
+.qitem.open .a{display:block}
+.ozet{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.ozet h3{font-size:15px;margin-bottom:6px;color:var(--acc)}
+.ozet ul{margin:0;padding-left:18px}
+.ozet li{font-size:13px;color:var(--mut);margin-bottom:4px;line-height:1.55}
+.note{font-size:11.5px;color:var(--mut);font-style:italic;margin-top:8px}
+mark{background:#fde68a;color:#111;border-radius:3px}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>📰 Güncel Mevzuat</h1>
+  <span class="badge">v1000</span>
+  <span class="spacer"></span>
+  <button class="gbtn" id="themeBtn">🌙</button>
+</header>
+<nav>
+  <a class="active" data-p="gunun">📅 Günün 100 Sorusu</a>
+  <a data-p="ozet">📚 Konu Özetleri</a>
+  <a data-p="tum">🔍 Tüm Sorular</a>
+</nav>
+<main>
+  <div class="pane active" id="paneGunun">
+    <div class="card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:800;font-size:16px">🔥 Günün 100 Sorusu</div>
+        <div style="font-size:12.5px;color:var(--mut)" id="gununTarih"></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:22px;font-weight:800;color:var(--acc)" id="gununSayac">0/100</div><div style="font-size:11px;color:var(--mut)">açtığın soru</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="gbtn" onclick="hepsiniAc(true)">▼ Hepsini Aç</button>
+      <button class="gbtn" onclick="hepsiniAc(false)">▲ Hepsini Kapat</button>
+      <button class="gbtn" onclick="sesliOku()">🔊 Sesli Oku (ilk 10)</button>
+    </div>
+    <div class="card"><div id="gununListe"></div></div>
+    <div class="note">⚠️ İçerik, muhasebetr.com / verginet.net gibi kaynakların işlediği güncel Türk vergi-muhasebe mevzuatı konularını kısa-öz derler; sınav sorusu veya resmî sirküler değildir. Resmî işlemlerde GİB ve yürürlükteki mevzuat esastır. Bu iki site otomatik erişime kapalı olduğundan içerik onlardan birebir kopyalanmamış, aynı konu başlıkları özgün biçimde hazırlanmıştır.</div>
+  </div>
+
+  <div class="pane" id="paneOzet">
+    <input id="ozetAra" placeholder="🔍 Konu ara..." oninput="ozetCiz()" style="margin-bottom:14px">
+    <div id="ozetListe"></div>
+  </div>
+
+  <div class="pane" id="paneTum">
+    <input id="tumAra" placeholder="🔍 Soru/cevap içinde ara..." oninput="tumCiz()" style="margin-bottom:8px">
+    <div style="font-size:12px;color:var(--mut);margin-bottom:12px" id="tumSayac"></div>
+    <div class="card"><div id="tumListe"></div></div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("gm_theme",t)}catch(e){}}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");
+try{theme(localStorage.getItem("gm_theme")||"dark")}catch(e){theme("dark")}
+
+/* ═══ KONU ÖZETLERİ ═══ */
+const KONU_OZET=[
+  {ad:'E-Belge (e-Fatura, e-Arşiv, e-İrsaliye)',mad:['Belirli ciro/sektör şartlarını aşan mükellefler için e-Fatura ve e-Arşiv zorunludur.','e-Fatura kayıtlı kullanıcılar arasında, e-Arşiv fatura ise e-Fatura kapsamı dışındakilere düzenlenir.','e-İrsaliye malın fiili sevkinde düzenlenir; kağıt irsaliye yerine geçer.','Vergi mükellefi olmayanlara belirli tutarı aşan e-Arşiv faturaları da elektronik düzenlenir.']},
+  {ad:'E-Defter ve Berat',mad:['e-Defter, yevmiye ve büyük defterin elektronik tutulmasıdır.','Berat dosyaları GİB onayına aylık veya 3 aylık dönemlerde yüklenir.','Beratın süresinde yüklenmemesi defterin tasdiksiz sayılması riskini doğurur.','e-Defter tutanlar kağıt defter tasdik ettiremez.']},
+  {ad:'Enflasyon Düzeltmesi (VUK Mük. 298/A)',mad:['Parasal olmayan kıymetler (stok, duran varlık, öz sermaye) Yİ-ÜFE ile düzeltilir.','Parasal kıymetler (kasa, banka, alacak, borç) düzeltilmez.','Düzeltme farkları 698 üzerinden 648/658 hesaplarına aktarılır.','Amortismana tabi varlıklarda birikmiş amortisman da düzeltilir.']},
+  {ad:'KDV Genel Esaslar',mad:['Teslim ve hizmetlerde vergiyi doğuran olay genel olarak malın teslimi/hizmetin ifasıdır.','İndirilecek KDV, indirim hakkının doğduğu takvim yılını izleyen yıl sonuna kadar indirilebilir.','İhracat, KDV\'den istisnadır ve yüklenilen KDV iade edilebilir.','Kısmi/tam tevkifat uygulanan işlemlerde alıcı KDV\'nin bir kısmını sorumlu sıfatıyla öder.']},
+  {ad:'KDV İadesi',mad:['İhracat, indirimli oran, tevkifat gibi işlemlerden doğan KDV iade edilir.','İade; mahsuben veya nakden, teminatla veya YMM raporuyla alınabilir.','İade talebi için gerekli belgeler (yüklenim listesi, satış faturaları) ibraz edilir.','Özel esaslara alınan mükelleflerde iade süreci zorlaşır.']},
+  {ad:'Gelir Vergisi Beyanı',mad:['Ticari, zirai, serbest meslek, ücret, GMSİ, MSİ ve diğer kazançlar gelir vergisine tabidir.','Yıllık beyan izleyen yıl Mart ayı sonuna kadar verilir.','Tek işverenden alınan ücret belirli sınırı aşmıyorsa beyan edilmez.','Beyanname üzerinden hesaplanan vergiden yıl içi kesintiler mahsup edilir.']},
+  {ad:'Kurumlar Vergisi',mad:['Kurum kazancı üzerinden hesaplanır; oran güncel yasa ile belirlenir (bankalarda daha yüksek).','İştirak kazançları istisnası mükerrer vergilemeyi önler.','Yıllık beyan izleyen yıl Nisan sonuna kadar verilir.','Örtülü sermaye ve transfer fiyatlandırması kazanç düzeltmesi gerektirir.']},
+  {ad:'Geçici Vergi',mad:['3 aylık dönem kazançları üzerinden peşin ödenir.','Dönemi izleyen 2. ayın 17\'sine kadar beyan edilir.','Yıllık beyanda hesaplanan vergiden mahsup edilir.','Yılın son dönemi (4.) için ayrı geçici vergi verilmez (mevzuata göre değişebilir).']},
+  {ad:'Damga Vergisi',mad:['Sözleşme, taahhütname, kira kontratı gibi kağıtlardan alınır.','Nispi (bedele göre binde) veya maktu olabilir.','Kağıdı imzalayan taraflar müteselsilen sorumludur.','Bir nüsha üzerinden değil, her nüsha için ayrıca doğabilir.']},
+  {ad:'SGK / Bordro',mad:['Sigortalı çalışan için aylık APHB (muhtasar ve prim hizmet) beyanı verilir.','Prim, brüt ücret üzerinden işçi ve işveren payı olarak hesaplanır.','Asgari ücret desteği ve teşvikler prim yükünü azaltabilir.','Eksik gün bildirimi belgeyle desteklenmelidir.']},
+  {ad:'Amortisman',mad:['Duran varlıkların yıpranma payı faydalı ömre göre gider yazılır.','Normal (eşit) veya azalan bakiyeler yöntemi seçilebilir.','Azalan bakiyeler oranı normalin 2 katı, en fazla %50\'dir.','Binek otomobillerde kıst amortisman ve tutar sınırı uygulanır.']},
+  {ad:'Transfer Fiyatlandırması',mad:['İlişkili kişilerle işlemlerde emsallere uygunluk ilkesi esastır.','Emsale aykırı fiyat örtülü kazanç dağıtımı sayılır.','Yöntemler: KFY, MSMY, MMY, kâr bölüşüm, işleme dayalı net kâr marjı.','Yıllık transfer fiyatlandırması belgelendirmesi gerekebilir.']},
+  {ad:'Ba-Bs Formları',mad:['Belirli haddi aşan alış (Ba) ve satışlar (Bs) bildirilir.','İzleyen ayın son gününe kadar verilir.','e-Defter/e-Fatura kapsamındaki bazı mükellefler için kaldırılmış olabilir (güncel duyuruya bakılır).','Mükerrer/eksik bildirim özel usulsüzlük cezası doğurur.']},
+  {ad:'Değerleme (VUK)',mad:['Ölçüler: maliyet bedeli, borsa rayici, tasarruf değeri, mukayyet değer, itibari değer, rayiç ve emsal bedel.','Stoklar maliyet, alacak/borç mukayyet değerle değerlenir.','Yabancı para borç/alacak dönem sonunda değerlenir, kur farkı gelir/gider yazılır.','Menkul kıymetler türüne göre alış bedeli veya borsa rayici ile değerlenir.']},
+  {ad:'Vergi Cezaları ve Uzlaşma',mad:['Vergi ziyaı cezası kaybolan verginin 1 katı (kaçakçılıkta 3 katı).','Usulsüzlük ve özel usulsüzlük cezaları şekli yükümlülük ihlallerinde kesilir.','Uzlaşma ile ceza/vergi aslında indirim sağlanabilir.','Pişmanlıkla beyan, vergi ziyaı cezasını kaldırabilir.']},
+  {ad:'Konkordato ve Tasfiye',mad:['Konkordato, borçlunun mahkeme gözetiminde borçlarını yapılandırmasıdır.','Konkordato sürecinde alacaklara özel şüpheli alacak hükümleri uygulanabilir.','Tasfiyede varlıklar paraya çevrilir, borçlar ödenir, kalan ortaklara dağıtılır.','Tasfiye dönemi ayrı bir hesap dönemi sayılır ve beyanname verilir.']},
+  {ad:'İhracat ve Dış Ticaret',mad:['İhracat teslimleri KDV\'den istisnadır.','İhraç kayıtlı satışta imalatçı KDV tahsil etmez, tecil-terkin uygulanır.','İhracatın süresinde gerçekleşmemesi tecil edilen KDV\'yi ceza/faizle geri getirir.','Dövizli işlemlerde kur farkları ayrıca değerlenir.']},
+  {ad:'Ücret, Kira (GMSİ), Serbest Meslek',mad:['Ücrette vergi genellikle stopajla alınır; şart varsa yıllık beyan gerekir.','GMSİ\'de götürü veya gerçek gider yöntemi seçilebilir.','Konut kira istisnası her yıl güncellenen tutarda uygulanır.','Serbest meslekte tahsil esası geçerlidir, SM makbuzu düzenlenir.']},
+];
+
+/* ═══ SORU BANKASI ═══ (kısa-öz, güncel mevzuat konuları) */
+const SORULAR=[
+  {k:'E-Belge',s:'e-Fatura ile e-Arşiv fatura arasındaki temel fark nedir?',c:'e-Fatura, sistemde kayıtlı kullanıcılar arasında düzenlenir; e-Arşiv fatura ise e-Fatura kapsamında olmayan (kayıtlı olmayan mükellef veya nihai tüketici) alıcılara elektronik düzenlenen faturadır.'},
+  {k:'E-Belge',s:'e-İrsaliye ne zaman düzenlenir?',c:'Malın fiili sevki sırasında düzenlenir ve kağıt sevk irsaliyesi yerine geçer; taşıma esnasında elektronik olarak ibraz edilebilir.'},
+  {k:'E-Belge',s:'e-Arşiv fatura vergi mükellefi olmayanlara hangi durumda elektronik düzenlenir?',c:'Vergi mükellefi olmayanlara düzenlenen ve tebliğle belirlenen tutarı aşan faturalar e-Arşiv olarak elektronik ortamda düzenlenmek zorundadır.'},
+  {k:'E-Belge',s:'e-Fatura kullanan bir mükellef aynı işlem için kağıt fatura düzenleyebilir mi?',c:'Kural olarak hayır; e-Fatura kapsamındaki mükellefler birbirlerine kağıt fatura düzenleyemez, sistem üzerinden e-Fatura düzenlemeleri gerekir.'},
+  {k:'E-Belge',s:'e-Faturada "temel" ve "ticari" senaryo farkı nedir?',c:'Ticari senaryoda alıcı, faturaya kabul/ret yanıtı verebilir; temel senaryoda böyle bir yanıt mekanizması yoktur, fatura düzenlenmekle akış tamamlanır.'},
+  {k:'E-Defter',s:'e-Defter berat dosyası ne işe yarar?',c:'Berat, e-Defterin ilgili döneme ait olduğunu ve değiştirilmediğini GİB nezdinde onaylayan, elektronik imzalı/mali mühürlü özet dosyadır.'},
+  {k:'E-Defter',s:'e-Defter beratının süresinde yüklenmemesi ne riski doğurur?',c:'Defterin tasdiksiz/geçersiz sayılması ve buna bağlı özel usulsüzlük ile ispat gücü kaybı riski doğar.'},
+  {k:'E-Defter',s:'e-Defter tutan mükellef kağıt defter tasdik ettirebilir mi?',c:'Hayır; e-Deftere geçen mükellef aynı defterleri kağıt ortamda tutup tasdik ettiremez.'},
+  {k:'Enflasyon Düzeltmesi',s:'Enflasyon düzeltmesinde hangi kıymetler düzeltilir?',c:'Parasal olmayan kıymetler (stoklar, maddi/maddi olmayan duran varlıklar, öz sermaye kalemleri) düzeltilir; parasal kıymetler düzeltilmez.'},
+  {k:'Enflasyon Düzeltmesi',s:'Parasal kıymet neden düzeltilmez?',c:'Parasal kıymetler (kasa, banka, alacak, borç) zaten dönem sonu nominal değeriyle enflasyonun etkisini taşıdığından ayrıca endekslenmez; bunların etkisi net parasal pozisyon kâr/zararıyla ölçülür.'},
+  {k:'Enflasyon Düzeltmesi',s:'Düzeltme farkları hangi hesaplarda izlenir?',c:'Düzeltme farkları 698 Enflasyon Düzeltmesi hesabında toplanır; sonuç 648 Enflasyon Düzeltmesi Kârı veya 658 Zararı hesabına aktarılır.'},
+  {k:'Enflasyon Düzeltmesi',s:'Tamamen amorti olmuş varlıkta enflasyon düzeltmesi tuzağı nedir?',c:'Geçmişte kıst/eksik amortisman uygulanmışsa, varlık ile birikmiş amortisman düzeltme artışları birbirini tutmaz ve nakit girişi olmayan hayali enflasyon kârı doğarak fazladan vergi ödenmesine yol açar.'},
+  {k:'KDV',s:'İndirilecek KDV en geç ne zamana kadar indirilebilir?',c:'İndirim hakkı, vergiyi doğuran olayın gerçekleştiği takvim yılını izleyen takvim yılı sonuna kadar kullanılabilir.'},
+  {k:'KDV',s:'KDV tevkifatında amaç nedir?',c:'Verginin bir kısmının alıcı (sorumlu) tarafından kaynağında kesilip doğrudan vergi dairesine ödenmesiyle kayıt dışılığı azaltmak ve tahsilatı güvence altına almaktır.'},
+  {k:'KDV',s:'İhraç kayıtlı teslimde KDV nasıl işler?',c:'İmalatçı, ihracatçıya KDV tahsil etmeden mal teslim eder; hesaplanan KDV tecil edilir, ihracat gerçekleşince terkin edilir (tecil-terkin).'},
+  {k:'KDV',s:'İhraç kayıtlı satışta 3 aylık süre kaçırılırsa ne olur?',c:'Malın teslim ayını izleyen aydan itibaren 3 ay içinde ihraç edilmezse tecil edilen KDV, vergi ziyaı cezası ve gecikme faiziyle birlikte imalatçıdan geri istenir.'},
+  {k:'KDV',s:'Kur farkı KDV\'ye tabi midir?',c:'Bedeli döviz cinsinden belirlenen vadeli işlemlerde, ödeme tarihinde lehe oluşan kur farkı için fatura düzenlenip KDV hesaplanması gerekir.'},
+  {k:'KDV İadesi',s:'KDV iadesi hangi yollarla alınabilir?',c:'Mahsuben veya nakden; tutara göre teminat karşılığı, YMM tasdik raporu veya inceleme raporu ile alınabilir.'},
+  {k:'KDV İadesi',s:'İhracattan doğan KDV iadesinde yüklenim listesi neyi gösterir?',c:'İhraç edilen mal/hizmet için yüklenilen ve iadeye konu edilen KDV\'nin hangi alış belgelerinden kaynaklandığını gösteren listedir.'},
+  {k:'KDV İadesi',s:'Özel esaslara alınmak ne anlama gelir?',c:'Sahte/muhteviyatı itibarıyla yanıltıcı belge riski nedeniyle mükellefin iade süreçlerinin daha sıkı incelemeye ve teminat şartına tabi tutulmasıdır.'},
+  {k:'Gelir Vergisi',s:'Tek işverenden alınan ücret ne zaman beyan edilir?',c:'Tek işverenden alınan ve yıllık belirlenen sınırı aşan ücretler beyan edilir; sınırı aşmayan tek işveren ücreti genelde beyan edilmez.'},
+  {k:'Gelir Vergisi',s:'Birden fazla işverenden ücret alan ne yapar?',c:'Birinci işveren dışındaki işverenlerden alınan ücretler toplamı ilgili beyan sınırını aşıyorsa, ücretlerin tamamı yıllık beyanla bildirilir.'},
+  {k:'Gelir Vergisi',s:'GMSİ\'de gerçek gider ve götürü gider farkı nedir?',c:'Götürü giderde hasılatın belirli bir yüzdesi gider kabul edilir; gerçek giderde ise belgelenen fiili giderler indirilir. Götürüyü seçen 2 yıl gerçek gidere dönemez.'},
+  {k:'Gelir Vergisi',s:'Konut kira geliri istisnası nasıl uygulanır?',c:'Mesken kira gelirinin her yıl güncellenen istisna tutarı, beyan edilen kira gelirinden düşülür; ancak ticari/zirai/mesleki kazanç sahipleri ve istisnayı aşan bazı durumlarda istisnadan yararlanılamaz.'},
+  {k:'Kurumlar Vergisi',s:'İştirak kazançları istisnası neyi önler?',c:'Bir tam mükellef kurumun başka tam mükellef kurumdan aldığı kâr payının tekrar vergilenmesini (mükerrer vergilemeyi) önler.'},
+  {k:'Kurumlar Vergisi',s:'Örtülü sermaye nasıl oluşur?',c:'Ortak veya ilişkili kişiden alınan borcun, hesap dönemi içinde öz sermayenin 3 katını aşan kısmı örtülü sermaye sayılır; bu kısma ait faiz/kur farkı gideri KKEG olur.'},
+  {k:'Kurumlar Vergisi',s:'Kurumlar vergisi beyannamesi ne zaman verilir?',c:'Hesap dönemini izleyen yılın Nisan ayı sonuna kadar verilir ve tahakkuk eden vergi aynı ay içinde ödenir.'},
+  {k:'Geçici Vergi',s:'Geçici vergi hangi dönemlerde beyan edilir?',c:'3 aylık dönemler halinde, dönemi izleyen 2. ayın 17\'sine kadar beyan edilip ödenir.'},
+  {k:'Geçici Vergi',s:'Geçici vergi yıllık vergiyle ilişkisi nedir?',c:'Yıl içinde ödenen geçici vergi, yıllık beyannamede hesaplanan gelir/kurumlar vergisinden mahsup edilir; fazlası iade veya mahsup edilir.'},
+  {k:'Damga Vergisi',s:'Damga vergisinde müteselsil sorumluluk kimdedir?',c:'Bir kağıdı imzalayan taraflar, damga vergisinin ödenmesinden müteselsilen sorumludur.'},
+  {k:'Damga Vergisi',s:'Nispi ve maktu damga vergisi farkı nedir?',c:'Nispi damga vergisi kağıdın içerdiği bedele göre binde oranla; maktu damga vergisi ise kağıt türüne göre sabit tutarla hesaplanır.'},
+  {k:'SGK',s:'APHB (Muhtasar ve Prim Hizmet Beyannamesi) neyi birleştirir?',c:'Gelir vergisi stopajı (muhtasar) ile SGK prim ve hizmet bildirimini tek beyannamede birleştirir.'},
+  {k:'SGK',s:'Eksik gün bildirimi neden belgelenmelidir?',c:'Sigortalının ay içinde eksik çalışmasının nedeni (istirahat, ücretsiz izin vb.) belgelenmezse SGK eksik günleri kabul etmeyip prim tahakkuk ettirebilir.'},
+  {k:'Amortisman',s:'Azalan bakiyeler yönteminde oran sınırı nedir?',c:'Uygulanacak oran normal amortisman oranının 2 katıdır ve her halükarda %50\'yi geçemez.'},
+  {k:'Amortisman',s:'Azalan bakiyelerden normale geçilebilir mi?',c:'Evet, azalan bakiyeler yönteminden normal yönteme geçilebilir; ancak normalden azalana geçiş yapılamaz.'},
+  {k:'Amortisman',s:'Binek otomobilde kıst amortisman ne demektir?',c:'Binek otomobil için, satın alındığı yıl kalan aylara isabet eden kısmi amortisman ayrılır; ilk yıl ayrılamayan kısım son yıl gider yazılır.'},
+  {k:'Amortisman',s:'Binek araç satışında mükerrer vergi tuzağı nedir?',c:'Satışta birikmiş amortismanın tamamı kâr hesabına katılırsa, geçmişte KKEG yapılan (indirilemeyen) kısım bir kez daha vergilenir; sadece kanunen kabul edilen amortisman kısmı dikkate alınmalıdır.'},
+  {k:'Transfer Fiyatlandırması',s:'Emsallere uygunluk ilkesi nedir?',c:'İlişkili kişilerle yapılan mal/hizmet alım-satımında uygulanan fiyatın, ilişkisiz kişilerle yapılıyormuş gibi belirlenmesidir.'},
+  {k:'Transfer Fiyatlandırması',s:'Emsale aykırı fiyatın sonucu nedir?',c:'Emsale aykırı fiyatlandırma, örtülü kazanç dağıtımı sayılır ve dağıtılan kâr payı gibi düzeltmeye/vergilemeye tabi tutulur.'},
+  {k:'Ba-Bs',s:'Ba ve Bs formları neyi bildirir?',c:'Belirli haddi aşan mal/hizmet alışları Form Ba ile, satışları Form Bs ile bildirilir.'},
+  {k:'Ba-Bs',s:'Ba-Bs ne zaman verilir?',c:'Bildirimler, ilgili dönemi izleyen ayın son gününe kadar verilir (kapsamdaki bazı mükellefler için güncel düzenlemelere bakılmalıdır).'},
+  {k:'Değerleme',s:'Yabancı para cinsi borç/alacak dönem sonunda nasıl değerlenir?',c:'Dönem sonu kuruyla değerlenir; oluşan olumlu fark kambiyo kârı (gelir), olumsuz fark kambiyo zararı (gider) olarak kaydedilir.'},
+  {k:'Değerleme',s:'Mukayyet değer nedir?',c:'Bir kıymetin muhasebe kayıtlarında (defterde) yazılı olan değeridir; alacak ve borçlar genellikle mukayyet değerle değerlenir.'},
+  {k:'Vergi Cezaları',s:'Vergi ziyaı cezası ne kadardır?',c:'Ziyaa uğratılan verginin 1 katıdır; fiil kaçakçılık suçu oluşturuyorsa 3 kat olarak uygulanır.'},
+  {k:'Vergi Cezaları',s:'Pişmanlık ve ıslah ne sağlar?',c:'Vergi ziyaı doğuran fiilin kendiliğinden idareye bildirilip şartların yerine getirilmesi halinde vergi ziyaı cezası kesilmez, sadece pişmanlık zammı ödenir.'},
+  {k:'Vergi Cezaları',s:'Uzlaşma neyi kapsar?',c:'Tarhiyat öncesi/sonrası uzlaşma ile vergi aslı ve/veya cezada indirim sağlanarak ihtilafın idari aşamada çözülmesidir.'},
+  {k:'Konkordato',s:'Konkordato nedir?',c:'Borçlunun, alacaklılarıyla mahkeme gözetiminde anlaşarak borçlarını belirli bir plan dahilinde ödemesini/indirmesini sağlayan hukuki süreçtir.'},
+  {k:'Tasfiye',s:'Tasfiye dönemi vergisel olarak nasıl değerlendirilir?',c:'Tasfiyeye giriş ile birlikte tasfiye dönemi başlar; bu dönem ayrı bir hesap dönemi sayılır ve her tasfiye dönemi için beyanname verilir.'},
+  {k:'İhracat',s:'İhracat teslimlerinde KDV durumu nedir?',c:'İhracat teslimleri KDV\'den istisnadır ve bu teslimlere ilişkin yüklenilen KDV iade konusu yapılabilir.'},
+  {k:'Serbest Meslek',s:'Serbest meslek kazancında tahsil esası ne demektir?',c:'Gelir, tahakkuk ettiği anda değil fiilen tahsil edildiği dönemde; gider ise fiilen ödendiği dönemde dikkate alınır.'},
+  {k:'TMS/TFRS',s:'TMS 12 ertelenmiş vergi neden doğar?',c:'Muhasebe kârı ile vergi matrahı arasındaki geçici farklardan doğar; indirilebilir farklar ertelenmiş vergi varlığı, vergilendirilebilir farklar ertelenmiş vergi yükümlülüğü yaratır.'},
+  {k:'TMS/TFRS',s:'TMS 2 Stoklarda maliyete girmeyen giderler nelerdir?',c:'Anormal fire/israf, üretim gerektirmeyen depolama giderleri, genel yönetim giderleri ve satış giderleri stok maliyetine dahil edilmez.'},
+  {k:'TMS/TFRS',s:'TFRS 16 kiracıyı nasıl etkiler?',c:'Kiracı, kısa süreli ve düşük değerli istisnalar dışında kiralamaları bilançoya "kullanım hakkı varlığı" ve "kira yükümlülüğü" olarak alır.'},
+  {k:'TMS/TFRS',s:'TMS 36 geri kazanılabilir tutar nedir?',c:'Bir varlığın gerçeğe uygun değerinden satış maliyetleri düşülmüş tutarı ile kullanım değerinden yüksek olanıdır; defter değeri bunu aşarsa değer düşüklüğü ayrılır.'},
+  {k:'TMS/TFRS',s:'TMS 37\'ye göre karşılık ne zaman ayrılır?',c:'Geçmiş olaydan doğan mevcut bir yükümlülük, kaynak çıkışı muhtemel ve tutar güvenilir tahmin edilebiliyorsa karşılık ayrılır.'},
+  {k:'Muhasebe',s:'Reeskont ne işe yarar?',c:'Vadeli senetli alacak ve borçların dönem sonunda bugünkü değere indirgenerek dönem sonucunun daha doğru ölçülmesini sağlar.'},
+  {k:'Muhasebe',s:'Şüpheli alacak karşılığı hangi şartlarda ayrılır?',c:'Dava veya icra safhasında olan ya da protesto edilmiş/yazıyla birden fazla istenmiş küçük alacaklar için karşılık ayrılır; teminatlı kısma ayrılamaz.'},
+  {k:'Muhasebe',s:'Değersiz alacak ile şüpheli alacak farkı nedir?',c:'Şüpheli alacakta tahsil imkânı zayıflamıştır (karşılık ayrılır); değersiz alacakta kazai hüküm/kanaat verici vesikayla tahsil imkânı tamamen bitmiştir (doğrudan zarar yazılır).'},
+  {k:'Muhasebe',s:'KKEG nedir?',c:'Kanunen Kabul Edilmeyen Gider; ticari kârdan düşülmüş olsa bile vergi matrahına geri eklenen, vergisel olarak indirimi kabul edilmeyen giderdir.'},
+  {k:'Muhasebe',s:'Dönemsellik ilkesi nedir?',c:'Faaliyet sonuçlarının belirli dönemlere bölünerek her döneme ait gelir ve giderin o dönemde muhasebeleştirilmesidir.'},
+  {k:'Muhasebe',s:'Tahakkuk esası nedir?',c:'Gelir ve giderin, nakit tahsilat/ödemeye bakılmaksızın hukuken doğduğu (tahakkuk ettiği) dönemde kaydedilmesidir.'},
+  {k:'Muhasebe',s:'İhtiyatlılık (muhafazakarlık) ilkesi nedir?',c:'Belirsizlik durumunda; gelir ve varlıkları olduğundan fazla, gider ve borçları olduğundan az göstermekten kaçınma ilkesidir.'},
+  {k:'Denetim',s:'Mesleki şüphecilik ne demektir?',c:'Denetçinin kanıtları sorgulayıcı bir zihinle değerlendirmesi ve hata/hile ihtimalini sürekli göz önünde bulundurmasıdır.'},
+  {k:'Denetim',s:'Şartlı görüş ne zaman verilir?',c:'Tespit edilen yanlışlık ya da kanıt yetersizliği önemli ancak yaygın değilse şartlı (sınırlı olumlu) görüş verilir.'},
+  {k:'Denetim',s:'Görevler ayrılığı neden önemlidir?',c:'İşlemi onaylama, kaydetme ve varlığa erişimin farklı kişilere verilmesi hata ve hile riskini azaltan temel bir iç kontroldür.'},
+  {k:'Vergi Usul',s:'İhtirazi kayıt nedir?',c:'Mükellefin beyannameyi verirken, ödediği vergiye karşı dava açma hakkını saklı tutmak için koyduğu çekincedir.'},
+  {k:'Vergi Usul',s:'Özel usulsüzlük cezası hangi hallerde kesilir?',c:'Belge düzenine aykırılık (fatura vermeme/almama), elektronik belge zorunluluğuna uymama, bildirim yükümlülüklerini ihlal gibi şekli kurallara aykırılıklarda kesilir.'},
+  {k:'Finans',s:'Cari oran neyi ölçer?',c:'Dönen varlıkların kısa vadeli yabancı kaynaklara oranıdır; işletmenin kısa vadeli borç ödeme gücünü gösterir (ideal ≈ 2).'},
+  {k:'Finans',s:'Asit-test oranı cari orandan nasıl ayrılır?',c:'Asit-test oranında stoklar dönen varlıklardan çıkarılır; böylece stok satılmadan borç ödeme gücü ölçülür (ideal ≥ 1).'},
+  {k:'Finans',s:'ROE neyi gösterir?',c:'Net kârın özkaynaklara oranıdır; ortakların koyduğu sermayenin ne kadar verimli kâra dönüştüğünü gösterir.'},
+  {k:'Finans',s:'Sürdürülebilir büyüme oranı nasıl hesaplanır?',c:'ROE × (1 − Temettü Dağıtım Oranı) ile hesaplanır; dış finansmana başvurmadan iç kaynaklarla büyünebilecek maksimum oranı gösterir.'},
+];
+
+/* ═══ GÜNLÜK SEED ROTASYON ═══ */
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
+function prng(seed){let s=seed>>>0;return()=>{s=(s*1103515245+12345)>>>0;return s/4294967296;};}
+function karistir(arr,seed){const a=arr.slice();const r=prng(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function bugunKey(){return new Date().toISOString().slice(0,10);}
+
+/* Havuz 100'den küçükse tekrarla genişlet, sonra karıştırıp 100 al */
+function gununSorulari(){
+  let havuz=SORULAR.slice();
+  const seed=hash('gm-'+bugunKey());
+  havuz=karistir(havuz,seed);
+  const out=[];let i=0,tur=0;
+  while(out.length<100){
+    out.push(havuz[i%havuz.length]);
+    i++;
+    if(i%havuz.length===0){tur++;havuz=karistir(SORULAR,seed+tur);} // her turda farklı sıra
+  }
+  return out.slice(0,100);
+}
+
+let _acikSayisi=0;
+function qHtml(q,i){
+  return `<div class="qitem" data-i="${i}">
+    <div class="q" onclick="this.parentElement.classList.toggle('open');sayacGuncelle()"><span class="no">${i+1}</span><div><span class="tag">${q.k}</span><br>${q.s}</div></div>
+    <div class="a">${q.c}</div>
+  </div>`;
+}
+let _gunun=[];
+function gununCiz(){
+  $("gununTarih").textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · her gün farklı 100 soru';
+  _gunun=gununSorulari();
+  $("gununListe").innerHTML=_gunun.map((q,i)=>qHtml(q,i)).join('');
+  sayacGuncelle();
+}
+function sayacGuncelle(){
+  const ac=document.querySelectorAll('#gununListe .qitem.open').length;
+  $("gununSayac").textContent=ac+'/100';
+}
+function hepsiniAc(ac){
+  document.querySelectorAll('#gununListe .qitem').forEach(q=>q.classList.toggle('open',ac));
+  sayacGuncelle();
+}
+function sesliOku(){
+  if(!('speechSynthesis'in window))return;
+  if(speechSynthesis.speaking){speechSynthesis.cancel();return;}
+  _gunun.slice(0,10).forEach((q,i)=>{
+    const u=new SpeechSynthesisUtterance(`${i+1}. ${q.s} Cevap: ${q.c}`);u.lang='tr-TR';u.rate=.98;speechSynthesis.speak(u);
+  });
+}
+
+/* ═══ KONU ÖZETLERİ ═══ */
+function ozetCiz(){
+  const q=($("ozetAra").value||'').toLocaleLowerCase('tr').trim();
+  const liste=KONU_OZET.filter(o=>!q||(o.ad+' '+o.mad.join(' ')).toLocaleLowerCase('tr').includes(q));
+  $("ozetListe").innerHTML=liste.length?liste.map(o=>`<div class="ozet"><h3>${o.ad}</h3><ul>${o.mad.map(m=>`<li>${m}</li>`).join('')}</ul></div>`).join(''):'<p style="color:var(--mut)">Eşleşen konu yok.</p>';
+}
+
+/* ═══ TÜM SORULAR ═══ */
+function tumCiz(){
+  const q=($("tumAra").value||'').toLocaleLowerCase('tr').trim();
+  const liste=SORULAR.filter(x=>!q||(x.k+' '+x.s+' '+x.c).toLocaleLowerCase('tr').includes(q));
+  $("tumSayac").textContent=liste.length+' / '+SORULAR.length+' soru';
+  const vur=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):t;
+  $("tumListe").innerHTML=liste.length?liste.map((x,i)=>`<div class="qitem" onclick="this.classList.toggle('open')">
+    <div class="q"><span class="no">${i+1}</span><div><span class="tag">${x.k}</span><br>${vur(x.s)}</div></div>
+    <div class="a">${vur(x.c)}</div></div>`).join(''):'<p style="color:var(--mut)">Eşleşen soru yok.</p>';
+}
+
+/* ═══ NAV ═══ */
+document.querySelectorAll('nav a').forEach(a=>{
+  a.onclick=()=>{
+    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
+    if(a.dataset.p==='ozet')ozetCiz();
+    if(a.dataset.p==='tum')tumCiz();
+  };
+});
+
+gununCiz();ozetCiz();tumCiz();
+</script>
+</body>
+</html>

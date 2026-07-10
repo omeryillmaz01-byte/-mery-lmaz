@@ -10,6 +10,7 @@ const panelFiles = [
   'INGILIZCE-OGRENIYORUM.html',
   'MUHASEBE-PANEL.html',
   'KISISEL-BILGILER-PANEL.html',
+  'GUNCEL-MEVZUAT-PANEL.html',
 ];
 
 function escapeForTemplateLiteral(s) {
