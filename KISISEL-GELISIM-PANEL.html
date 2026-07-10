@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🟡 Kişisel Gelişim Paneli · v500</title>
+<title>🟡 Kişisel Gelişim Paneli · v1000</title>
 <style>
 :root{--bg:#0f1419;--panel:#1a2230;--panel2:#222d3d;--line:#2d3a4d;--txt:#e6edf3;--mut:#8b9bb0;--acc:#ffca28;--acc2:#22d3a0;--ok:#2ecc71;--warn:#f1c40f;--bad:#e74c3c;--shadow:0 4px 18px rgba(0,0,0,.35)}
 [data-theme="light"]{--bg:#eef2f7;--panel:#fff;--panel2:#f4f7fb;--line:#dde5ef;--txt:#15202b;--mut:#5d6b7d;--acc:#f9a825;--acc2:#0aa97a;--shadow:0 4px 16px rgba(60,90,130,.12)}
@@ -275,6 +275,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;b
           <div id="sadakaToplam" style="font-size:22px;font-weight:800;color:#0e9f6e">0 ₺</div>
         </div>
         <div id="sadakaListe" style="margin-top:8px;font-size:12px;max-height:120px;overflow:auto"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin:0 0 10px">🕋 Zekât Hesaplayıcı</h2>
+        <p class="mut" style="margin:0 0 8px;font-size:12px">Nisab: 85 gram altın karşılığı. Toplam mal varlığın bu sınırı aşarsa zekât %2,5 oranında hesaplanır.</p>
+        <div class="row" style="gap:6px;margin-bottom:6px"><input id="zekatVarlik" type="number" placeholder="Toplam mal varlığın (₺)"></div>
+        <div class="row" style="gap:6px;margin-bottom:8px"><input id="zekatAltinGram" type="number" placeholder="Güncel gram altın fiyatı (₺)"><button class="btn" onclick="zekatHesapla()">Hesapla</button></div>
+        <div id="zekatSonuc" style="font-size:12.5px"></div>
       </div>
       <div class="card">
         <h2 style="margin:0 0 10px">🧘 Bugün Nasılım?</h2>
@@ -931,6 +938,18 @@ function sadakaRender(){
   var top=list.reduce((a,b)=>a+b.tutar,0);
   $("sadakaToplam").textContent=top.toLocaleString("tr-TR")+" ₺";
   $("sadakaListe").innerHTML=list.slice().reverse().slice(0,5).map(s=>'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)"><span class="mut">'+s.t.slice(8)+'</span><b>'+s.tutar.toLocaleString("tr-TR")+' ₺</b></div>').join("");
+}
+function zekatHesapla(){
+  const varlik=+$("zekatVarlik").value||0,gramFiyat=+$("zekatAltinGram").value||0;
+  if(!varlik||!gramFiyat){$("zekatSonuc").innerHTML='<span class="mut">Varlık ve gram altın fiyatını gir.</span>';return;}
+  const nisab=85*gramFiyat;
+  if(varlik<nisab){
+    $("zekatSonuc").innerHTML='Nisab miktarı: <b>'+nisab.toLocaleString("tr-TR")+' ₺</b><br>Varlığın nisabın altında, zekât farz değil.';
+  }else{
+    const zekat=varlik*0.025;
+    $("zekatSonuc").innerHTML='Nisab miktarı: <b>'+nisab.toLocaleString("tr-TR")+' ₺</b><br>Ödenmesi gereken zekât (%2,5): <b style="color:#0e9f6e;font-size:16px">'+zekat.toLocaleString("tr-TR",{maximumFractionDigits:2})+' ₺</b>';
+  }
+  set("zekatSonHesap",{varlik,gramFiyat,tarih:todayStr()});
 }
 function sadakaEkle(){
   var t=parseFloat($("sadakaTutar").value);if(!t||t<=0)return;

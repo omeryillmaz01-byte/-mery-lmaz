@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ÖMER YILMAZ — Komut Merkezi · v500</title>
+<title>ÖMER YILMAZ — Komut Merkezi · v1000</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 :root{
@@ -59,6 +59,8 @@ body{background:var(--bg);transition:background .4s}
 /* ───── İÇERİK ───── */
 #home{flex:1;overflow:auto;padding:34px 26px 60px}
 .wrap{max-width:1000px;margin:0 auto}
+body.odak-modu #grid{opacity:.15;filter:grayscale(1);pointer-events:none}
+body.odak-modu #havaChip{display:none}
 
 /* greeting */
 .greet{margin-bottom:30px}
@@ -203,11 +205,14 @@ body{background:var(--bg);transition:background .4s}
       <div class="search-drop" id="aramaDrop"></div>
     </div>
     <span class="chip"><span class="dot"></span> <span id="tarih">–</span></span>
-    <span class="chip">⚡ <b>v500</b></span>
+    <span class="chip">⚡ <b>v1000</b></span>
     <span class="chip" id="havaChip" style="cursor:pointer" title="Yenilemek için tıkla">🌤️ –</span>
     <button class="gbtn" id="bildirimBtn" title="Bildirimler">🔔</button>
     <button class="gbtn" id="sesBtn" title="Sesli komut: 'muhasebe panelini aç' de">🎙️</button>
     <button class="gbtn" id="dilBtn" title="Dil / Language">TR</button>
+    <button class="gbtn" onclick="yaziBoyutAyarla(-10)" title="Yazıyı küçült">A-</button>
+    <button class="gbtn" onclick="yaziBoyutAyarla(10)" title="Yazıyı büyüt">A+</button>
+    <button class="gbtn" onclick="odakModuToggle()" title="Odak Modu (dikkat dağıtıcıları gizle)">🎯</button>
     <button class="gbtn" id="themeBtn">🌙</button>
   </div>
 
@@ -219,6 +224,10 @@ body{background:var(--bg);transition:background .4s}
         <div class="counter"><span class="num" id="kalan">–</span><span class="lbl">gün kaldı · KGK Sınavı</span></div>
         <div class="counter"><span class="num" id="ilerleme">–</span><span class="lbl">panel aktif</span></div>
       </div>
+      <div id="gununSozu" style="margin-top:14px;font-size:12.5px;font-style:italic;color:var(--mut)"></div>
+      <div id="kullanimGunSayaci" style="margin-top:6px;font-size:11.5px;color:var(--mut)"></div>
+      <button class="gbtn" style="margin-top:10px" onclick="neYapmaliyimGoster()">🧭 Bugün Ne Yapmalıyım?</button>
+      <div id="neYapmaliyimKutu" style="display:none;margin-top:10px;padding:10px 14px;background:var(--card2,#1c2130);border-radius:10px;font-size:13px;line-height:1.7"></div>
     </div>
 
     <!-- YOĞUN DÖNEM MODU -->
@@ -347,6 +356,8 @@ body{background:var(--bg);transition:background .4s}
           <button class="mini-btn" style="flex:none;padding:8px 14px" id="remEkle">Ekle</button>
         </div>
         <div class="rem-list" id="remListe"></div>
+        <div style="font-size:11px;color:var(--faint);margin-top:8px;cursor:pointer" onclick="bildirimGecmisiGoster()">🕐 Bildirim geçmişini göster</div>
+        <div id="bildirimGecmisiKutu" style="display:none;margin-top:8px;font-size:11px;color:var(--faint)"></div>
       </div>
     </div>
 
@@ -488,6 +499,7 @@ function remKontrolEt(){
     else if(tekrar==="aylik")uygun=(simdi.getDate()===(r.ayGunu??simdi.getDate()));
     if(!uygun)return;
     r.son=bugunISO;degisti=true;remSesCal();
+    bildirimGecmisineEkle(r.metin);
     if("Notification" in window && Notification.permission==="granted"){try{new Notification("⏰ Hatırlatıcı",{body:r.metin});}catch(e){}}
     else alert("⏰ Hatırlatıcı: "+r.metin);
   });
@@ -536,6 +548,100 @@ function ozetOlustur(){
       <div class="mini-row">Son kayıtlı kilo <b>${kiloDeger}</b></div></div>`;
 }
 ozetOlustur();
+
+/* ───── GÜNÜN SÖZÜ ───── */
+const GUNUN_SOZLERI=[
+  "Sabreden derviş muradına ermiş.",
+  "Bugün ektiğin, yarın biçeceğindir.",
+  "Küçük adımlar, büyük hedeflere götürür.",
+  "Disiplin, motivasyon bittiğinde devreye girer.",
+  "Zorluklar geçicidir, bıraktığın iz kalıcıdır.",
+  "En iyi zaman şimdi, en iyi yer burasıdır.",
+  "Kendine söz verdiğin şeyi tutan insan, en büyük başarıyı kazanır.",
+  "Bir adım at, yol kendini gösterir.",
+  "Yorgunluk geçer, pes etmenin acısı kalır.",
+  "Her gün biraz daha iyi olmak yeterlidir.",
+  "İstikrar, yetenekten daha güçlüdür.",
+  "Bugün zor olan, yarın kolay hatırlanır.",
+  "Kazanmak isteyen, önce alışkanlıklarını değiştirir.",
+  "Vazgeçmemek, kazanmanın yarısıdır.",
+  "Emek boşa gitmez, sabırla beklemesini bil."
+];
+function gununSozunuGoster(){
+  const gun=Math.floor(Date.now()/86400000);
+  $("gununSozu").textContent="💬 "+GUNUN_SOZLERI[gun%GUNUN_SOZLERI.length];
+}
+gununSozunuGoster();
+
+/* ───── Ctrl+K ARAMA KISAYOLU ───── */
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){
+    e.preventDefault();$("arama").focus();$("arama").select();
+  }
+});
+
+/* ───── BİLDİRİM GEÇMİŞİ ───── */
+function bildirimGecmisineEkle(mesaj){
+  try{
+    const l=JSON.parse(localStorage.getItem("oy_bildirim_gecmisi")||"[]");
+    l.unshift({mesaj,zaman:new Date().toLocaleString("tr-TR")});
+    localStorage.setItem("oy_bildirim_gecmisi",JSON.stringify(l.slice(0,30)));
+  }catch(e){}
+}
+function bildirimGecmisiGoster(){
+  const kutu=$("bildirimGecmisiKutu");
+  const gosteriliyor=kutu.style.display==="block";
+  if(gosteriliyor){kutu.style.display="none";return;}
+  let l=[];try{l=JSON.parse(localStorage.getItem("oy_bildirim_gecmisi")||"[]");}catch(e){}
+  kutu.innerHTML=l.length?l.map(x=>x.zaman+" — "+x.mesaj).join("<br>"):"Henüz bildirim tetiklenmedi.";
+  kutu.style.display="block";
+}
+
+/* ───── KULLANIM GÜNÜ SAYACI (v1000) ───── */
+(function(){
+  try{
+    const bugun=new Date().toISOString().slice(0,10);
+    let l=JSON.parse(localStorage.getItem("oy_kullanim_gunleri")||"[]");
+    if(!l.includes(bugun)){l.push(bugun);localStorage.setItem("oy_kullanim_gunleri",JSON.stringify(l));}
+    const el=$("kullanimGunSayaci");
+    if(el)el.textContent="📅 Panel "+l.length+" farklı gün kullanıldı";
+  }catch(e){}
+})();
+
+/* ───── ERİŞİLEBİLİRLİK: YAZI BOYUTU (v1000) ───── */
+function yaziBoyutAyarla(delta){
+  let mevcut=parseInt(localStorage.getItem("oy_yazi_boyutu")||"100",10);
+  mevcut=Math.max(80,Math.min(130,mevcut+delta));
+  localStorage.setItem("oy_yazi_boyutu",mevcut);
+  document.documentElement.style.fontSize=mevcut+"%";
+}
+(function(){const b=localStorage.getItem("oy_yazi_boyutu");if(b)document.documentElement.style.fontSize=b+"%";})();
+
+/* ───── ODAK MODU (v1000) ───── */
+function odakModuToggle(){
+  document.body.classList.toggle("odak-modu");
+  localStorage.setItem("oy_odak_modu",document.body.classList.contains("odak-modu")?"1":"0");
+}
+(function(){if(localStorage.getItem("oy_odak_modu")==="1")document.body.classList.add("odak-modu");})();
+
+/* ───── "BUGÜN NE YAPMALIYIM" AKILLI ÖNERİ (v1000) ───── */
+function neYapmaliyimGoster(){
+  const oneriler=[];
+  try{
+    const ds=new Date().toISOString().slice(0,10);
+    const oncelikler=JSON.parse(localStorage.getItem("yd_oncelik_"+ds)||"[]");
+    const bosOncelik=Array.isArray(oncelikler)?oncelikler.filter(x=>x&&!x.tamam&&x.metin):[];
+    if(bosOncelik.length)oneriler.push("🎯 Öncelik: "+bosOncelik[0].metin);
+    const hatirlatmalar=JSON.parse(localStorage.getItem("oy_reminders")||"[]");
+    const yakin=hatirlatmalar.find(r=>!r.tamam);
+    if(yakin)oneriler.push("⏰ Hatırlatma: "+(yakin.baslik||yakin.metin||"kontrol et"));
+    const gun=Math.floor(Date.now()/86400000);
+    oneriler.push("💬 "+GUNUN_SOZLERI[gun%GUNUN_SOZLERI.length]);
+  }catch(e){}
+  if(!oneriler.length)oneriler.push("Bugün için planlanmış özel bir görev yok, dilediğin panelden çalışmaya başlayabilirsin.");
+  const kutu=$("neYapmaliyimKutu");
+  if(kutu){kutu.innerHTML=oneriler.map(o=>"• "+o).join("<br>");kutu.style.display="block";}
+}
 
 /* ───── YEDEKLEME ───── */
 function yedekGecmisiEkle(){

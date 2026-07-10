@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💰 Muhasebe Paneli · v500</title>
+<title>💰 Muhasebe Paneli · v1000</title>
 <style>
 :root{
   --bg0:#070b14;--bg1:#0c1322;--glass:rgba(22,30,48,.55);--glass2:rgba(30,40,64,.5);
@@ -126,7 +126,7 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
       </div>
     </div>
     <div class="panel" style="margin-bottom:0">
-      <h2>📊 Aylık Gelir / Gider</h2>
+      <h2>📊 Aylık Gelir / Gider <button class="btn btn-s" style="height:26px;padding:0 10px;font-size:11px;margin-left:8px" onclick="barChartToggle()">6/12 Ay</button></h2>
       <canvas id="barCanvas" width="420" height="220" style="width:100%;max-width:100%"></canvas>
     </div>
   </div>
@@ -227,6 +227,18 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
           <button class="btn btn-g" id="butceKaydet">Kaydet</button>
         </div>
         <div id="butceUyari" style="font-size:13px"></div>
+        <h2 style="margin-top:18px">📂 Kategori Bazlı Bütçe Limitleri</h2>
+        <div class="row" style="margin-bottom:10px">
+          <div class="fld" style="max-width:170px"><label>KATEGORİ</label>
+            <select id="katButceKat">
+              <option>Market / Yiyecek</option><option>Fatura / Aidat</option><option>Ulaşım</option>
+              <option>Sağlık</option><option>Eğitim</option><option>Eğlence</option><option>Giyim</option>
+            </select>
+          </div>
+          <div class="fld" style="max-width:150px"><label>LİMİT (₺)</label><input id="katButceLimit" type="number" min="0" placeholder="0" /></div>
+          <button class="btn btn-g" id="katButceKaydet">Kaydet</button>
+        </div>
+        <div id="katButceListe"></div>
       </div>
       <div class="panel" style="margin-bottom:16px">
         <h2>🔔 Vergi/SGK Takvimi Hatırlatıcıları</h2>
@@ -367,12 +379,14 @@ function pieChart(){
   ctx.fillStyle="#eef3fb";ctx.font="bold 15px sans-serif";ctx.fillText(Math.round(top).toLocaleString("tr-TR")+"₺",100,112);
   $("pieLegend").innerHTML=entries.map((e,i)=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:11px;height:11px;border-radius:3px;background:${PALET[i%PALET.length]};flex:none"></span><span style="flex:1">${e[0]}</span><b>${Math.round(e[1]/top*100)}%</b></div>`).join("");
 }
+let _barAySayisi=6;
+function barChartToggle(){_barAySayisi=_barAySayisi===6?12:6;barChart();}
 function barChart(){
   const cv=document.getElementById("barCanvas");if(!cv)return;const ctx=cv.getContext("2d");const W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);
-  // son 6 ay
+  const ayAdet=_barAySayisi||6;
   const aylar=[];const now=new Date();
-  for(let k=5;k>=0;k--){const d=new Date(now.getFullYear(),now.getMonth()-k,1);aylar.push({y:d.getFullYear(),m:d.getMonth(),lbl:["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"][d.getMonth()],gelir:0,gider:0});}
+  for(let k=ayAdet-1;k>=0;k--){const d=new Date(now.getFullYear(),now.getMonth()-k,1);aylar.push({y:d.getFullYear(),m:d.getMonth(),lbl:["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"][d.getMonth()],gelir:0,gider:0});}
   islemler.forEach(i=>{const d=new Date(i.tarih);const a=aylar.find(x=>x.y===d.getFullYear()&&x.m===d.getMonth());if(a){if(i.tip==="gelir")a.gelir+=i.tutar;else if(i.tip==="gider")a.gider+=i.tutar;}});
   const max=Math.max(1,...aylar.map(a=>Math.max(a.gelir,a.gider)));
   const pad=30,bw=(W-pad*2)/aylar.length,gw=bw*0.32;
@@ -410,6 +424,30 @@ function butceRender(){
     +(yuzde>=100?'<div style="color:#f87171;margin-top:6px">🚨 Bu ay bütçe limitini aştın!</div>':yuzde>=80?'<div style="color:#fbbf24;margin-top:6px">⚠️ Limitin %80\'ine yaklaştın.</div>':'');
 }
 $("butceKaydet").onclick=()=>{save("muh_butceLimit",+$("butceLimit").value||0);butceRender();};
+
+/* ───── KATEGORİ BAZLI BÜTÇE LİMİTLERİ ───── */
+function katButceler(){return load("muh_katButce")||{};}
+$("katButceKaydet").onclick=()=>{
+  const kat=$("katButceKat").value,limit=+$("katButceLimit").value||0;
+  if(!limit){alert("Geçerli bir limit gir.");return;}
+  const b=katButceler();b[kat]=limit;save("muh_katButce",b);
+  $("katButceLimit").value="";katButceRender();
+};
+function katButceRender(){
+  const b=katButceler();const ay=new Date().getMonth(),yil=new Date().getFullYear();
+  const kats=Object.keys(b);
+  if(!kats.length){$("katButceListe").innerHTML='<div style="color:var(--mut);font-size:12px;padding:6px 0">Henüz kategori limiti eklenmedi.</div>';return;}
+  $("katButceListe").innerHTML=kats.map(kat=>{
+    const harcanan=islemler.filter(i=>i.tip==="gider"&&i.kategori===kat&&new Date(i.tarih).getMonth()===ay&&new Date(i.tarih).getFullYear()===yil).reduce((s,i)=>s+(+i.tutar||0),0);
+    const yuzde=Math.round(harcanan/b[kat]*100);
+    const renk=yuzde>=100?"#f87171":yuzde>=80?"#fbbf24":"#34d399";
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>${kat}</span><span>${fmt(harcanan)} / ${fmt(b[kat])} (%${yuzde}) <button class="del-btn" onclick="katButceSil('${kat}')">✕</button></span></div>
+      <div style="height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden"><div style="height:100%;width:${Math.min(100,yuzde)}%;background:${renk}"></div></div>
+    </div>`;
+  }).join("");
+}
+function katButceSil(kat){const b=katButceler();delete b[kat];save("muh_katButce",b);katButceRender();}
 
 /* ───── ABONELİK / SABİT GİDER ───── */
 let abonelikler=load("muh_abonelik")||[];
@@ -592,7 +630,7 @@ $("vergiTakvimEkle").onclick=()=>{
   $("vergiTakvimDurum").textContent=eklendi?("✓ "+eklendi+" hatırlatıcı eklendi — Ana ekran › Hatırlatıcılar bölümünde görebilirsin."):"Zaten tüm vergi hatırlatıcıları ekli.";
 };
 
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender()}
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender();katButceRender()}
 
 function islemEkleTamamla(fisFoto){
   const tip=$("tipSel").value;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KGK SINAV PANELİ · Fuat Hoca Tarzı · Pro · v500</title>
+<title>KGK SINAV PANELİ · Fuat Hoca Tarzı · Pro · v1000</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -235,6 +235,7 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
     <a data-tab="gunun">📅 Günün Soruları</a>
     <a data-tab="bilgi">📘 Muhasebe Bilgileri</a>
     <a data-tab="favoriler">⭐ Favoriler</a>
+    <a data-tab="yanlislarim">❌ Yanlışlarım</a>
     <a data-tab="analiz">Analiz</a>
   </nav>
   <div class="actions">
@@ -419,6 +420,14 @@ footer .copy{font-size:12.5px;color:#8b97a8;margin-top:10px}
   <div class="section-h"><h3>⭐ Favorilerim</h3><span class="line"></span></div>
   <p style="color:var(--text-soft);margin-bottom:16px">Soru çözerken veya bilgi kartlarında ⭐ ikonuna bastığında burada birikir — tekrar bakmak istediklerin için.</p>
   <div id="favorilerListe"></div>
+</div>
+
+<!-- ════════ YANLIŞLARIM TAB ════════ -->
+<div class="tab-pane" id="tabYanlislarim">
+  <div class="section-h"><h3>❌ Yanlışlarım</h3><span class="badge" id="yanlisSayac"></span><span class="line"></span></div>
+  <p style="color:var(--text-soft);margin-bottom:14px">Çoktan seçmeli sorularda yanlış cevapladıkların otomatik burada birikir. Düzenli tekrar ederek zayıf noktalarını kapat.</p>
+  <button class="btn btn-primary" onclick="App.yanlislariTekrarBasla()" style="margin-bottom:16px">🔁 Hepsini Tekrar Çöz</button>
+  <div id="yanlisListe"></div>
 </div>
 
 <!-- ════════ ANALİZ TAB ════════ -->
@@ -682,7 +691,9 @@ const HAZIR_SORULAR_EK = {
   {q:'E-fatura ve e-defter uygulaması muhasebe süreçlerini nasıl etkiler?',a:'Belge ve kayıtların elektronik ortamda düzenlenip saklanmasını sağlayarak denetlenebilirliği ve standardizasyonu artırır.',anahtar:'Belirli ciro/şartları aşan mükellefler için e-fatura/e-defter zorunludur.',puf:'E-defter berat dosyaları GİB’e/onaylı mali müşavire elektronik imzayla gönderilir.'},
   {q:'Enflasyon düzeltmesinde "amortisman ömrü biten varlıklar" tuzağı nedir? (VUK Mük. 298/A)',a:'Tamamen amorti olmuş (net defter değeri 0 veya iz bedeli) bir varlık endekslendiğinde, varlık artışı ile birikmiş amortisman artışı normalde birbirini nötrler. Ancak geçmişte kıst amortisman uygulanmışsa veya bir yıl amortisman ayrılmayı unutulmuşsa, bu iki artış tutarı birbirini tutmaz ve aradaki fark hayali (nakit girişi olmayan) bir "Enflasyon Kârı" (648) olarak ortaya çıkar; mükellef bu kâr üzerinden fazladan kurumlar vergisi öder.',anahtar:'253/254/255 ve 257 hesapları Yİ-ÜFE ile endekslenirken, geçmiş amortisman geçmişi kuruşu kuruşuna kontrol edilmelidir.',puf:'Mizan incelemesinde faydalı ömrü biten varlıkların amortisman geçmişindeki tutarsızlıklar, dönem sonunda hayali bir enflasyon kârı ve gereksiz vergi yükü doğurur — bu yüzden özellikle eski/tam amorti varlıklar tek tek kontrol edilmelidir.'},
   {q:'İhraç kayıtlı satışlarda (KDVK md. 11/1-c) "3 aylık süre" tuzağı nasıl işler?',a:'İmalatçı, ihracatçıya KDV hesaplamadan mal teslim eder ve bu KDV devlet tarafından tecil (ertelenmiş) edilir. İhracatçının malı teslim aldığı tarihi izleyen ay başından itibaren 3 ay içinde fiilen ihraç etmesi gerekir. Bu süre kaçırılırsa, tecil edilen KDV, vergi ziyaı cezası ve gecikme faiziyle birlikte İMALATÇIDAN geri istenir.',anahtar:'Süre dolmadan önce imalatçı veya ihracatçı vergi dairesinden "ek süre" (en fazla 3 ay daha) talep edebilir; süre geçtikten sonraki başvurular reddedilir.',puf:'Mali müşavirin ihracatçıyı düzenli arayıp "gümrük beyannamesi kapandı mı?" diye takip etmesi gereken tam da bu noktadır — 2 günlük gecikme bile faturayı imalatçıya kestirebilir.'},
-  {q:'Binek araç gider kısıtlamasında amortisman sınırı ile satış anındaki kâr/zarar hesabı nasıl ilişkilidir?',a:'Binek araçların hem giderlerine (%70 sınırı) hem amortismanlarına yıllık tebliğle belirlenen tutar sınırları vardır; sınırı aşan amortisman kısmı KKEG (kanunen kabul edilmeyen gider) olarak matraha eklenir. Araç satıldığında ise geçmiş yıllarda KKEG yapılan (yani vergi matrahından zaten bir kez indirilemeyen) amortisman tutarlarının satış kârından düşülmesi gerekir; aksi halde aynı tutar üzerinden mükerrer (iki kez) vergi ödenmiş olur.',anahtar:'Satış kaydında birikmiş amortismanın tamamını değil, sadece "kanunen kabul edilen" kısmını kâr hesabına dahil etmek gerekir.',puf:'Muhasebecilerin sık yaptığı hata: aracı satarken 257 hesaptaki birikmiş amortismanın tamamını kâr hesabına katmak — bu, geçmişte zaten gider yazılamayan (KKEG yapılan) tutarı satışta bir kez daha vergilendirir.'}
+  {q:'Binek araç gider kısıtlamasında amortisman sınırı ile satış anındaki kâr/zarar hesabı nasıl ilişkilidir?',a:'Binek araçların hem giderlerine (%70 sınırı) hem amortismanlarına yıllık tebliğle belirlenen tutar sınırları vardır; sınırı aşan amortisman kısmı KKEG (kanunen kabul edilmeyen gider) olarak matraha eklenir. Araç satıldığında ise geçmiş yıllarda KKEG yapılan (yani vergi matrahından zaten bir kez indirilemeyen) amortisman tutarlarının satış kârından düşülmesi gerekir; aksi halde aynı tutar üzerinden mükerrer (iki kez) vergi ödenmiş olur.',anahtar:'Satış kaydında birikmiş amortismanın tamamını değil, sadece "kanunen kabul edilen" kısmını kâr hesabına dahil etmek gerekir.',puf:'Muhasebecilerin sık yaptığı hata: aracı satarken 257 hesaptaki birikmiş amortismanın tamamını kâr hesabına katmak — bu, geçmişte zaten gider yazılamayan (KKEG yapılan) tutarı satışta bir kez daha vergilendirir.'},
+  {q:'Stok sayım sırasında fiili miktar kayıtlı miktardan az çıkarsa (sayım noksanı) hangi vergisel değerlendirme yapılır?',a:'Noksanlığın nedeni (fire, çalınma, kayıt hatası) araştırılır; normal fire toleransı içindeyse gider kabul edilebilir, toleransı aşan veya nedeni belirsiz noksanlık KDV açısından "teslim sayılan haller" kapsamında değerlendirilip KDV hesaplanması gerekebilir.',anahtar:'197 Sayım Noksanları hesabı, neden belirlenene kadar geçici olarak kullanılır.',puf:'Nedeni tespit edilemeyen noksanlıklar vergi incelemesinde risk teşkil eder; fire oranlarının sektörel emsallerle desteklenmesi önemlidir.'},
+  {q:'Bir işletmenin duran varlık yatırımını kredi ile finanse etmesi durumunda faiz giderleri nasıl muhasebeleştirilir?',a:'Varlık kullanıma hazır hale gelene kadarki (yatırım dönemi) faizler TMS 23 kapsamında maliyete eklenebilir (özellikli varlık şartını sağlıyorsa); kullanıma başladıktan sonraki faizler döneme gider yazılır.',anahtar:'Vergi mevzuatında da inşaat/yatırım dönemindeki kredi faizleri maliyete eklenebilir ya da doğrudan gider yazılabilir (seçimlik).',puf:'Aktifleştirme kararı bir kez verildiğinde o yatırım için tutarlı uygulanmalıdır.'}
  ],
  'DENETİM':[
   {q:'Denetçinin "mesleki şüphecilik" göstermesi ne demektir?',a:'Kanıtları sorgulayıcı bir zihinle değerlendirmesi, hata/hile olabileceğini sürekli göz önünde tutmasıdır.',anahtar:'TDS 200.',puf:'Yönetime güven, kanıt toplamayı azaltmanın gerekçesi olamaz.'},
@@ -779,7 +790,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Denetimde soruşturma" (inquiry) prosedürünün sınırlılığı nedir?',a:'Sözlü/yazılı bilgi talebine dayandığından tek başına yeterli kanıt sayılmaz; diğer prosedürlerle desteklenmelidir.',anahtar:'Soruşturma, yönetim ve çalışanlarla yapılan görüşmeleri kapsar.',puf:'Soruşturmadan elde edilen bilgi, bağımsız kanıtlarla teyit edilmelidir.'},
   {q:'"Kilit denetim ortağı" (engagement partner) kimdir?',a:'Denetimin yürütülmesinden ve denetim raporundan nihai olarak sorumlu olan ortak/denetçidir.',anahtar:'Rotasyon kuralları öncelikle kilit denetim ortağı için uygulanır.',puf:'Kilit denetim ortağı raporu imzalayan kişidir.'},
   {q:'"Denetim raporunun kamuya açıklanması" hangi amaca hizmet eder?',a:'Yatırımcılar, kreditörler ve diğer paydaşların finansal tablolara olan güvenini artırarak sermaye piyasalarının sağlıklı işlemesini destekler.',anahtar:'Halka açık şirketlerde rapor KAP üzerinden kamuya açıklanır.',puf:'Denetim raporu, finansal tabloların ayrılmaz bir parçası olarak sunulur.'},
-  {q:'"Denetimde kanıt toplamanın maliyet-fayda dengesi" nasıl kurulur?',a:'Denetçi, ek kanıt toplamanın maliyetini elde edilecek güvence artışıyla karşılaştırarak makul bir denge kurar.',anahtar:'Maliyet gerekçesiyle yetersiz kanıtla yetinmek kabul edilemez.',puf:'Risk yüksekse maliyet gerekçesi denetim kapsamını daraltma nedeni olamaz.'}
+  {q:'"Denetimde kanıt toplamanın maliyet-fayda dengesi" nasıl kurulur?',a:'Denetçi, ek kanıt toplamanın maliyetini elde edilecek güvence artışıyla karşılaştırarak makul bir denge kurar.',anahtar:'Maliyet gerekçesiyle yetersiz kanıtla yetinmek kabul edilemez.',puf:'Risk yüksekse maliyet gerekçesi denetim kapsamını daraltma nedeni olamaz.'},
+  {q:'"Grup denetiminde" (TDS 600) ana denetçi ile bileşen denetçisi arasındaki ilişki nasıldır?',a:'Ana denetçi (group engagement partner) grup görüşünden nihai olarak sorumludur; bileşen denetçilerin çalışmalarını yönlendirir, gözden geçirir ve yeterliliğini değerlendirir.',anahtar:'Önemli bileşenler için ana denetçi doğrudan çalışmaya katılabilir veya bileşen denetçisinin çalışma kağıtlarını inceler.',puf:'Bileşen denetçisinin bağımsızlığı ve yeterliliği konusunda ana denetçi yeterli güvence almalıdır.'},
+  {q:'"Sürekliliğe ilişkin önemli belirsizlik" (going concern) denetim raporunu nasıl etkiler?',a:'Yönetim uygun açıklama yapmışsa denetçi olumlu görüş verip raporda ayrı bir paragrafla belirsizliği vurgular; yeterli açıklama yapılmamışsa şartlı veya olumsuz görüş gerekebilir.',anahtar:'TDS 570 sürekliliğin denetimini düzenler.',puf:'Belirsizliğin varlığı tek başına şartlı görüş nedeni değildir, açıklamanın yeterliliği belirleyicidir.'}
  ],
  'FİNANS':[
   {q:'Bileşik faiz ile basit faiz arasındaki fark nedir?',a:'Basit faiz yalnızca anaparaya, bileşik faiz anapara + birikmiş faize işler.',anahtar:'Bileşik: GD = AD×(1+i)^n.',puf:'Uzun vadede bileşik faiz çok daha hızlı büyür.'},
@@ -876,7 +889,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Kredi notu düşüşünün" bir şirketin tahvil ihracına etkisi nedir?',a:'Kredi notu düştükçe yatırımcılar daha yüksek risk primi talep eder, bu da şirketin borçlanma maliyetini artırır.',anahtar:'Bazı tahvil sözleşmelerinde kredi notu düşüşü erken geri ödeme tetikleyicisi olabilir.',puf:'Kredi notu, hem faiz oranını hem de yatırımcı tabanının genişliğini etkiler.'},
   {q:'"Temettü politikasında istikrarlı (residual olmayan) yaklaşım" ne anlama gelir?',a:'İşletmenin, kâr dalgalansa bile yıllar içinde nispeten sabit veya düzenli artan bir temettü ödeme politikası izlemesidir.',anahtar:'Bu yaklaşım, yatırımcılara öngörülebilirlik sağlar ve olumlu sinyal etkisi yaratabilir.',puf:'Artık (residual) yaklaşımda ise temettü, yatırım ihtiyaçları karşılandıktan sonra kalan kârdan ödenir.'},
   {q:'"Finansal esneklik" (financial flexibility) kavramı neden önemlidir?',a:'İşletmenin beklenmedik fırsat veya sıkıntılara hızla finansman sağlayabilme kapasitesidir; düşük kaldıraç ve güçlü nakit pozisyonuyla desteklenir.',anahtar:'Yüksek finansal esneklik, ekonomik belirsizlik dönemlerinde rekabet avantajı sağlar.',puf:'Aşırı ihtiyatlı finansman politikası ise fırsat maliyeti (kullanılmayan kaldıraç avantajı) yaratabilir.'},
-  {q:'"Kredi analizinde 5C kuralı" nelerdir?',a:'Karakter (character), kapasite (capacity), sermaye (capital), teminat (collateral) ve koşullar (conditions).',anahtar:'Bankalar kredi değerlendirmesinde bu beş unsuru birlikte inceler.',puf:'Kapasite, genellikle nakit akışı ve borç ödeme gücünü ifade eder.'}
+  {q:'"Kredi analizinde 5C kuralı" nelerdir?',a:'Karakter (character), kapasite (capacity), sermaye (capital), teminat (collateral) ve koşullar (conditions).',anahtar:'Bankalar kredi değerlendirmesinde bu beş unsuru birlikte inceler.',puf:'Kapasite, genellikle nakit akışı ve borç ödeme gücünü ifade eder.'},
+  {q:'"Sermaye bütçelemesinde geri ödeme süresi" (payback period) ile "ıskonto edilmiş geri ödeme süresi" arasındaki fark nedir?',a:'Basit geri ödeme süresi nakit akışlarını olduğu gibi toplarken, iskonto edilmiş versiyon her nakit akışını önce bugünkü değere indirger, böylece paranın zaman değerini dikkate alır.',anahtar:'İskontolu geri ödeme süresi her zaman basit geri ödeme süresinden uzun veya eşittir.',puf:'Her iki yöntem de geri ödeme sonrası nakit akışlarını göz ardı eder, bu nedenle NPV/IRR ile birlikte kullanılmalıdır.'},
+  {q:'"Sürdürülebilir büyüme oranı" (sustainable growth rate) neyi ifade eder?',a:'İşletmenin dış finansmana (borç/özkaynak ihracı) başvurmadan, sadece iç kaynaklarla (dağıtılmayan kâr) destekleyebileceği maksimum büyüme oranıdır.',anahtar:'SGO = ROE × (1 − Temettü Dağıtım Oranı).',puf:'Bu oranın üzerinde büyümek isteyen işletmeler ek finansman ihtiyacı (AFN) ile karşılaşır.'}
  ],
  'TMS-TFRS':[
   {q:'TMS 1 Finansal Tabloların Sunuluşu hangi tabloları zorunlu kılar?',a:'Finansal durum tablosu, kâr/zarar ve diğer kapsamlı gelir tablosu, özkaynak değişim tablosu, nakit akış tablosu ve dipnotlar.',anahtar:'Karşılaştırmalı (en az iki dönem) sunum esastır.',puf:'İşletmenin sürekliliği (going concern) varsayımı temeldir.'},
@@ -973,7 +988,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Bir işletmenin kendi hisselerini geri alması" (treasury shares) finansal tablolarda nasıl gösterilir?',a:'Geri alınan paylar bir varlık olarak değil, özkaynaklardan indirim kalemi olarak gösterilir.',anahtar:'Geri alım ve yeniden satış işlemlerinden kâr/zarar oluşmaz, doğrudan özkaynak içinde muhasebeleştirilir.',puf:'TTK, sınırlı hallerde ve belirli oranlarda pay geri alımına izin verir.'},
   {q:'"TFRS’lerde mesleki muhakemenin önemi" muhasebe uygulamasında neden artmıştır?',a:'TFRS’ler kural bazlı değil ilke bazlı standartlar olduğundan, işletmelerin ve denetçilerin somut olaylara ilkeleri yorumlayarak uygulaması gerekir.',anahtar:'İlke bazlı yaklaşım esneklik sağlar ama tutarlılığı sağlamak için ek açıklama ve gerekçelendirme gerektirir.',puf:'ABD GAAP’ın daha kural bazlı olmasıyla sık karşılaştırılan bir husustur.'},
   {q:'"Finansal tabloların onaylanması" (yayım için yetkilendirilme tarihi) TMS 10 açısından neden önemlidir?',a:'Bu tarih, "bilanço tarihinden sonraki olaylar" değerlendirmesinin sona erdiği tarihtir; bu tarihten sonraki olaylar genellikle finansal tablolara yansıtılmaz.',anahtar:'Yönetim kurulu onayı genellikle bu tarih olarak kabul edilir.',puf:'Genel kurul onayı, yayım için yetkilendirme tarihinden farklı ve daha sonraki bir tarih olabilir.'},
-  {q:'"TFRS Yorumları" (TFRYK/IFRIC) ne işe yarar?',a:'Mevcut standartlarda açık olmayan veya çelişkili yorumlanabilecek konularda uygulama birliği sağlamak için Yorumlama Komitesi tarafından yayımlanan ek rehberlerdir.',anahtar:'TFRYK yorumları, ilgili standartla birlikte bağlayıcı kabul edilir.',puf:'Örnek: TFRYK 23 Gelir Vergisi Belirsizliklerinin bulunduğu durumlar.'}
+  {q:'"TFRS Yorumları" (TFRYK/IFRIC) ne işe yarar?',a:'Mevcut standartlarda açık olmayan veya çelişkili yorumlanabilecek konularda uygulama birliği sağlamak için Yorumlama Komitesi tarafından yayımlanan ek rehberlerdir.',anahtar:'TFRYK yorumları, ilgili standartla birlikte bağlayıcı kabul edilir.',puf:'Örnek: TFRYK 23 Gelir Vergisi Belirsizliklerinin bulunduğu durumlar.'},
+  {q:'TFRS 16 Kiralamalar standardına göre kiracı, işletme kiralamasını (operating lease) nasıl muhasebeleştirir?',a:'Kiracı neredeyse tüm kiralamalar için bilançoya "kullanım hakkı varlığı" ve karşılığında "kira yükümlülüğü" kaydeder; kısa süreli ve düşük değerli varlık kiralamaları istisnadır.',anahtar:'TFRS 16 öncesinde işletme kiralamaları bilanço dışı (off-balance sheet) izlenirdi.',puf:'Bu değişiklik, kiracı şirketlerin borç/özkaynak oranlarını ve FAVÖK\'ünü önemli ölçüde etkiler.'},
+  {q:'TMS 36 Varlıklarda Değer Düşüklüğü standardına göre "geri kazanılabilir tutar" nasıl belirlenir?',a:'Gerçeğe uygun değer eksi satış maliyetleri ile kullanım değerinden (gelecekteki nakit akışlarının bugünkü değeri) yüksek olanıdır; defter değeri bu tutarı aşarsa değer düşüklüğü karşılığı ayrılır.',anahtar:'Şerefiye (goodwill) için değer düşüklüğü testi her yıl zorunludur, gösterge olsun olmasın.',puf:'Değer düşüklüğü zararı sonradan iptal edilebilir, ancak şerefiyeye ilişkin değer düşüklüğü asla iptal edilemez.'}
  ],
  'VERGİ MEVZUATI':[
   {q:'Kurumlar vergisi oranı ve mükellefleri nelerdir?',a:'Sermaye şirketleri, kooperatifler, iktisadi kamu kuruluşları vb. kurum kazançları üzerinden alınır.',anahtar:'KVK md. 1-2.',puf:'Kurum kazancı, GVK’daki ticari kazanç hükümlerine göre tespit edilir.'},
@@ -1071,7 +1088,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Vergi tekniği raporu" nedir?',a:'Vergi incelemesi sırasında, sahte belge kullanımı gibi tespitlerin dayanaklarını ve teknik gerekçelerini ortaya koyan rapor türüdür.',anahtar:'Bu raporlar genellikle diğer mükelleflerle ilgili incelemelerde de referans olarak kullanılır.',puf:'Vergi tekniği raporu, doğrudan bir tarhiyata değil, tespit ve gerekçelendirmeye hizmet eder.'},
   {q:'"Özelge" (mukteza) nedir ve bağlayıcılığı nasıldır?',a:'Mükellefin, vergi durumu hakkında görüş almak için idareye yazılı başvurusu sonucu verilen yazılı görüştür; özelgeye uygun hareket eden mükellefe ceza kesilemez.',anahtar:'VUK md. 413 özelge müessesesini düzenler.',puf:'Özelge sadece talep eden mükellef için bağlayıcıdır, genel bir düzenleyici işlem değildir.'},
   {q:'"Vergi mevzuatında tebligatın ilanen yapılması" ne zaman söz konusu olur?',a:'Muhatabın adresi bilinmiyorsa veya tebliğ yapılamıyorsa, tebligat ilan yoluyla (gazete/idare panosu) yapılır.',anahtar:'VUK md. 103-106 ilanen tebligatı düzenler.',puf:'İlan yoluyla tebligatta belirli bir süre sonunda tebliğ yapılmış sayılır.'},
-  {q:'"Vergi incelemesi sonucunda düzenlenen vergi inceleme raporu" ne işe yarar?',a:'İncelemenin bulgularını, hukuki dayanaklarını ve önerilen tarhiyatı içeren, tarhiyata esas teşkil eden resmi belgedir.',anahtar:'Rapor, mükellefe tebliğ edilerek savunma hakkı tanınır.',puf:'Rapor değerlendirme komisyonu, bazı durumlarda raporu inceleyip görüş bildirebilir.'}
+  {q:'"Vergi incelemesi sonucunda düzenlenen vergi inceleme raporu" ne işe yarar?',a:'İncelemenin bulgularını, hukuki dayanaklarını ve önerilen tarhiyatı içeren, tarhiyata esas teşkil eden resmi belgedir.',anahtar:'Rapor, mükellefe tebliğ edilerek savunma hakkı tanınır.',puf:'Rapor değerlendirme komisyonu, bazı durumlarda raporu inceleyip görüş bildirebilir.'},
+  {q:'"Serbest bölgelerde üretilen malların yurt içine satışı" nasıl vergilendirilir?',a:'Serbest bölge, gümrük bölgesi dışında sayıldığından, buradan yurt içine (Türkiye gümrük bölgesine) yapılan satışlar ithalat olarak değerlendirilir ve ilgili vergiler (KDV, gümrük vergisi) uygulanır.',anahtar:'Serbest bölgeden yurt dışına satış ise ihracat gibi değerlendirilir.',puf:'Serbest bölge teşvikleri, sadece bölge içi faaliyet ve ihracata yönelik üretim için geçerlidir.'},
+  {q:'"Tevkifatlı fatura" ile "tevkifatsız fatura" arasındaki muhasebe farkı nedir?',a:'Tevkifatlı faturada KDV\'nin bir kısmı alıcı tarafından sorumlu sıfatıyla beyan edilir; satıcı sadece tevkifat dışı kalan kısmı tahsil eder ve kendi beyannamesinde gösterir.',anahtar:'Tevkifat oranı işlem türüne göre KDV Genel Uygulama Tebliği\'nde belirlenir.',puf:'Tevkifat uygulanan işlemlerde alıcı, tevkif ettiği KDV\'yi 2 no\'lu KDV beyannamesiyle beyan eder.'}
  ],
  'KGK MEVZUATI':[
   {q:'Türkiye Denetim Standartları (TDS) neyi kapsar?',a:'Bağımsız denetim, sınırlı bağımsız denetim, güvence ve ilgili hizmet standartlarını kapsar.',anahtar:'TDS, uluslararası standartlarla (ISA) uyumludur.',puf:'KGK bu standartları Resmî Gazete’de yayımlar.'},
@@ -1170,7 +1189,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Denetim standartlarının Türkçeye çevrilmesinde dikkat edilen hususlar" nelerdir?',a:'Orijinal (İngilizce) metnin anlam bütünlüğünün korunması, Türk hukuk ve muhasebe terminolojisiyle uyumlu, anlaşılır bir dil kullanılması hedeflenir.',anahtar:'Çeviri farklılıkları, uygulamada yorum farklılıklarına yol açabileceğinden özenle yapılır.',puf:'KGK, çeviri sürecinde uzman çalışma grupları oluşturabilir.'},
   {q:'"KGK’nın denetim kuruluşlarının finansal istikrarını (mali yapısını) izlemesi" neden gerekebilir?',a:'Mali sıkıntı içindeki bir denetim kuruluşunun, kalite ve bağımsızlıktan ödün vererek gelir baskısı altında hareket etme riski taşıyabilmesi nedeniyle önemlidir.',anahtar:'Bu tür bir izleme, dolaylı bir kalite güvence unsuru olarak değerlendirilebilir.',puf:'Denetim kuruluşunun sürekliliği, hizmet verdiği müşteriler için de önemli bir husustur.'},
   {q:'"KGK’nın denetim raporlarında dil ve format birliğini denetlemesi" neden önemlidir?',a:'Standart bir format, farklı denetim kuruluşlarınca hazırlanan raporların karşılaştırılabilirliğini ve kullanıcılar tarafından doğru anlaşılmasını kolaylaştırır.',anahtar:'TDS 700 serisi standart rapor formatını ayrıntılı biçimde düzenler.',puf:'Format dışına çıkılması gereken özel durumlar (örn. KAM, dikkat çekilen husus) standartlarda ayrıca belirtilmiştir.'},
-  {q:'"KGK bünyesinde şikayet başvurusu nasıl yapılır ve süreç nasıl işler?"',a:'İlgili taraflar, bir denetim kuruluşu veya denetçi hakkındaki şikayetlerini KGK’ya yazılı olarak iletebilir; KGK ön inceleme yaparak soruşturma açıp açmayacağına karar verir.',anahtar:'Şikayetler somut delil ve gerekçe içermelidir.',puf:'Asılsız veya kötü niyetli şikayetler de değerlendirme sürecinde ayrıca ele alınabilir.'}
+  {q:'"KGK bünyesinde şikayet başvurusu nasıl yapılır ve süreç nasıl işler?"',a:'İlgili taraflar, bir denetim kuruluşu veya denetçi hakkındaki şikayetlerini KGK’ya yazılı olarak iletebilir; KGK ön inceleme yaparak soruşturma açıp açmayacağına karar verir.',anahtar:'Şikayetler somut delil ve gerekçe içermelidir.',puf:'Asılsız veya kötü niyetli şikayetler de değerlendirme sürecinde ayrıca ele alınabilir.'},
+  {q:'"KGK’nın denetim kuruluşlarından beklediği belgelendirme dili" neden Türkçe esaslıdır?',a:'Türkiye\'de yürütülen denetimlerde çalışma kâğıtları ve raporların Türkçe olması, hem yerel mevzuata uygunluğun hem de KGK\'nın denetleyebilirliğinin sağlanması için esastır.',anahtar:'Uluslararası ağ üyesi firmalarda İngilizce şablonlar da kullanılsa, resmi rapor Türkçe düzenlenir.',puf:'Bu durum, uluslararası grup denetimlerinde ek bir çeviri/uyum yükü doğurabilir.'},
+  {q:'"KGK’nın halka açık olmayan ama denetime tabi şirketlerde uyguladığı esneklik" neye dayanır?',a:'Bu şirketlerde KAYİK\'lere özgü daha katı kurallar (zorunlu rotasyon, EQR gibi) aranmayabilir; orantılılık ilkesi gereği daha esnek bir denetim yaklaşımı uygulanabilir.',anahtar:'Orantılılık, işletmenin büyüklüğü ve kamu yararı etkisine göre uygulama derinliğini ayarlar.',puf:'Esneklik, denetim kalitesinin temel gerekliliklerinden ödün vermek anlamına gelmez.'}
  ],
  'KURUMSAL YÖNETİM':[
   {q:'Denetim komitesinin görevi nedir?',a:'Finansal raporlamanın doğruluğunu, iç kontrol ve bağımsız denetim sürecini gözetmektir.',anahtar:'Bağımsız yönetim kurulu üyelerinden oluşur.',puf:'Bağımsız denetçiyi öneren ve gözeten yapıdır.'},
@@ -1269,7 +1290,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Kurumsal yönetimde bağımsız üyelerin sayısının ve etkinliğinin uluslararası karşılaştırması" neden önemlidir?',a:'Farklı ülkelerdeki uygulamaların karşılaştırılması, yerel düzenlemelerin uluslararası en iyi uygulamalarla uyumlu geliştirilmesine katkı sağlar.',anahtar:'Bazı ülkelerde yönetim kurulunun çoğunluğunun bağımsız olması zorunlu tutulabilir.',puf:'Sayısal çoğunluk tek başına etkinliği garanti etmez; üyelerin gerçek bağımsızlığı ve yetkinliği de önemlidir.'},
   {q:'"Kurumsal yönetimde bir şirketin performans göstergelerinin (KPI) yönetim kuruluna raporlanması" neden düzenli yapılmalıdır?',a:'Yönetim kurulunun, şirketin stratejik hedeflere ne ölçüde ulaştığını zamanında görüp gerektiğinde müdahale edebilmesini sağlar.',anahtar:'KPI’lar hem finansal hem finansal olmayan (müşteri memnuniyeti, çalışan bağlılığı) göstergeleri içerebilir.',puf:'Yanlış veya eksik KPI seçimi, yönetim kurulunun yanlış yönde karar almasına yol açabilir.'},
   {q:'"Kurumsal yönetimde şirket birleşmelerinde \'kültürel uyum\' (cultural fit) değerlendirmesi" neden önemlidir?',a:'Finansal olarak cazip görünen bir birleşme, kurumsal kültür uyumsuzluğu nedeniyle beklenen sinerjiyi sağlayamayabilir ve entegrasyon sürecini zorlaştırabilir.',anahtar:'Kültürel due diligence, finansal ve hukuki due diligence kadar önemli görülmeye başlanmıştır.',puf:'Kültür çatışması, birleşme sonrası anahtar personel kaybına da yol açabilir.'},
-  {q:'"Kurumsal yönetimde şirketlerin yapay zeka kullanımına ilişkin etik ilkeler belirlemesi" neden gündeme gelmektedir?',a:'Yapay zeka kararlarının şeffaflığı, adil olması ve hesap verebilirliği konusundaki endişeler, şirketlerin kendi etik çerçevelerini oluşturmasını gerektirmektedir.',anahtar:'Bazı düzenleyiciler, yapay zeka kullanımına ilişkin şeffaflık yükümlülükleri getirmeye başlamıştır.',puf:'Yönetim kurulu, yapay zeka risklerini de genel risk yönetimi çerçevesine dahil etmelidir.'}
+  {q:'"Kurumsal yönetimde şirketlerin yapay zeka kullanımına ilişkin etik ilkeler belirlemesi" neden gündeme gelmektedir?',a:'Yapay zeka kararlarının şeffaflığı, adil olması ve hesap verebilirliği konusundaki endişeler, şirketlerin kendi etik çerçevelerini oluşturmasını gerektirmektedir.',anahtar:'Bazı düzenleyiciler, yapay zeka kullanımına ilişkin şeffaflık yükümlülükleri getirmeye başlamıştır.',puf:'Yönetim kurulu, yapay zeka risklerini de genel risk yönetimi çerçevesine dahil etmelidir.'},
+  {q:'"Kurumsal yönetimde bir şirketin temettü politikasıyla büyüme stratejisi arasındaki denge" nasıl kurulur?',a:'Yönetim kurulu, mevcut kârın ne kadarının yatırıma (büyüme) ne kadarının temettüye ayrılacağına, şirketin sermaye ihtiyacı ve ortakların beklentilerini dengeleyerek karar verir.',anahtar:'Büyüme aşamasındaki şirketler genellikle düşük temettü, olgun şirketler yüksek temettü dağıtır.',puf:'Bu denge, sürdürülebilir büyüme oranı (SGO) kavramıyla da ilişkilidir.'},
+  {q:'"Kurumsal yönetimde şirketlerin kriz sonrası itibar yönetimi stratejisi" hangi unsurları içerir?',a:'Şeffaf iletişim, hesap verebilirlik, somut düzeltici eylemler ve paydaşlarla yeniden güven inşası gibi unsurları içerir.',anahtar:'İtibar kaybı, genellikle finansal kayıptan daha uzun sürede telafi edilir.',puf:'Kriz sonrası sessizlik veya savunmacı tutum, itibar kaybını derinleştirebilir.'}
  ],
  'GENEL HUKUK':[
   {q:'Limited şirket ile anonim şirket arasındaki temel fark nedir?',a:'Ltd. ortak sayısı 50 ile sınırlı, pay senedi halka arz edilemez; AŞ’de pay devri daha kolay ve halka açılabilir.',anahtar:'İkisi de sermaye şirketidir, sorumluluk sermaye ile sınırlıdır.',puf:'Ltd. ortakları kamu borçlarından pay oranında sorumlu olabilir.'},
@@ -1367,7 +1390,9 @@ const HAZIR_SORULAR_EK = {
   {q:'"Poliçe" ile "bono" arasındaki temel fark nedir?',a:'Poliçede üç taraf (düzenleyen, muhatap, lehtar) bulunur ve bir ödeme havalesi niteliğindedir; bonoda ise iki taraf (düzenleyen, lehtar) vardır ve düzenleyenin kendisi ödeme taahhüdünde bulunur.',anahtar:'TTK md. 671 vd. poliçeyi düzenler.',puf:'Poliçenin geçerli olması için muhatap tarafından "kabul" edilmesi gerekebilir.'},
   {q:'"Ciro" işlemi kıymetli evrakta ne işe yarar?',a:'Emre yazılı senetlerin, arkasına yazılan bir beyanla başka bir kişiye devredilmesini sağlar.',anahtar:'Ciro, "temlik cirosu" veya "tahsil cirosu" gibi türlere ayrılabilir.',puf:'Ciro silsilesindeki her ciranta, kural olarak senetten müteselsilen sorumludur.'},
   {q:'"Aval" kıymetli evrak hukukunda ne anlama gelir?',a:'Bir kişinin, bono/poliçe borcunu, borçlu ile birlikte veya onun yerine ödemeyi kefil gibi taahhüt etmesidir.',anahtar:'TTK md. 700-702 avali düzenler.',puf:'Aval veren, kimin için taahhütte bulunduğunu belirtmezse, düzenleyen için aval vermiş sayılır.'},
-  {q:'"Kambiyo senetlerine özgü takip yolu" (icra takibi) genel takipten nasıl farklıdır?',a:'Kambiyo senedine dayalı takipte, borçluya ödeme emri gönderilir ve itiraz süresi (5 gün) genel takibe göre daha kısadır; itiraz icra mahkemesine yapılır.',anahtar:'İcra ve İflas Kanunu md. 167 vd. bu özel takip yolunu düzenler.',puf:'Bu takip yolu, sadece kambiyo senedi (bono, poliçe, çek) alacaklarına özgüdür.'}
+  {q:'"Kambiyo senetlerine özgü takip yolu" (icra takibi) genel takipten nasıl farklıdır?',a:'Kambiyo senedine dayalı takipte, borçluya ödeme emri gönderilir ve itiraz süresi (5 gün) genel takibe göre daha kısadır; itiraz icra mahkemesine yapılır.',anahtar:'İcra ve İflas Kanunu md. 167 vd. bu özel takip yolunu düzenler.',puf:'Bu takip yolu, sadece kambiyo senedi (bono, poliçe, çek) alacaklarına özgüdür.'},
+  {q:'"Ticari işlerde faiz" ile "adi işlerde faiz" arasındaki fark nedir?',a:'Ticari işlerde temerrüt faizi oranı genellikle daha yüksek uygulanabilir ve tacirler arasında faiz istemek için ayrıca ihtar şartı aranmayabilir; adi işlerde ise TBK\'nın genel faiz hükümleri uygulanır.',anahtar:'TTK, tacirler arası ilişkilerde daha sıkı kurallar öngörür.',puf:'Ticari iş karinesi: bir tacirin borçlarının, aksi ispatlanmadıkça ticari iş sayılmasıdır.',},
+  {q:'"Vekaletsiz iş görme" (gestion d\'affaires) ne anlama gelir?',a:'Bir kişinin, başkasının işini onun bilgisi veya yetkisi olmadan, ancak onun menfaatine uygun şekilde görmesidir; iş sahibi işi onaylarsa vekalet hükümleri, onaylamazsa haksız fiil/sebepsiz zenginleşme hükümleri uygulanabilir.',anahtar:'TBK md. 526 vd. vekaletsiz iş görmeyi düzenler.',puf:'İş gören, iş sahibinin gerçek veya tahmin edilen iradesine uygun hareket etmelidir.'}
  ]
 };
 
@@ -1662,6 +1687,7 @@ const App = {
         if(a.dataset.tab==='gunun') this.gununSorulariGoster();
         if(a.dataset.tab==='bilgi') this.bilgiGoster();
         if(a.dataset.tab==='favoriler') this.favorilerGoster();
+        if(a.dataset.tab==='yanlislarim') this.yanlislarimGoster();
       });
     });
   },
@@ -2381,6 +2407,33 @@ const App = {
       });
     }
     el.innerHTML=html||'<p style="color:var(--text-dim)">Henüz favori eklemedin. Soru çözerken ⭐ ikonuna, bilgi kartlarında da ⭐ ikonuna tıklayarak ekleyebilirsin.</p>';
+  },
+
+  // ─── YANLIŞLARIM ───
+  yanlisSorulariBul(){
+    const l=[];
+    GECMIS.forEach(s=>{
+      const key='gy-'+s.yil+'-'+s.sinav+'-'+s.konu+'-'+s.sno;
+      const c=CEVAPLAR[key];
+      if(c&&c.dogru===false)l.push(s);
+    });
+    return l;
+  },
+  yanlislarimGoster(){
+    const l=this.yanlisSorulariBul();
+    document.getElementById('yanlisSayac').textContent=l.length+' soru';
+    const el=document.getElementById('yanlisListe');
+    el.innerHTML=l.length?l.map((s,i)=>`
+      <div style="background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow-sm);border-left:4px solid var(--err)">
+        <div style="font-size:11px;color:var(--text-dim);font-weight:700">${s.konu} · ${s.sinav} ${s.yil}</div>
+        <div style="margin:6px 0;white-space:pre-wrap">${s.q}</div>
+        <div style="font-size:12.5px;color:var(--ok)">${s.a}</div>
+      </div>`).join(''):'<p style="color:var(--text-dim)">Harika, yanlış cevaplanmış soru yok! (Çoktan seçmeli sorularda yanlış yaptıkların burada birikir.)</p>';
+  },
+  yanlislariTekrarBasla(){
+    const l=this.yanlisSorulariBul();
+    if(!l.length){this.toast('Tekrar edilecek yanlış yok','err');return;}
+    this.modalAc(l,'gy',`❌ Yanlışlarım Tekrarı · ${l.length} soru`,null);
   },
 
   // ─── GENEL ARAMA (sorular + bilgi kartları) ───
