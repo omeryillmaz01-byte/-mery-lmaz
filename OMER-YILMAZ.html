@@ -2,8 +2,16 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ÖMER YILMAZ — Komut Merkezi · v1000</title>
+<!-- iPhone / iOS Ana Ekran uygulaması (PWA) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Komut Merkezi">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e17">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjNGZjM2Y3Ii8+PHRleHQgeD0iOTAiIHk9IjExOCIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMwYTBlMTciIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWkiPsOWWTwvdGV4dD48L3N2Zz4=">
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Komut Merkezi","short_name":"Komut","start_url":".","display":"standalone","background_color":"%230a0e17","theme_color":"%230a0e17","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 180%22><rect width=%22180%22 height=%22180%22 rx=%2240%22 fill=%22%234fc3f7%22/><text x=%2290%22 y=%22118%22 font-size=%2284%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22%230a0e17%22>ÖY</text></svg>","sizes":"180x180","type":"image/svg+xml"}]}'>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 :root{
@@ -240,6 +248,17 @@ body.odak-modu #havaChip{display:none}
       <div style="margin-top:14px">
         <button class="gbtn" onclick="haftalikRaporGoster()">📊 Haftalık Özet Raporu</button>
         <div id="haftalikRaporKutu" style="display:none;margin-top:12px"></div>
+      </div>
+      <div style="margin-top:18px;padding:14px 16px;background:var(--card2,#1c2130);border-radius:12px">
+        <div style="font-weight:800;font-size:14px;margin-bottom:4px">☁️ Yedek & Senkron</div>
+        <div style="font-size:11.5px;color:var(--mut);margin-bottom:10px">Tüm verini (tüm paneller) tek dosyada yedekle. iPhone'da dosyayı <b>iCloud Drive</b>'a kaydet → diğer cihazda "Geri Yükle" ile aç. iCloud otomatik senkron eder.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="gbtn" onclick="veriYedekle()">💾 Yedekle (indir)</button>
+          <button class="gbtn" onclick="document.getElementById('veriGeriYukleInp').click()">📥 Geri Yükle</button>
+          <button class="gbtn" onclick="yedegiMaille()">📧 Yedeği/Raporu Maille</button>
+          <input type="file" id="veriGeriYukleInp" accept="application/json,.json" style="display:none" onchange="veriGeriYukle(this)">
+        </div>
+        <div id="yedekDurum" style="font-size:11.5px;color:var(--mut);margin-top:8px"></div>
       </div>
     </div>
 
@@ -13385,6 +13404,61 @@ function haftalikRaporGoster(){
   </div>`;
   kutu.style.display="block";
 }
+
+/* ───── YEDEK & SENKRON (iCloud Drive uyumlu) (v1000) ───── */
+function tumVeriTopla(){
+  const veri={};
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);veri[k]=localStorage.getItem(k);}
+  return {surum:"v1000",tarih:new Date().toISOString(),cihaz:navigator.userAgent.slice(0,60),anahtarSayisi:Object.keys(veri).length,veri};
+}
+function veriYedekle(){
+  try{
+    const paket=tumVeriTopla();
+    const blob=new Blob([JSON.stringify(paket,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="komut-merkezi-yedek-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    localStorage.setItem("oy_son_yedek",new Date().toISOString());
+    yedekDurumGuncelle("✅ Yedek indirildi ("+paket.anahtarSayisi+" kayıt). iPhone'da 'iCloud Drive'a kaydet' seç.");
+    if(typeof yedekGecmisiEkle==="function")yedekGecmisiEkle();
+  }catch(e){yedekDurumGuncelle("⚠️ Yedek alınamadı: "+e.message);}
+}
+function veriGeriYukle(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const okuyucu=new FileReader();
+  okuyucu.onload=e=>{
+    try{
+      const paket=JSON.parse(e.target.result);
+      const veri=paket.veri||paket; // hem yeni hem düz format
+      const adet=Object.keys(veri).length;
+      if(!adet){yedekDurumGuncelle("⚠️ Dosyada veri yok.");return;}
+      if(!confirm("Bu yedekteki "+adet+" kayıt yüklenecek ve mevcut verinin üzerine yazılacak. Devam edilsin mi?"))return;
+      Object.keys(veri).forEach(k=>{try{localStorage.setItem(k,veri[k]);}catch(_){}});
+      yedekDurumGuncelle("✅ "+adet+" kayıt geri yüklendi. Sayfa yenileniyor...");
+      setTimeout(()=>location.reload(),1200);
+    }catch(err){yedekDurumGuncelle("⚠️ Geçersiz yedek dosyası: "+err.message);}
+  };
+  okuyucu.readAsText(f);
+  input.value="";
+}
+function yedegiMaille(){
+  const paket=tumVeriTopla();
+  let ozet="";
+  try{
+    const ay=new Date().toISOString().slice(0,7);let gelir=0,gider=0;
+    (JSON.parse(localStorage.getItem("muh_islemler")||"[]")).forEach(x=>{if((x.tarih||"").slice(0,7)===ay){if(x.tip==="gelir")gelir+=+x.tutar||0;else gider+=+x.tutar||0;}});
+    let gunler=[];try{gunler=JSON.parse(localStorage.getItem("oy_kullanim_gunleri")||"[]");}catch(_){}
+    ozet=`Bu ay gelir: ${gelir.toLocaleString("tr-TR")} TL\nBu ay gider: ${gider.toLocaleString("tr-TR")} TL\nKullanim gunu: ${gunler.length}\nToplam kayit: ${paket.anahtarSayisi}`;
+  }catch(e){ozet="Toplam kayit: "+paket.anahtarSayisi;}
+  const konu=encodeURIComponent("Komut Merkezi Ozet · "+new Date().toLocaleDateString("tr-TR"));
+  const govde=encodeURIComponent("Komut Merkezi durum ozeti:\n\n"+ozet+"\n\nNot: Tam yedek dosyasini almak icin panelden '💾 Yedekle (indir)' butonunu kullan ve dosyayi bu maile ekle.\n\n— Omer Yilmaz Komut Merkezi");
+  window.location.href="mailto:omer.yillmaz01@gmail.com?subject="+konu+"&body="+govde;
+  yedekDurumGuncelle("📧 Mail uygulaması açıldı (özet hazır). Tam yedek için önce 'Yedekle' ile dosyayı indirip maile ekle.");
+}
+function yedekDurumGuncelle(msg){const el=$("yedekDurum");if(el)el.textContent=msg;}
+(function(){const s=localStorage.getItem("oy_son_yedek");const el=$("yedekDurum");if(s&&el)el.textContent="Son yedek: "+new Date(s).toLocaleString("tr-TR");})();
 
 /* ───── ERİŞİLEBİLİRLİK: YAZI BOYUTU (v1000) ───── */
 function yaziBoyutAyarla(delta){
