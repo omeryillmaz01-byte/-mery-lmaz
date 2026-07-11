@@ -578,6 +578,48 @@ function kuranToplam(){var t=0;tumGunler().forEach(function(ds){var g=get("gun_"
 function kuranGunlukOrt(){var top=0,n=0,d=new Date();for(var i=0;i<30;i++){var g=get("gun_"+fmt(d),null);if(g){top+=g.kuran||0;n++;}d.setDate(d.getDate()-1);}return n?top/n:0;}
 function hatimBilgi(){var tot=kuranToplam();var hatim=Math.floor(tot/HATIM_SAYFA);var mevcut=tot%HATIM_SAYFA;var pct=Math.round(mevcut/HATIM_SAYFA*100);var ort=kuranGunlukOrt();var tahmin="—";if(ort>0){var kalan=HATIM_SAYFA-mevcut;var g=Math.ceil(kalan/ort);var d=new Date();d.setDate(d.getDate()+g);tahmin=g+" gün (~"+fmtTR(d)+")";}return{tot:tot,hatim:hatim,mevcut:mevcut,pct:pct,ort:ort,tahmin:tahmin};}
 
+function pomoHedef(){return parseInt(localStorage.getItem("kg_pomo_hedef")||"0",10)||0;}
+function pomoHedefSet(){
+ var pi=$("pomoHedefIn");if(!pi)return;
+ localStorage.setItem("kg_pomo_hedef",pi.value||"0");
+ var g=gun();$("pomoSay").textContent=(g.pomo||0)+" 🍅"+(pomoHedef()?(" / "+pomoHedef()):"");
+}
+function renderVakitBar(){
+ var bar=$("vakitBar");if(!bar)return;
+ var cache=null;try{cache=JSON.parse(localStorage.getItem("kg_vakit_cache")||"null");}catch(e){}
+ if(!cache||!cache.vakitler||!cache.vakitler.length){bar.style.display="none";return;}
+ var simdi=new Date(),simdiD=simdi.getHours()*60+simdi.getMinutes();
+ var sonraki=null;
+ for(var i=0;i<cache.vakitler.length;i++){
+   var p=(cache.vakitler[i].saat||"0:0").split(":"),d=(+p[0])*60+(+p[1]);
+   if(d>simdiD){sonraki=cache.vakitler[i];break;}
+ }
+ if(!sonraki)sonraki=cache.vakitler[0]; // ertesi gün ilk vakit
+ $("vakitNext").textContent=(sonraki.ic||"")+" "+sonraki.ad+" "+sonraki.saat;
+ $("vakitList").innerHTML=cache.vakitler.map(function(v){return '<span style="padding:2px 7px;border-radius:8px;background:var(--panel)">'+v.ad+' '+v.saat+'</span>';}).join("");
+ bar.style.display="block";
+}
+function renderVKI(kilo){
+ var out=$("vkiN");if(!out)return;
+ var boy=parseFloat(localStorage.getItem("kg_boy")||"")||0;
+ var bi=$("boyIn");if(bi&&!bi.value&&boy)bi.value=boy;
+ var k=parseFloat(kilo)||0;
+ if(!k||!boy){out.textContent="–";return;}
+ var m=boy/100;var vki=k/(m*m);
+ var durum=vki<18.5?"zayıf":vki<25?"normal":vki<30?"fazla kilolu":"obez";
+ out.textContent=vki.toFixed(1);
+ out.title="VKİ "+vki.toFixed(1)+" → "+durum;
+}
+function boySet(){
+ var bi=$("boyIn");if(!bi)return;
+ localStorage.setItem("kg_boy",bi.value||"");
+ var g=gun();renderVKI(g.kilo);
+}
+function kiloKaydet(){
+ var ki=$("kiloIn");if(!ki)return;
+ var g=gun();g.kilo=parseFloat(ki.value)||0;gunSet(g);
+ renderVKI(g.kilo);
+}
 function loadGun(){
  $("tarih").value=cur;const g=gun();
  var YERLER=["Ev","Ofis","Cami","Mescit","Diğer"];
@@ -616,6 +658,7 @@ function loadGun(){
  // kilo / vkı
  $("kiloIn").value=g.kilo||"";renderVKI(g.kilo);
  // pomodoro sayaç
+ if($("pomoHedefIn")&&!$("pomoHedefIn").value&&pomoHedef())$("pomoHedefIn").value=pomoHedef();
  $("pomoSay").textContent=(g.pomo||0)+" 🍅"+(pomoHedef()?(" / "+pomoHedef()):"");
  // namaz vakit barı
  renderVakitBar();
@@ -1199,6 +1242,7 @@ function namazYukle(){
         {ad:"Akşam",ic:"🌆",saat:t.Maghrib},
         {ad:"Yatsı",ic:"🌃",saat:t.Isha}
       ];
+      try{localStorage.setItem("kg_vakit_cache",JSON.stringify({tarih:new Date().toISOString().slice(0,10),vakitler:vakitler}));}catch(e){}
       // hangi vakit aktif
       var simdi=new Date(),simdiD=simdi.getHours()*60+simdi.getMinutes();
       var aktifIdx=-1;
