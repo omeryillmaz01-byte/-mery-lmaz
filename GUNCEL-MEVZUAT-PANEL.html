@@ -46,6 +46,7 @@ mark{background:#fde68a;color:#111;border-radius:3px}
 </header>
 <nav>
   <a class="active" data-p="gunun">📅 Günün 100 Sorusu</a>
+  <a data-p="test">🧪 Test Modu (KGK)</a>
   <a data-p="ozet">📚 Konu Özetleri</a>
   <a data-p="tum">🔍 Tüm Sorular</a>
 </nav>
@@ -65,6 +66,22 @@ mark{background:#fde68a;color:#111;border-radius:3px}
     </div>
     <div class="card"><div id="gununListe"></div></div>
     <div class="note">⚠️ İçerik, muhasebetr.com / verginet.net gibi kaynakların işlediği güncel Türk vergi-muhasebe mevzuatı konularını kısa-öz derler; sınav sorusu veya resmî sirküler değildir. Resmî işlemlerde GİB ve yürürlükteki mevzuat esastır. Bu iki site otomatik erişime kapalı olduğundan içerik onlardan birebir kopyalanmamış, aynı konu başlıkları özgün biçimde hazırlanmıştır.</div>
+  </div>
+
+  <div class="pane" id="paneTest">
+    <div id="testKurulum">
+      <div class="card">
+        <div style="font-weight:800;font-size:16px;margin-bottom:6px">🧪 Test Modu · Çoktan Seçmeli (KGK formatı)</div>
+        <p style="color:var(--mut);font-size:13px;margin-bottom:12px">Sınav gerçek formatında A-E şıklı. Şık seç → anında doğru/yanlış + açıklama. Sonunda karne çıkar. Ders seç ya da "Karışık" ile hepsinden çöz.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="testDers"><option value="">🎲 Karışık (tüm dersler)</option></select>
+          <select id="testAdet"><option value="10">10 soru</option><option value="20">20 soru</option><option value="40">40 soru</option></select>
+          <button class="gbtn" style="background:var(--acc);color:#04121c;font-weight:800" onclick="testBaslat()">🚀 Testi Başlat</button>
+        </div>
+        <div id="testIstatistik" style="margin-top:14px;font-size:12.5px;color:var(--mut)"></div>
+      </div>
+    </div>
+    <div id="testAlan"></div>
   </div>
 
   <div class="pane" id="paneOzet">
@@ -533,6 +550,58 @@ const SORULAR=[
   {k:'Ticaret Hukuku',s:'Rekabet yasağı (işçi/ortak) ne kadar sürebilir?',c:'Sözleşme sonrası rekabet yasağı; yer, süre ve konu bakımından sınırlı olmalı ve kural olarak 2 yılı aşmamalıdır.'},
 ];
 
+/* ═══ TEST MODU · ÇOKTAN SEÇMELİ (KGK formatı) ═══
+   d = doğru şıkkın index'i (0=A,1=B,2=C,3=D,4=E) */
+const TEST_SORULARI=[
+  // ─── TMS / TFRS ───
+  {k:'TMS/TFRS',s:'TMS 2 Stoklar standardına göre stoklar hangi değerle ölçülür?',sec:['Maliyet bedeliyle','Net gerçekleşebilir değerle','Maliyet ile net gerçekleşebilir değerden düşük olanıyla','Rayiç bedelle','Yeniden değerlenmiş tutarla'],d:2,a:'Stoklar, maliyet ve net gerçekleşebilir değerden düşük olanıyla değerlenir.'},
+  {k:'TMS/TFRS',s:'Şerefiye (goodwill) ile ilgili aşağıdakilerden hangisi doğrudur?',sec:['Her yıl eşit tutarda itfa edilir','Faydalı ömrü 5 yıldır','İtfa edilmez, değer düşüklüğü testine tabidir','Özkaynaktan indirilir','Hiçbir zaman muhasebeleştirilmez'],d:2,a:'Şerefiye itfa edilmez; her raporlama döneminde değer düşüklüğü testine tabi tutulur.'},
+  {k:'TMS/TFRS',s:'Muhasebe politikası değişikliği TMS 8\'e göre nasıl uygulanır?',sec:['İleriye dönük','Geriye dönük (retrospektif)','Sadece cari dönemde','Uygulanmaz','Dipnotta belirtilip uygulanmaz'],d:1,a:'Muhasebe politikası değişikliği kural olarak geriye dönük (retrospektif) uygulanır; tahmin değişikliği ise ileriye dönüktür.'},
+  {k:'TMS/TFRS',s:'Ertelenmiş vergi hangi farktan doğar?',sec:['Kalıcı farklar','Geçici farklar','Kur farkları','Enflasyon farkları','Fiyat farkları'],d:1,a:'Ertelenmiş vergi, muhasebe değeri ile vergi matrahı arasındaki geçici farklardan doğar (TMS 12). Kalıcı farklar ertelenmiş vergi yaratmaz.'},
+  {k:'TMS/TFRS',s:'TMS 23\'e göre "özellikli varlık" nedir?',sec:['Değeri yüksek her varlık','Kullanıma/satışa hazır hale gelmesi uzun süre gerektiren varlık','Sadece gayrimenkuller','İthal edilen varlıklar','Amortismana tabi tüm varlıklar'],d:1,a:'Özellikli varlık, amaçlanan kullanıma veya satışa hazır hale gelmesi zorunlu olarak uzun bir süre gerektiren varlıktır; borçlanma maliyetleri aktifleştirilebilir.'},
+  {k:'TMS/TFRS',s:'TFRS 16\'ya göre kiracı, işletme kiralamalarını (kısa süreli/düşük değerli istisnalar dışında) nasıl gösterir?',sec:['Sadece dipnotta açıklar','Gider olarak kaydeder, bilançoya almaz','Kullanım hakkı varlığı ve kira yükümlülüğü olarak bilançoya alır','Özkaynakta gösterir','Nazım hesapta izler'],d:2,a:'TFRS 16 ile kiracı, neredeyse tüm kiralamaları "kullanım hakkı varlığı" ve "kira yükümlülüğü" olarak bilançoya alır.'},
+  {k:'TMS/TFRS',s:'TMS 36\'da "kullanım değeri" nasıl bulunur?',sec:['Satış fiyatı eksi maliyet','Gelecekteki nakit akışlarının bugünkü değeri','Defter değeri','Yeniden değerleme tutarı','Maliyet bedeli'],d:1,a:'Kullanım değeri, varlıktan beklenen gelecekteki nakit akışlarının bugünkü (iskonto edilmiş) değeridir.'},
+  {k:'TMS/TFRS',s:'TMS 37\'ye göre karşılık ayrılabilmesi için aşağıdakilerden hangisi GEREKLİ DEĞİLDİR?',sec:['Geçmiş olaydan doğan mevcut yükümlülük','Kaynak çıkışının muhtemel olması','Tutarın güvenilir tahmin edilebilmesi','Yükümlülüğün kesinlikle mahkemeye taşınmış olması','—'],d:3,a:'Mahkemeye taşınmış olma şartı yoktur. Üç şart: mevcut yükümlülük, muhtemel kaynak çıkışı ve güvenilir tahmin.'},
+  {k:'TMS/TFRS',s:'TFRS 15 hasılat modelinin ilk adımı nedir?',sec:['İşlem bedelini belirlemek','Edim yükümlülüklerini ayırmak','Müşteriyle sözleşmeyi tanımlamak','Hasılatı muhasebeleştirmek','Bedeli dağıtmak'],d:2,a:'5 adımlı modelin ilki müşteriyle yapılan sözleşmenin tanımlanmasıdır.'},
+  {k:'TMS/TFRS',s:'TMS 16\'ya göre yeniden değerleme artışı nereye kaydedilir?',sec:['Dönem kâr/zararına','Özkaynakta değer artış fonuna (diğer kapsamlı gelir)','Doğrudan sermayeye','Geçmiş yıl kârlarına','Hasılata'],d:1,a:'Yeniden değerleme artışı kâr/zarara değil, özkaynak içinde "yeniden değerleme değer artış fonu"na (DKG) yazılır.'},
+  {k:'TMS/TFRS',s:'TMS 40 kapsamındaki "yatırım amaçlı gayrimenkul" hangi amaçla tutulur?',sec:['Üretimde kullanmak','İdari amaçla kullanmak','Kira geliri veya değer artışı elde etmek','Satmak üzere üretmek','Personele tahsis etmek'],d:2,a:'Yatırım amaçlı gayrimenkul, kira geliri ve/veya değer artışı kazancı için elde tutulur; işletmede kullanılmaz.'},
+  // ─── DENETİM ───
+  {k:'Denetim',s:'Bağımsız denetçinin finansal tablolara verdiği güvence düzeyi nedir?',sec:['Mutlak (tam) güvence','Makul güvence','Sınırlı güvence','Hiçbir güvence','Koşulsuz güvence'],d:1,a:'Bağımsız denetim, finansal tabloların önemli yanlışlık içermediğine dair MAKUL güvence sağlar; mutlak güvence mümkün değildir.'},
+  {k:'Denetim',s:'Maddi yanlışlık riski hangi iki riskin bileşimidir?',sec:['Doğal risk + saptanamama riski','Doğal (yapısal) risk + kontrol riski','Kontrol riski + saptanamama riski','İşletme riski + piyasa riski','Denetim riski + iş riski'],d:1,a:'Maddi yanlışlık riski = doğal (yapısal) risk × kontrol riski. Saptanamama riski denetçinin kontrolündedir.'},
+  {k:'Denetim',s:'Tespit edilen yanlışlık önemli ancak yaygın DEĞİLSE denetçi hangi görüşü verir?',sec:['Olumlu görüş','Sınırlı olumlu (şartlı) görüş','Olumsuz görüş','Görüş bildirmekten kaçınma','Vurgu paragrafı'],d:1,a:'Önemli ama yaygın olmayan yanlışlık/kanıt yetersizliğinde şartlı (sınırlı olumlu) görüş verilir. Önemli VE yaygın ise olumsuz görüş / görüş bildirmekten kaçınma.'},
+  {k:'Denetim',s:'İç kontrolün beş bileşeni arasında aşağıdakilerden hangisi YOKTUR?',sec:['Kontrol ortamı','Risk değerlendirme','Kâr maksimizasyonu','Kontrol faaliyetleri','İzleme'],d:2,a:'COSO iç kontrol bileşenleri: kontrol ortamı, risk değerlendirme, kontrol faaliyetleri, bilgi-iletişim ve izleme. Kâr maksimizasyonu bir iç kontrol bileşeni değildir.'},
+  {k:'Denetim',s:'Denetçi yeterli ve uygun kanıt toplayamaz, olası etki hem önemli hem yaygınsa görüş ne olur?',sec:['Olumlu görüş','Şartlı görüş','Görüş bildirmekten kaçınma','Olumsuz görüş','Vurgu paragrafı'],d:2,a:'Kanıt yetersizliği + etki önemli ve yaygın → görüş bildirmekten kaçınma. (Yanlışlık önemli ve yaygın olsaydı → olumsuz görüş.)'},
+  {k:'Denetim',s:'"Kilit denetim konuları" (KAM) denetçi raporunda neyi amaçlar?',sec:['Ücreti açıklamak','Denetçinin mesleki muhakemesine göre en önemli konuları paylaşmak','Yönetimi eleştirmek','Vergi tutarını göstermek','Gelecek tahmini yapmak'],d:1,a:'KAM, cari dönem denetiminde denetçinin muhakemesine göre en çok önem taşıyan konuları kullanıcıya açıklar.'},
+  {k:'Denetim',s:'Alacak ve banka bakiyeleri için en güçlü denetim kanıtı hangisidir?',sec:['Yeniden hesaplama','İç belgeler','Dış teyit (doğrulama)','Yönetim beyanı','Analitik inceleme'],d:2,a:'Bağımsız üçüncü taraftan alınan dış teyit (banka/müşteri doğrulaması) en güvenilir kanıtlardandır.'},
+  {k:'Denetim',s:'Hile üçgeni hangi üç unsurdan oluşur?',sec:['Baskı, fırsat, haklı gösterme','Risk, kontrol, kanıt','Gelir, gider, kâr','Planlama, test, rapor','Doğal, kontrol, tespit'],d:0,a:'Hile üçgeni: baskı (motivasyon), fırsat ve haklı gösterme (rasyonalizasyon).'},
+  {k:'Denetim',s:'İşletmenin sürekliliği konusunda önemli belirsizlik varsa ve YÖNETİM UYGUN AÇIKLAMA YAPMIŞSA denetçi ne yapar?',sec:['Olumsuz görüş verir','Olumlu görüş verip belirsizliği vurgulayan ayrı paragraf ekler','Görüş vermekten kaçınır','Denetimden çekilir','Şartlı görüş zorunludur'],d:1,a:'Yeterli açıklama yapılmışsa denetçi olumlu görüş verip "süreklilikle ilgili önemli belirsizlik" paragrafıyla dikkat çeker. Açıklama yetersizse şartlı/olumsuz görüş gerekebilir.'},
+  {k:'Denetim',s:'Çalışma kâğıtları (denetim dosyası) kime aittir?',sec:['Müşteri işletmeye','Denetim firmasına/denetçiye','KGK\'ya','Vergi dairesine','Ortaklara'],d:1,a:'Çalışma kâğıtları denetçinin/denetim firmasının mülkiyetindedir.'},
+  // ─── TİCARET & BORÇLAR HUKUKU ───
+  {k:'Ticaret/Borçlar Hukuku',s:'Anonim şirketin temel yönetim organı hangisidir?',sec:['Genel kurul','Yönetim kurulu','Denetim kurulu','Müdürler kurulu','Tasfiye kurulu'],d:1,a:'Anonim şirkette yönetim ve temsil organı Yönetim Kurulu\'dur; genel kurul ise karar organıdır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Ticari defterlerin saklanma süresi kaç yıldır?',sec:['5 yıl','8 yıl','10 yıl','15 yıl','Süresiz'],d:2,a:'TTK\'ya göre ticari defter ve belgeler 10 yıl saklanır (vergi yönünden zamanaşımı 5 yıldır).'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Müteselsil borçluluk" ne anlama gelir?',sec:['Her borçlu payı kadar sorumludur','Borçlulardan her biri borcun tamamından sorumludur','Sadece asıl borçlu sorumludur','Borç kefile geçer','Borç ortadan kalkar'],d:1,a:'Müteselsil sorumlulukta alacaklı, borcun tamamını borçlulardan herhangi birinden isteyebilir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Limited ve anonim şirket arasındaki temel fark aşağıdakilerden hangisidir?',sec:['Limitedde ortak sınırsız sorumludur','A.Ş. paylarına hisse senedi çıkarılabilir, limitedde esas sermaye payı vardır','Limited şirket tacir sayılmaz','A.Ş. defter tutmaz','İkisi de aynıdır'],d:1,a:'A.Ş.\'de paylar kıymetli evrağa (hisse senedi) bağlanabilir; limitedde "esas sermaye payı" vardır, kural olarak hisse senedi çıkarılmaz.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"İbra" kararı neyi ifade eder?',sec:['Şirketin tasfiyesini','Yönetim kurulunun sorumluluktan aklanmasını','Sermaye artırımını','Kâr dağıtımını','Birleşmeyi'],d:1,a:'İbra, genel kurulun yönetim kurulu üyelerini dönem işlemleri bakımından sorumluluktan kurtarmasıdır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Halka açık olmayan A.Ş.\'lerde azınlık hakları en az hangi sermaye oranıyla kullanılır?',sec:['%1','%5','%10','%20','%25'],d:2,a:'Halka açık olmayan anonim şirketlerde azınlık, sermayenin en az %10\'unu temsil eden paylardır (halka açıkta %5).'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Zamanaşımını kesen sebeplerden biri DEĞİLDİR?',sec:['Dava açılması','İcra takibi','Borçlunun borcu ikrarı','Alacaklının içinden geçirmesi','—'],d:3,a:'Zamanaşımını dava, icra takibi ve borcun ikrarı keser; alacaklının niyeti/düşüncesi kesmez.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Sebepsiz zenginleşme" nedir?',sec:['Sözleşmeyle kazanç','Haklı bir sebep olmaksızın başkasının malvarlığından zenginleşme','Miras yoluyla kazanç','Faiz geliri','Kâr payı'],d:1,a:'Sebepsiz zenginleşme, geçerli/haklı bir sebep olmadan başkasının malvarlığı aleyhine zenginleşmedir; iade yükümlülüğü doğurur.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Yönetim kurulu üyelerinin şirkete karşı temel yükümlülüğü nedir?',sec:['Kâr garantisi','Özen ve bağlılık (basiretli yönetici) yükümlülüğü','Sermaye koyma','Kişisel kefalet','Vergi ödeme'],d:1,a:'Yönetim kurulu üyeleri, tedbirli/basiretli bir yönetici gibi özen ve şirkete bağlılık yükümlülüğü taşır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Tüzel kişilik perdesinin aralanması" ne demektir?',sec:['Şirketin tasfiyesi','Şirket perdesi arkasına saklanan haksızlığın ortağa/yöneticiye yansıtılması','Sermaye azaltımı','Halka arz','Birleşme'],d:1,a:'Belirli hallerde şirketin ayrı tüzel kişiliği göz ardı edilip sorumluluk doğrudan arkasındaki kişiye yansıtılır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Ticari defterler bir uyuşmazlıkta sahibi LEHİNE delil olabilmesi için ne gerekir?',sec:['Sadece açık olması','Usulüne uygun tutulması ve karşı tarafça çürütülmemesi','Notere onaylatılması','Mahkemeye sunulması','Hiçbir şart yok'],d:1,a:'Usulüne uygun tutulup saklanan defterler sahibi lehine de delil olabilir; ancak karşı taraf aksini ispatlayabilir.'},
+  // ─── VERGİ MEVZUATI ───
+  {k:'Vergi Mevzuatı',s:'Kurumlar vergisi beyannamesi hangi ayda verilir?',sec:['Mart','Nisan','Şubat','Mayıs','Haziran'],d:1,a:'Kurumlar vergisi beyannamesi, hesap döneminin kapandığı ayı izleyen 4. ayda (takvim yılında Nisan) verilir. Gelir vergisi ise Mart.'},
+  {k:'Vergi Mevzuatı',s:'Vergi ziyaı cezası kural olarak ne kadardır?',sec:['Verginin yarısı','Ziyaa uğratılan verginin 1 katı','Verginin 2 katı','Sabit tutar','Verginin %10\'u'],d:1,a:'Vergi ziyaı cezası, ziyaa uğratılan verginin 1 katıdır; kaçakçılık suçuyla sebebiyet verilirse 3 katı uygulanır.'},
+  {k:'Vergi Mevzuatı',s:'Örtülü sermaye üzerinden hesaplanan faizin vergisel durumu nedir?',sec:['Doğrudan gider yazılır','KKEG olarak matraha eklenir','İstisna kazançtır','Amortismana tabidir','Reeskonta tabidir'],d:1,a:'Örtülü sermaye faizi ve kur farkı KKEG\'dir; borç veren tarafta ise dağıtılmış kâr payı sayılır.'},
+  {k:'Vergi Mevzuatı',s:'Geçici vergi hangi dönemler halinde beyan edilir?',sec:['Aylık','İki aylık','Üçer aylık','Altı aylık','Yıllık'],d:2,a:'Geçici vergi 3\'er aylık dönemler halinde beyan edilip ödenir; yıllık vergiden mahsup edilir.'},
+  {k:'Vergi Mevzuatı',s:'Binek otomobillerde akaryakıt-bakım gibi giderlerin en fazla ne kadarı indirilebilir?',sec:['%30','%50','%70','%100','İndirilemez'],d:2,a:'Binek otomobil giderlerinin en çok %70\'i indirilebilir; kalan %30 KKEG olur. (Amortisman ve kiralama için ayrıca tutar sınırları vardır.)'},
+  {k:'Vergi Mevzuatı',s:'Reeskont işlemi neyi ifade eder?',sec:['Stokların sayımını','Senetli alacak/borçların dönem sonunda bugünkü değere indirgenmesini','Amortisman ayrılmasını','Kur değerlemesini','Karşılık ayrılmasını'],d:1,a:'Reeskont, vadeli senetli alacak ve borçların dönem sonu itibarıyla peşin (bugünkü) değerine getirilmesidir.'},
+  {k:'Vergi Mevzuatı',s:'Gayrimenkul ve iştirak hissesi satış kazancı istisnasında asgari elde tutma süresi nedir?',sec:['1 tam yıl','2 tam yıl','3 tam yıl','5 tam yıl','Süre yok'],d:1,a:'Kurumların en az 2 tam yıl aktifte tuttuğu taşınmaz/iştirak hissesi satış kazancının bir kısmı, şartlarla istisnadır.'},
+  {k:'Vergi Mevzuatı',s:'İndirilecek KDV en geç ne zamana kadar indirilebilir?',sec:['Aynı ay','Vergiyi doğuran olayı izleyen takvim yılı sonuna kadar','3 ay içinde','Süresiz','Beyan tarihine kadar'],d:1,a:'İndirim hakkı, vergiyi doğuran olayın gerçekleştiği takvim yılını izleyen takvim yılı sonuna kadar kullanılabilir.'},
+  {k:'Vergi Mevzuatı',s:'Vergi Usul Kanunu\'na göre değerleme günü ne zamandır?',sec:['Ayın son günü','Hesap döneminin kapandığı gün','Beyanname günü','İşlem günü','Yılın ilk günü'],d:1,a:'Değerleme, iktisadi kıymetlerin hesap döneminin kapandığı gün (bilanço günü) itibarıyla yapılır.'},
+  {k:'Vergi Mevzuatı',s:'Serbest meslek erbabı hangi defteri tutar?',sec:['Yevmiye defteri','İşletme hesabı defteri','Serbest meslek kazanç defteri','Envanter defteri','Büyük defter'],d:2,a:'Serbest meslek erbabı, Serbest Meslek Kazanç Defteri tutar ve tahsil esasına göre kazancını belirler.'},
+  {k:'Vergi Mevzuatı',s:'Stopaj (tevkifat) yapmaktan kim sorumludur?',sec:['Geliri elde eden','Ödemeyi yapan','Vergi dairesi','Banka','Noter'],d:1,a:'Tevkifatı, ödemeyi yapan (vergi sorumlusu) keser ve muhtasar beyanname ile vergi dairesine yatırır.'},
+];
+
 /* ═══ GÜNLÜK SEED ROTASYON ═══ */
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
 function prng(seed){let s=seed>>>0;return()=>{s=(s*1103515245+12345)>>>0;return s/4294967296;};}
@@ -583,6 +652,84 @@ function sesliOku(){
   });
 }
 
+/* ═══ TEST MODU ═══ */
+let _test={sorular:[],cvp:{},bitti:false};
+function testDersDoldur(){
+  const sel=document.getElementById('testDers');if(!sel||sel.dataset.dolu)return;
+  const dersler=[...new Set(TEST_SORULARI.map(t=>t.k))];
+  dersler.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' ('+TEST_SORULARI.filter(t=>t.k===d).length+')';sel.appendChild(o);});
+  sel.dataset.dolu="1";
+  testIstatistikCiz();
+}
+function testIstatistikCiz(){
+  const el=document.getElementById('testIstatistik');if(!el)return;
+  let g=[];try{g=JSON.parse(localStorage.getItem('gm_test_gecmis')||'[]');}catch(e){}
+  if(!g.length){el.textContent='Toplam '+TEST_SORULARI.length+' çoktan seçmeli soru · henüz test çözmedin.';return;}
+  const ort=Math.round(g.reduce((s,x)=>s+x.yuzde,0)/g.length);
+  const enIyi=Math.max(...g.map(x=>x.yuzde));
+  el.innerHTML='📊 '+g.length+' test çözdün · ortalama <b style="color:var(--acc)">%'+ort+'</b> · en iyi <b style="color:#66bb6a">%'+enIyi+'</b> · toplam '+TEST_SORULARI.length+' soru havuzu';
+}
+function testBaslat(){
+  const ders=document.getElementById('testDers').value;
+  const adet=parseInt(document.getElementById('testAdet').value,10);
+  let havuz=ders?TEST_SORULARI.filter(t=>t.k===ders):TEST_SORULARI.slice();
+  havuz=karistir(havuz,hash('test-'+Date.now()));
+  _test={sorular:havuz.slice(0,Math.min(adet,havuz.length)),cvp:{},bitti:false};
+  document.getElementById('testKurulum').style.display='none';
+  testRender();
+}
+function testRender(){
+  const HARF=['A','B','C','D','E'];
+  const alan=document.getElementById('testAlan');
+  const cevaplanan=Object.keys(_test.cvp).length;
+  alan.innerHTML=`<div class="card" style="position:sticky;top:106px;z-index:5;display:flex;justify-content:space-between;align-items:center">
+      <b>${cevaplanan}/${_test.sorular.length} cevaplandı</b>
+      <button class="gbtn" style="background:var(--acc);color:#04121c;font-weight:800" onclick="testBitir()">✅ Testi Bitir</button>
+    </div>`+
+    _test.sorular.map((q,i)=>{
+      const secilen=_test.cvp[i];const cevaplandi=secilen!==undefined;
+      return `<div class="card">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;margin-bottom:4px">SORU ${i+1} · ${q.k}</div>
+        <div style="font-weight:600;margin-bottom:10px">${q.s}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${q.sec.map((se,j)=>{
+            let bg='var(--panel2)',bd='var(--line)',ic='';
+            if(cevaplandi){
+              if(j===q.d){bg='rgba(102,187,106,.18)';bd='#66bb6a';ic=' ✓';}
+              else if(j===secilen){bg='rgba(239,83,80,.15)';bd='#ef5350';ic=' ✗';}
+            }
+            return `<div onclick="testSec(${i},${j})" style="cursor:${cevaplandi?'default':'pointer'};padding:9px 12px;border-radius:10px;background:${bg};border:1px solid ${bd};font-size:13.5px"><b>${HARF[j]})</b> ${se}${ic}</div>`;
+          }).join('')}
+        </div>
+        ${cevaplandi?`<div style="margin-top:8px;padding:9px 12px;background:rgba(79,195,247,.1);border-left:3px solid var(--acc);border-radius:8px;font-size:12.5px"><b>${secilen===q.d?'✅ Doğru!':'❌ Yanlış.'}</b> ${q.a}</div>`:''}
+      </div>`;
+    }).join('');
+}
+function testSec(i,j){
+  if(_test.cvp[i]!==undefined)return; // tek sefer
+  _test.cvp[i]=j;
+  testRender();
+}
+function testBitir(){
+  const toplam=_test.sorular.length;
+  let dogru=0;_test.sorular.forEach((q,i)=>{if(_test.cvp[i]===q.d)dogru++;});
+  const yuzde=Math.round(dogru/toplam*100);
+  try{const g=JSON.parse(localStorage.getItem('gm_test_gecmis')||'[]');g.push({tarih:new Date().toISOString(),dogru,toplam,yuzde});localStorage.setItem('gm_test_gecmis',JSON.stringify(g.slice(-100)));}catch(e){}
+  const renk=yuzde>=70?'#66bb6a':yuzde>=50?'#ffb74d':'#ef5350';
+  const mesaj=yuzde>=70?'Harika! Bu tempoyla sınav senin 💪':yuzde>=50?'İyi yoldasın, yanlışları tekrar et 👊':'Biraz daha çalışalım, açıklamaları oku 🌱';
+  const alan=document.getElementById('testAlan');
+  alan.insertAdjacentHTML('afterbegin',`<div class="card" style="text-align:center;border:2px solid ${renk}">
+    <div style="font-size:13px;color:var(--mut)">TEST KARNESİ</div>
+    <div style="font-size:40px;font-weight:800;color:${renk}">%${yuzde}</div>
+    <div style="font-size:15px;font-weight:700">${dogru} / ${toplam} doğru</div>
+    <div style="font-size:12.5px;color:var(--mut);margin-top:6px">${mesaj}</div>
+    <button class="gbtn" style="margin-top:12px" onclick="testYeniden()">🔄 Yeni Test</button>
+  </div>`);
+  testIstatistikCiz();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function testYeniden(){document.getElementById('testAlan').innerHTML='';document.getElementById('testKurulum').style.display='block';testIstatistikCiz();window.scrollTo(0,0);}
+
 /* ═══ KONU ÖZETLERİ ═══ */
 function ozetCiz(){
   const q=($("ozetAra").value||'').toLocaleLowerCase('tr').trim();
@@ -609,10 +756,11 @@ document.querySelectorAll('nav a').forEach(a=>{
     $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
     if(a.dataset.p==='ozet')ozetCiz();
     if(a.dataset.p==='tum')tumCiz();
+    if(a.dataset.p==='test')testDersDoldur();
   };
 });
 
-gununCiz();ozetCiz();tumCiz();
+gununCiz();ozetCiz();tumCiz();testDersDoldur();
 </script>
 </body>
 </html>
