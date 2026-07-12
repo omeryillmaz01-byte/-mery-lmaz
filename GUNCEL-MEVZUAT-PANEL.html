@@ -80,6 +80,10 @@ mark{background:#fde68a;color:#111;border-radius:3px}
         </div>
         <div id="testIstatistik" style="margin-top:14px;font-size:12.5px;color:var(--mut)"></div>
       </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">⚡ Tek tıkla ders testi (10 soru)</div>
+        <div id="testHizli" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
     </div>
     <div id="testAlan"></div>
   </div>
@@ -600,6 +604,61 @@ const TEST_SORULARI=[
   {k:'Vergi Mevzuatı',s:'Vergi Usul Kanunu\'na göre değerleme günü ne zamandır?',sec:['Ayın son günü','Hesap döneminin kapandığı gün','Beyanname günü','İşlem günü','Yılın ilk günü'],d:1,a:'Değerleme, iktisadi kıymetlerin hesap döneminin kapandığı gün (bilanço günü) itibarıyla yapılır.'},
   {k:'Vergi Mevzuatı',s:'Serbest meslek erbabı hangi defteri tutar?',sec:['Yevmiye defteri','İşletme hesabı defteri','Serbest meslek kazanç defteri','Envanter defteri','Büyük defter'],d:2,a:'Serbest meslek erbabı, Serbest Meslek Kazanç Defteri tutar ve tahsil esasına göre kazancını belirler.'},
   {k:'Vergi Mevzuatı',s:'Stopaj (tevkifat) yapmaktan kim sorumludur?',sec:['Geliri elde eden','Ödemeyi yapan','Vergi dairesi','Banka','Noter'],d:1,a:'Tevkifatı, ödemeyi yapan (vergi sorumlusu) keser ve muhtasar beyanname ile vergi dairesine yatırır.'},
+  {k:'Vergi Mevzuatı',s:'Vergi Usul Kanunu\'na göre tarh zamanaşımı süresi ne kadardır?',sec:['1 yıl','3 yıl','5 yıl','7 yıl','10 yıl'],d:2,a:'Tarh zamanaşımı, vergiyi doğuran olayı izleyen yılın başından itibaren 5 yıldır.'},
+  {k:'Vergi Mevzuatı',s:'Aşağıdakilerden hangisi dolaylı vergidir?',sec:['Gelir vergisi','Kurumlar vergisi','KDV','Emlak vergisi','Veraset vergisi'],d:2,a:'KDV harcama üzerinden alınan ve fiyata yansıtılan dolaylı vergidir; gelir/kurumlar/emlak/veraset dolaysızdır.'},
+  {k:'Vergi Mevzuatı',s:'Pişmanlıkla beyan yapan mükellef hangi cezadan kurtulur?',sec:['Vergi aslından','Gecikme faizinden','Vergi ziyaı cezasından','Damga vergisinden','Hiçbirinden'],d:2,a:'Pişmanlıkla beyanda vergi ziyaı cezası kesilmez; sadece pişmanlık zammı ödenir.'},
+  {k:'Vergi Mevzuatı',s:'Fatura, malın teslimi/hizmetin yapılmasından itibaren en geç kaç gün içinde düzenlenir?',sec:['3 gün','7 gün','10 gün','15 gün','30 gün'],d:1,a:'Fatura en geç 7 gün içinde düzenlenir; süre geçerse hiç düzenlenmemiş sayılır.'},
+  {k:'Vergi Mevzuatı',s:'Vergiden muaf esnaftan yapılan alımlarda hangi belge düzenlenir?',sec:['Fatura','Gider pusulası','Serbest meslek makbuzu','Perakende fiş','Müstahsil makbuzu'],d:1,a:'Vergi mükellefi olmayanlardan/muaf esnaftan alımda, alıcı gider pusulası düzenler.'},
+  // ─── TMS/TFRS ek ───
+  {k:'TMS/TFRS',s:'TMS 7 Nakit Akış Tablosu faaliyetleri hangileridir?',sec:['Üretim, satış, yönetim','İşletme, yatırım, finansman','Gelir, gider, kâr','Kısa, orta, uzun vade','Nakit, kredi, sermaye'],d:1,a:'Nakit akışları işletme, yatırım ve finansman faaliyetleri olarak üçe ayrılır.'},
+  {k:'TMS/TFRS',s:'Kredi geri ödemesinin anaparası nakit akış tablosunda nerede yer alır?',sec:['İşletme faaliyeti','Yatırım faaliyeti','Finansman faaliyeti','Gösterilmez','Özkaynak'],d:2,a:'Kredi anapara geri ödemesi finansman faaliyetlerinde gösterilir.'},
+  {k:'TMS/TFRS',s:'TFRS 9\'a göre finansal varlıklarda karşılık modeli hangisidir?',sec:['Gerçekleşen zarar','Beklenen kredi zararı (ECL)','Maliyet modeli','Sabit oran','Karşılık ayrılmaz'],d:1,a:'TFRS 9, zararın gerçekleşmesini beklemeden beklenen kredi zararı (ECL) modelini getirmiştir.'},
+  {k:'TMS/TFRS',s:'TMS 33 Hisse Başına Kazanç nasıl hesaplanır?',sec:['Net kâr / toplam varlık','Net kâr / ağırlıklı ortalama adi pay sayısı','Temettü / hisse fiyatı','Özkaynak / pay sayısı','Satış / pay sayısı'],d:1,a:'Adi HBK = adi paylara ait net kâr / dönem ağırlıklı ortalama adi pay sayısı.'},
+  {k:'TMS/TFRS',s:'TMS 10\'a göre bilanço tarihinden sonra ortaya çıkan, o tarihteki durumu teyit eden olay ne yapılır?',sec:['Dipnotta açıklanır sadece','Finansal tablolar düzeltilir','Dikkate alınmaz','Gelecek döneme atılır','Sadece denetçiye bildirilir'],d:1,a:'Düzeltme gerektiren olaylar (bilanço tarihindeki durumu teyit eden) finansal tablolara yansıtılır.'},
+  // ─── Denetim ek ───
+  {k:'Denetim',s:'Denetim riski modelinde denetçinin doğrudan kontrol ettiği risk hangisidir?',sec:['Doğal risk','Kontrol riski','Saptanamama (tespit) riski','İş riski','Piyasa riski'],d:2,a:'Doğal ve kontrol riski işletmeye aittir; saptanamama riskini denetçi prosedürleriyle yönetir.'},
+  {k:'Denetim',s:'Denetçinin bağımsızlığını tehdit eden unsurlardan biri DEĞİLDİR?',sec:['Öz-çıkar','Öz-denetim','Yakınlık','Yıldırma','Mesleki şüphecilik'],d:4,a:'Mesleki şüphecilik bir tehdit değil, denetçinin taşıması gereken tutumdur. Tehditler: öz-çıkar, öz-denetim, taraf tutma, yakınlık, yıldırma.'},
+  {k:'Denetim',s:'"Performans önemliliği" neyi amaçlar?',sec:['Ücret belirlemeyi','Tek tek önemsiz yanlışlıkların toplamının önemliliği aşma riskini azaltmayı','Denetim süresini','Rapor formatını','Örneklem seçimini engellemeyi'],d:1,a:'Performans önemliliği, toplam önemlilik altında belirlenip küçük yanlışlıkların toplamının riskini azaltır.'},
+  {k:'Denetim',s:'Yönetimin yazılı beyanı (teyit mektubu) ne işe yarar?',sec:['Denetim ücretini belirler','Yönetimin sorumluluklarını ve bilgilerin doğruluğunu teyit eder','Vergi hesaplar','Görüşü değiştirir','Raporu imzalar'],d:1,a:'Yönetim beyan mektubu, yönetimin sorumluluklarını ve verdiği bilgilerin doğruluğunu yazılı teyit eder.'},
+  {k:'Denetim',s:'Denetim örneklemesi neden kullanılır?',sec:['Zorunlu olduğu için','Tüm kitleyi test etmek çoğu zaman verimsiz olduğu için','Kanıt gerekmediği için','Yönetim istediği için','Ücret düşük olduğu için'],d:1,a:'Kitlenin tamamını test etmek genelde ekonomik/mümkün olmadığından örneklemle geneli hakkında sonuç çıkarılır.'},
+  // ─── Ticaret/Borçlar ek ───
+  {k:'Ticaret/Borçlar Hukuku',s:'Kambiyo senetleri (bono, poliçe, çek) için itiraz süresi ödeme emrine karşı kaç gündür?',sec:['3 gün','5 gün','7 gün','15 gün','30 gün'],d:1,a:'Kambiyo senetlerine mahsus takipte ödeme emrine itiraz süresi 5 gündür ve itiraz icra mahkemesine yapılır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Bonoda zorunlu unsurlardan biri eksikse ne olur?',sec:['Geçerli kalır','Bono vasfını kaybedebilir','Çeke dönüşür','Poliçe olur','Faizsiz olur'],d:1,a:'Zorunlu unsurların eksikliği (yasal tamamlama halleri dışında) senedin bono vasfını kaybetmesine yol açar.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Poliçede kaç taraf bulunur?',sec:['1','2','3','4','5'],d:2,a:'Poliçede üç taraf vardır: düzenleyen (keşideci), muhatap ve lehtar. Bonoda iki taraf vardır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Anonim şirkette yönetim kurulu toplantı nisabı nedir?',sec:['Üye tam sayısının 1/3\'ü','Üye tam sayısının çoğunluğu','Tüm üyeler','2/3 çoğunluk','Tek üye yeter'],d:1,a:'Yönetim kurulu, üye tam sayısının çoğunluğuyla toplanır ve toplantıda hazır bulunanların çoğunluğuyla karar alır.'},
+  // ─── Kurumsal Yönetim & Finansal Yönetim ───
+  {k:'Kurumsal Yönetim/Finans',s:'Kurumsal yönetimin temel ilkelerinden biri DEĞİLDİR?',sec:['Şeffaflık','Hesap verebilirlik','Adillik','Sorumluluk','Kâr maksimizasyonu'],d:4,a:'Kurumsal yönetimin dört temel ilkesi: şeffaflık, hesap verebilirlik, adillik (eşitlik) ve sorumluluk.'},
+  {k:'Kurumsal Yönetim/Finans',s:'"Vekâlet (temsil) sorunu" neyi ifade eder?',sec:['Ortaklar arası anlaşmazlık','Yönetici ile pay sahibi çıkar farklılığı','Müşteri şikayeti','Devletle ihtilaf','Çalışan grevi'],d:1,a:'Vekâlet sorunu, vekil (yönetici) ile asil (pay sahipleri) arasındaki çıkar farklılığından doğan risktir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Cari oran neyi ölçer?',sec:['Kârlılığı','Kısa vadeli borç ödeme gücünü','Uzun vadeli borçları','Verimliliği','Piyasa değerini'],d:1,a:'Cari oran = Dönen Varlıklar / KVYK; kısa vadeli borç ödeme gücünü gösterir (ideal ≈ 2).'},
+  {k:'Kurumsal Yönetim/Finans',s:'ROE (özkaynak kârlılığı) nasıl hesaplanır?',sec:['Net kâr / satışlar','Net kâr / özkaynaklar','Net kâr / toplam varlık','Satış / özkaynak','FVÖK / varlık'],d:1,a:'ROE = Net Kâr / Özkaynaklar; ortakların sermayesinin verimini gösterir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'NPV (net bugünkü değer) bir yatırım için pozitifse ne yapılır?',sec:['Proje reddedilir','Proje kabul edilir','Kararsız kalınır','Sadece IRR\'ye bakılır','Ertelenir'],d:1,a:'NPV > 0 ise proje değer yaratır ve kabul edilir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'WACC neyi ifade eder?',sec:['Sadece borç maliyeti','Ağırlıklı ortalama sermaye maliyeti','Özkaynak kârlılığı','Net kâr marjı','Faiz oranı'],d:1,a:'WACC, öz kaynak ve borç maliyetlerinin sermaye yapısındaki ağırlıklarına göre ortalamasıdır; iskonto oranı olarak kullanılır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Sistematik risk (piyasa riski) için hangisi doğrudur?',sec:['Çeşitlendirmeyle yok edilir','Çeşitlendirmeyle yok edilemez','Firmaya özgüdür','Sıfırdır','Sadece tahvillerde vardır'],d:1,a:'Sistematik risk tüm piyasayı etkiler, çeşitlendirmeyle yok edilemez; sistematik olmayan risk çeşitlendirilebilir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Beta katsayısı 1\'den büyük bir hisse için ne söylenir?',sec:['Piyasadan az oynak','Risksiz','Piyasadan daha oynak','Getirisi sabit','Tahvil gibidir'],d:2,a:'Beta > 1 olan hisse, piyasa hareketlerine göre daha oynak (yüksek sistematik risk) demektir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Denetim komitesinin temel görevi nedir?',sec:['Ürün pazarlamak','Finansal raporlama ve iç kontrol/denetimin gözetimi','Personel almak','Kâr dağıtmak','Fiyat belirlemek'],d:1,a:'Denetim komitesi; finansal raporlamanın doğruluğunu, iç kontrol-iç denetimi ve bağımsız denetçinin bağımsızlığını gözetir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Sürdürülebilir büyüme oranı formülü nedir?',sec:['ROE × dağıtım oranı','ROE × (1 − temettü dağıtım oranı)','ROA × kaldıraç','Net marj × devir','Beta × getiri'],d:1,a:'SGO = ROE × (1 − temettü dağıtım oranı); dış finansman olmadan büyünebilecek orandır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Başabaş noktası nasıl bulunur?',sec:['Sabit maliyet / birim fiyat','Sabit maliyet / birim katkı payı','Toplam maliyet / adet','Kâr / satış','Satış / maliyet'],d:1,a:'Başabaş adet = Sabit Maliyet / (Birim Fiyat − Birim Değişken Maliyet).'},
+  {k:'Kurumsal Yönetim/Finans',s:'Bağımsız yönetim kurulu üyesinin amacı nedir?',sec:['Ücreti artırmak','Tarafsız denetim ve azınlık/paydaş çıkarını gözetmek','Ana ortağı temsil','Sadece oy kullanmak','Vergi planlaması'],d:1,a:'Bağımsız üye, yönetim üzerinde tarafsız denetim sağlayıp tüm paydaşların çıkarını gözetir.'},
+  // ─── Sermaye Piyasası / Bankacılık / Sigorta ───
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Halka açık şirketler önemli bilgileri hangi platformda açıklar?',sec:['Ticaret sicili','KAP (Kamuyu Aydınlatma Platformu)','Resmi Gazete','SGK','Vergi dairesi'],d:1,a:'Halka açık şirketler, önemli olayları ve finansalları KAP üzerinden kamuya açıklar.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sermaye piyasasını düzenleyen ve denetleyen kurum hangisidir?',sec:['BDDK','SPK','TCMB','KGK','Hazine'],d:1,a:'Sermaye piyasalarını Sermaye Piyasası Kurulu (SPK) düzenler ve denetler.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankaları düzenleyen ve denetleyen kurum hangisidir?',sec:['SPK','BDDK','KGK','SGK','Borsa İstanbul'],d:1,a:'Bankacılık sektörünü Bankacılık Düzenleme ve Denetleme Kurumu (BDDK) düzenler ve denetler.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankalarda sermaye yeterlilik rasyosu (SYR) neyi ölçer?',sec:['Kârlılığı','Özkaynağın risk ağırlıklı varlıklara oranını','Mevduat miktarını','Kredi faizini','Şube sayısını'],d:1,a:'SYR = özkaynak / risk ağırlıklı varlıklar; bankanın riske karşı sermaye gücünü gösterir (Basel).'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'"İçeriden öğrenenlerin ticareti" (insider trading) nedir?',sec:['Normal alım-satım','Kamuya açıklanmamış bilgiyle menfaat sağlama','Halka arz','Temettü dağıtımı','Aracılık'],d:1,a:'Henüz kamuya açıklanmamış, fiyatı etkileyecek bilgiyi kullanarak menfaat sağlamaktır; yasaktır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'İzahname (prospektüs) ne zaman düzenlenir?',sec:['Kâr dağıtımında','Halka arzda','Tasfiyede','Birleşmede zorunlu değil','Denetimde'],d:1,a:'İzahname, sermaye piyasası araçlarının halka arzında yatırımcıyı bilgilendirmek için düzenlenir ve SPK onayına tabidir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sigortacılıkta "muallak hasar karşılığı" nedir?',sec:['Tahsil edilen prim','Gerçekleşmiş ama henüz ödenmemiş hasarlar için ayrılan karşılık','Reasürans payı','Kâr payı','Komisyon'],d:1,a:'Muallak hasar karşılığı, gerçekleşmiş fakat henüz ödenmemiş (dosyası açık) hasarlar için ayrılır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Reasürans ne demektir?',sec:['Sigorta satışı','Sigortacının riskinin bir kısmını başka şirkete devretmesi','Prim tahsili','Hasar ödeme','Poliçe iptali'],d:1,a:'Reasürans, sigorta şirketinin üstlendiği riskin bir kısmını başka bir (reasürans) şirkete devrederek paylaşmasıdır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'"Kazanılmamış primler karşılığı" nedir?',sec:['Ödenmemiş hasar','Primin gelecek döneme ait (henüz hak edilmemiş) kısmı','Komisyon gideri','Vergi karşılığı','Reasürans alacağı'],d:1,a:'Tahsil edilen primin, gelecek döneme sarkan ve henüz hak edilmemiş kısmı için ayrılan karşılıktır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Yatırım fonu katılma payı neyi temsil eder?',sec:['Şirket ortaklığını','Fon portföyündeki paya sahipliği','Tahvil alacağını','Mevduatı','Sigorta poliçesini'],d:1,a:'Katılma payı, yatırımcının fon portföyündeki payını (oransal sahipliğini) temsil eder.'},
+  // ─── Genel Hukuk ───
+  {k:'Genel Hukuk',s:'Kanunların Anayasaya uygunluğunu hangi mahkeme denetler?',sec:['Yargıtay','Danıştay','Anayasa Mahkemesi','Sayıştay','Bölge Adliye Mahkemesi'],d:2,a:'Kanunların Anayasaya uygunluğunu Anayasa Mahkemesi denetler.'},
+  {k:'Genel Hukuk',s:'İdari işlemlere karşı açılan davalara hangi yargı bakar?',sec:['Adli yargı','İdari yargı (Danıştay/İdare Mahkemeleri)','Anayasa Mahkemesi','Askeri yargı','Ceza mahkemesi'],d:1,a:'İdari işlem ve eylemlere karşı davalara idari yargı (idare/vergi mahkemeleri, Danıştay) bakar.'},
+  {k:'Genel Hukuk',s:'Ceza hukukunda "kanunsuz suç ve ceza olmaz" ilkesi ne anlama gelir?',sec:['Herkes suçludur','Kanunda tanımlanmayan fiil suç sayılamaz','Ceza takdiridir','Suç affedilir','Ceza uygulanmaz'],d:1,a:'Suçta ve cezada kanunilik ilkesi: bir fiil ancak kanunda açıkça suç olarak tanımlanmışsa cezalandırılır.'},
+  {k:'Genel Hukuk',s:'Bir hakkın kullanımının süreye bağlı olarak sona ermesi hangi kavramdır?',sec:['İbra','Zamanaşımı/hak düşürücü süre','Takas','Tecdit','Havale'],d:1,a:'Zamanaşımı ve hak düşürücü süreler, hakkın belirli süre içinde kullanılmaması halinde talep/koruma imkânını sınırlar.'},
+  {k:'Genel Hukuk',s:'Türkiye\'de en üst genel mahkeme (adli yargı) hangisidir?',sec:['Danıştay','Yargıtay','Anayasa Mahkemesi','Sayıştay','AYİM'],d:1,a:'Adli yargının en üst temyiz mercii Yargıtay\'dır; idari yargıda ise Danıştay.'},
+  {k:'Genel Hukuk',s:'Sözleşmenin kurulması için gereken temel unsur nedir?',sec:['Noter onayı','Karşılıklı ve birbirine uygun irade beyanı','Tanık','Damga vergisi','Tescil'],d:1,a:'Sözleşme, tarafların karşılıklı ve birbirine uygun irade beyanlarıyla (icap-kabul) kurulur.'},
+  {k:'Genel Hukuk',s:'Devletin temel organları hangileridir?',sec:['Yasama, yürütme, yargı','Meclis, ordu, polis','Merkez, taşra, yerel','Vergi, güvenlik, eğitim','Başkan, vekil, memur'],d:0,a:'Kuvvetler ayrılığı gereği devletin üç temel organı: yasama, yürütme ve yargı.'},
+  {k:'Genel Hukuk',s:'"Hukuki ehliyet" (fiil ehliyeti) için genel şart nedir?',sec:['Vergi mükellefi olmak','Ergin, ayırt etme gücüne sahip ve kısıtlı olmamak','Tacir olmak','Kamu görevlisi olmak','Şirket ortağı olmak'],d:1,a:'Tam fiil ehliyeti için kişinin ergin, ayırt etme gücüne sahip ve kısıtlı olmaması gerekir.'},
 ];
 
 /* ═══ GÜNLÜK SEED ROTASYON ═══ */
@@ -659,7 +718,14 @@ function testDersDoldur(){
   const dersler=[...new Set(TEST_SORULARI.map(t=>t.k))];
   dersler.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' ('+TEST_SORULARI.filter(t=>t.k===d).length+')';sel.appendChild(o);});
   sel.dataset.dolu="1";
+  const hiz=document.getElementById('testHizli');
+  if(hiz)hiz.innerHTML=dersler.map(d=>`<button class="gbtn" style="font-size:12px" onclick="testHizliBaslat('${d.replace(/'/g,"\\'")}')">${d} (${TEST_SORULARI.filter(t=>t.k===d).length})</button>`).join('');
   testIstatistikCiz();
+}
+function testHizliBaslat(ders){
+  document.getElementById('testDers').value=ders;
+  document.getElementById('testAdet').value='10';
+  testBaslat();
 }
 function testIstatistikCiz(){
   const el=document.getElementById('testIstatistik');if(!el)return;
