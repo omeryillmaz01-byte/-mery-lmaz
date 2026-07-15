@@ -62,6 +62,7 @@ mark{background:#fde68a;color:#111}
 <nav>
   <a class="active" data-p="pos">💳 POS Günlük</a>
   <a data-p="banka">🏦 Banka Hesap Kodları</a>
+  <a data-p="plan">📚 Hesap Planı</a>
   <a data-p="ozet">📊 Özet</a>
 </nav>
 <main>
@@ -116,6 +117,22 @@ Garanti	102.02	Garanti TL Vadesiz	TR34..."></textarea>
     </div>
   </div>
 
+  <!-- HESAP PLANI -->
+  <div class="pane" id="panePlan">
+    <div class="card">
+      <h2>📚 Tek Düzen Hesap Planı (standart, gömülü)</h2>
+      <p class="note" style="margin-bottom:10px">Türkiye standart Tekdüzen Hesap Planı uygulamaya gömülü — tekrar yüklemene gerek yok. Ara, banka hesabı olanları tek tıkla "Banka Hesap Kodları"na aktar.</p>
+      <div class="row" style="margin-bottom:12px">
+        <input id="planAra" placeholder="🔍 Hesap kodu veya adı ara (ör. 102, banka, satıcı)" oninput="planCiz()" style="flex:1">
+        <button class="gbtn primary" onclick="bankaHesaplariniYukle()">🏦 Banka hesaplarını (10x) Banka listesine ekle</button>
+      </div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th style="width:90px">Kod</th><th>Hesap Adı</th><th style="width:120px">Grup</th></tr></thead>
+        <tbody id="planBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
   <!-- ÖZET -->
   <div class="pane" id="paneOzet">
     <div class="stat">
@@ -145,7 +162,82 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
   $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
   if(a.dataset.p==='ozet')ozetCiz();
+  if(a.dataset.p==='plan')planCiz();
 });
+
+/* ═══ STANDART TEK DÜZEN HESAP PLANI (gömülü) ═══ */
+const HESAP_PLANI=[
+  {k:'100',a:'KASA',g:'1 Dönen V.'},{k:'101',a:'ALINAN ÇEKLER',g:'1 Dönen V.'},{k:'102',a:'BANKALAR',g:'1 Dönen V.'},
+  {k:'103',a:'VERİLEN ÇEKLER VE ÖDEME EMİRLERİ (-)',g:'1 Dönen V.'},{k:'108',a:'DİĞER HAZIR DEĞERLER',g:'1 Dönen V.'},
+  {k:'110',a:'HİSSE SENETLERİ',g:'1 Dönen V.'},{k:'111',a:'ÖZEL KESİM TAHVİL, SENET VE BONOLARI',g:'1 Dönen V.'},
+  {k:'112',a:'KAMU KESİMİ TAHVİL, SENET VE BONOLARI',g:'1 Dönen V.'},{k:'118',a:'DİĞER MENKUL KIYMETLER',g:'1 Dönen V.'},
+  {k:'119',a:'MENKUL KIYMETLER DEĞER DÜŞÜKLÜĞÜ KARŞ. (-)',g:'1 Dönen V.'},
+  {k:'120',a:'ALICILAR',g:'1 Dönen V.'},{k:'121',a:'ALACAK SENETLERİ',g:'1 Dönen V.'},{k:'122',a:'ALACAK SENETLERİ REESKONTU (-)',g:'1 Dönen V.'},
+  {k:'126',a:'VERİLEN DEPOZİTO VE TEMİNATLAR',g:'1 Dönen V.'},{k:'127',a:'DİĞER TİCARİ ALACAKLAR',g:'1 Dönen V.'},
+  {k:'128',a:'ŞÜPHELİ TİCARİ ALACAKLAR',g:'1 Dönen V.'},{k:'129',a:'ŞÜPHELİ TİCARİ ALACAKLAR KARŞILIĞI (-)',g:'1 Dönen V.'},
+  {k:'131',a:'ORTAKLARDAN ALACAKLAR',g:'1 Dönen V.'},{k:'136',a:'DİĞER ÇEŞİTLİ ALACAKLAR',g:'1 Dönen V.'},
+  {k:'150',a:'İLK MADDE VE MALZEME',g:'1 Dönen V.'},{k:'151',a:'YARI MAMULLER - ÜRETİM',g:'1 Dönen V.'},{k:'152',a:'MAMULLER',g:'1 Dönen V.'},
+  {k:'153',a:'TİCARİ MALLAR',g:'1 Dönen V.'},{k:'157',a:'DİĞER STOKLAR',g:'1 Dönen V.'},{k:'159',a:'VERİLEN SİPARİŞ AVANSLARI',g:'1 Dönen V.'},
+  {k:'180',a:'GELECEK AYLARA AİT GİDERLER',g:'1 Dönen V.'},{k:'181',a:'GELİR TAHAKKUKLARI',g:'1 Dönen V.'},
+  {k:'190',a:'DEVREDEN KDV',g:'1 Dönen V.'},{k:'191',a:'İNDİRİLECEK KDV',g:'1 Dönen V.'},{k:'193',a:'PEŞİN ÖDENEN VERGİLER VE FONLAR',g:'1 Dönen V.'},
+  {k:'195',a:'İŞ AVANSLARI',g:'1 Dönen V.'},{k:'196',a:'PERSONEL AVANSLARI',g:'1 Dönen V.'},{k:'197',a:'SAYIM VE TESELLÜM NOKSANLARI',g:'1 Dönen V.'},
+  {k:'220',a:'ALICILAR (Uzun V.)',g:'2 Duran V.'},{k:'221',a:'ALACAK SENETLERİ (Uzun V.)',g:'2 Duran V.'},
+  {k:'226',a:'VERİLEN DEPOZİTO VE TEMİNATLAR (Uzun V.)',g:'2 Duran V.'},{k:'231',a:'ORTAKLARDAN ALACAKLAR (Uzun V.)',g:'2 Duran V.'},
+  {k:'240',a:'BAĞLI MENKUL KIYMETLER',g:'2 Duran V.'},{k:'242',a:'İŞTİRAKLER',g:'2 Duran V.'},{k:'245',a:'BAĞLI ORTAKLIKLAR',g:'2 Duran V.'},
+  {k:'250',a:'ARAZİ VE ARSALAR',g:'2 Duran V.'},{k:'251',a:'YERALTI VE YERÜSTÜ DÜZENLERİ',g:'2 Duran V.'},{k:'252',a:'BİNALAR',g:'2 Duran V.'},
+  {k:'253',a:'TESİS, MAKİNE VE CİHAZLAR',g:'2 Duran V.'},{k:'254',a:'TAŞITLAR',g:'2 Duran V.'},{k:'255',a:'DEMİRBAŞLAR',g:'2 Duran V.'},
+  {k:'256',a:'DİĞER MADDİ DURAN VARLIKLAR',g:'2 Duran V.'},{k:'257',a:'BİRİKMİŞ AMORTİSMANLAR (-)',g:'2 Duran V.'},
+  {k:'258',a:'YAPILMAKTA OLAN YATIRIMLAR',g:'2 Duran V.'},{k:'259',a:'VERİLEN AVANSLAR',g:'2 Duran V.'},
+  {k:'260',a:'HAKLAR',g:'2 Duran V.'},{k:'261',a:'ŞEREFİYE',g:'2 Duran V.'},{k:'264',a:'ÖZEL MALİYETLER',g:'2 Duran V.'},
+  {k:'267',a:'DİĞER MADDİ OLMAYAN DURAN VARLIKLAR',g:'2 Duran V.'},{k:'268',a:'BİRİKMİŞ AMORTİSMANLAR (-)',g:'2 Duran V.'},
+  {k:'280',a:'GELECEK YILLARA AİT GİDERLER',g:'2 Duran V.'},{k:'281',a:'GELİR TAHAKKUKLARI',g:'2 Duran V.'},
+  {k:'300',a:'BANKA KREDİLERİ (Kısa V.)',g:'3 KVYK'},{k:'303',a:'UZUN V. KREDİLERİN ANAPARA TAKSİT VE FAİZLERİ',g:'3 KVYK'},
+  {k:'320',a:'SATICILAR',g:'3 KVYK'},{k:'321',a:'BORÇ SENETLERİ',g:'3 KVYK'},{k:'322',a:'BORÇ SENETLERİ REESKONTU (-)',g:'3 KVYK'},
+  {k:'326',a:'ALINAN DEPOZİTO VE TEMİNATLAR',g:'3 KVYK'},{k:'329',a:'DİĞER TİCARİ BORÇLAR',g:'3 KVYK'},
+  {k:'331',a:'ORTAKLARA BORÇLAR',g:'3 KVYK'},{k:'335',a:'PERSONELE BORÇLAR',g:'3 KVYK'},{k:'336',a:'DİĞER ÇEŞİTLİ BORÇLAR',g:'3 KVYK'},
+  {k:'340',a:'ALINAN SİPARİŞ AVANSLARI',g:'3 KVYK'},
+  {k:'360',a:'ÖDENECEK VERGİ VE FONLAR',g:'3 KVYK'},{k:'361',a:'ÖDENECEK SOSYAL GÜVENLİK KESİNTİLERİ',g:'3 KVYK'},
+  {k:'368',a:'VADESİ GEÇMİŞ ERTELENMİŞ TAKSİTLENDİRİLMİŞ VERGİ',g:'3 KVYK'},{k:'369',a:'ÖDENECEK DİĞER YÜKÜMLÜLÜKLER',g:'3 KVYK'},
+  {k:'370',a:'DÖNEM KÂRI VERGİ VE DİĞER YASAL YÜK. KARŞ.',g:'3 KVYK'},{k:'371',a:'DÖNEM KÂRININ PEŞİN ÖDENEN VERGİ VE YÜK. (-)',g:'3 KVYK'},
+  {k:'373',a:'MALİYET GİDERLERİ KARŞILIĞI',g:'3 KVYK'},{k:'391',a:'HESAPLANAN KDV',g:'3 KVYK'},{k:'392',a:'DİĞER KDV',g:'3 KVYK'},
+  {k:'397',a:'SAYIM VE TESELLÜM FAZLALARI',g:'3 KVYK'},
+  {k:'400',a:'BANKA KREDİLERİ (Uzun V.)',g:'4 UVYK'},{k:'420',a:'SATICILAR (Uzun V.)',g:'4 UVYK'},{k:'421',a:'BORÇ SENETLERİ (Uzun V.)',g:'4 UVYK'},
+  {k:'426',a:'ALINAN DEPOZİTO VE TEMİNATLAR (Uzun V.)',g:'4 UVYK'},{k:'431',a:'ORTAKLARA BORÇLAR (Uzun V.)',g:'4 UVYK'},
+  {k:'472',a:'KIDEM TAZMİNATI KARŞILIĞI',g:'4 UVYK'},{k:'480',a:'GELECEK YILLARA AİT GELİRLER',g:'4 UVYK'},
+  {k:'500',a:'SERMAYE',g:'5 Özkaynak'},{k:'501',a:'ÖDENMEMİŞ SERMAYE (-)',g:'5 Özkaynak'},
+  {k:'520',a:'HİSSE SENEDİ İHRAÇ PRİMLERİ',g:'5 Özkaynak'},{k:'522',a:'MADDİ DURAN VARLIK YENİDEN DEĞERLEME ARTIŞLARI',g:'5 Özkaynak'},
+  {k:'540',a:'YASAL YEDEKLER',g:'5 Özkaynak'},{k:'541',a:'STATÜ YEDEKLERİ',g:'5 Özkaynak'},{k:'542',a:'OLAĞANÜSTÜ YEDEKLER',g:'5 Özkaynak'},
+  {k:'570',a:'GEÇMİŞ YILLAR KÂRLARI',g:'5 Özkaynak'},{k:'580',a:'GEÇMİŞ YILLAR ZARARLARI (-)',g:'5 Özkaynak'},{k:'590',a:'DÖNEM NET KÂRI',g:'5 Özkaynak'},{k:'591',a:'DÖNEM NET ZARARI (-)',g:'5 Özkaynak'},
+  {k:'600',a:'YURTİÇİ SATIŞLAR',g:'6 Gelir Tab.'},{k:'601',a:'YURTDIŞI SATIŞLAR',g:'6 Gelir Tab.'},{k:'602',a:'DİĞER GELİRLER',g:'6 Gelir Tab.'},
+  {k:'610',a:'SATIŞTAN İADELER (-)',g:'6 Gelir Tab.'},{k:'611',a:'SATIŞ İSKONTOLARI (-)',g:'6 Gelir Tab.'},
+  {k:'620',a:'SATILAN MAMULLER MALİYETİ (-)',g:'6 Gelir Tab.'},{k:'621',a:'SATILAN TİCARİ MALLAR MALİYETİ (-)',g:'6 Gelir Tab.'},{k:'622',a:'SATILAN HİZMET MALİYETİ (-)',g:'6 Gelir Tab.'},
+  {k:'630',a:'ARAŞTIRMA VE GELİŞTİRME GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'631',a:'PAZARLAMA SATIŞ VE DAĞITIM GİD. (-)',g:'6 Gelir Tab.'},{k:'632',a:'GENEL YÖNETİM GİDERLERİ (-)',g:'6 Gelir Tab.'},
+  {k:'642',a:'FAİZ GELİRLERİ',g:'6 Gelir Tab.'},{k:'645',a:'MENKUL KIYMET SATIŞ KÂRLARI',g:'6 Gelir Tab.'},{k:'646',a:'KAMBİYO KÂRLARI',g:'6 Gelir Tab.'},
+  {k:'648',a:'ENFLASYON DÜZELTMESİ KÂRLARI',g:'6 Gelir Tab.'},{k:'649',a:'DİĞER OLAĞAN GELİR VE KÂRLAR',g:'6 Gelir Tab.'},
+  {k:'653',a:'KOMİSYON GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'654',a:'KARŞILIK GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'656',a:'KAMBİYO ZARARLARI (-)',g:'6 Gelir Tab.'},
+  {k:'658',a:'ENFLASYON DÜZELTMESİ ZARARLARI (-)',g:'6 Gelir Tab.'},{k:'659',a:'DİĞER OLAĞAN GİDER VE ZARARLAR (-)',g:'6 Gelir Tab.'},
+  {k:'660',a:'KISA VADELİ BORÇLANMA GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'661',a:'UZUN VADELİ BORÇLANMA GİDERLERİ (-)',g:'6 Gelir Tab.'},
+  {k:'679',a:'DİĞER OLAĞANDIŞI GELİR VE KÂRLAR',g:'6 Gelir Tab.'},{k:'689',a:'DİĞER OLAĞANDIŞI GİDER VE ZARARLAR (-)',g:'6 Gelir Tab.'},
+  {k:'690',a:'DÖNEM KÂRI VEYA ZARARI',g:'6 Gelir Tab.'},{k:'691',a:'DÖNEM KÂRI VERGİ VE YASAL YÜK. KARŞ. (-)',g:'6 Gelir Tab.'},{k:'692',a:'DÖNEM NET KÂRI VEYA ZARARI',g:'6 Gelir Tab.'},
+  {k:'700',a:'MALİYET MUHASEBESİ BAĞLANTI HESABI',g:'7 Maliyet'},{k:'710',a:'DİREKT İLK MADDE VE MALZEME GİDERLERİ',g:'7 Maliyet'},
+  {k:'720',a:'DİREKT İŞÇİLİK GİDERLERİ',g:'7 Maliyet'},{k:'730',a:'GENEL ÜRETİM GİDERLERİ',g:'7 Maliyet'},{k:'740',a:'HİZMET ÜRETİM MALİYETİ',g:'7 Maliyet'},
+  {k:'750',a:'ARAŞTIRMA VE GELİŞTİRME GİDERLERİ',g:'7 Maliyet'},{k:'760',a:'PAZARLAMA SATIŞ VE DAĞITIM GİDERLERİ',g:'7 Maliyet'},{k:'770',a:'GENEL YÖNETİM GİDERLERİ',g:'7 Maliyet'},{k:'780',a:'FİNANSMAN GİDERLERİ',g:'7 Maliyet'},
+];
+function planCiz(){
+  const q=($("planAra").value||'').toLocaleLowerCase('tr').trim();
+  const liste=HESAP_PLANI.filter(h=>!q||(h.k+' '+h.a).toLocaleLowerCase('tr').includes(q));
+  const vur=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):t;
+  $("planBody").innerHTML=liste.length?liste.map(h=>`<tr><td style="font-weight:700;color:var(--acc2)">${vur(h.k)}</td><td>${vur(h.a)}</td><td style="color:var(--mut);font-size:12px">${h.g}</td></tr>`).join(''):'<tr><td colspan="3" style="color:var(--mut)">Eşleşen hesap yok.</td></tr>';
+}
+function bankaHesaplariniYukle(){
+  const bankaKodlari=HESAP_PLANI.filter(h=>['100','101','102','103','108'].includes(h.k));
+  let n=0;
+  bankaKodlari.forEach(h=>{
+    if(!bankalar.some(b=>b.kod===h.k)){bankalar.push({banka:'',kod:h.k,ad:h.a,iban:''});n++;}
+  });
+  save("battal_banka",bankalar);bankaRender();
+  alert(n+" standart hazır değer/banka hesap kodu eklendi (100-108). Banka adlarını ve alt kodları (102.01 gibi) düzenleyebilirsin.");
+}
 
 /* ═══ BANKA HESAP KODLARI ═══ */
 let bankalar=load("battal_banka")||[];
