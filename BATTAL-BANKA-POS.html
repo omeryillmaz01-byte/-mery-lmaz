@@ -264,7 +264,11 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{
 });
 
 /* ═══ FİRMALAR ═══ */
-let firmalar=load("battal_firmalar")||["ISIK_PETROL"];
+const FIRMALAR_VARSAYILAN=["ISIK_PETROL","2AA","AKÇA AĞIZ","BESA GIDA","BILPARK BILIŞIM","BİLPARK YAZILIM","BODUR","BURAK CET ADİ ORT.","CET ENERJİ","DECOR PEOPLE","DTB YAZILIM","ERDA GÜMRÜK","ERDEM ÖZŞEN","ERLAMER","ESNI BILIŞIM","GIZEM GÖKER ADİ ORT.","HACIKERIMOĞLU GIDA","HÜLYA HATUN","İSTANBUL PLASTİK","KARIYERKÜRE","KARMAKENT","KIRPI","KNA","MARMARAGES","MD","NEN","NES GÜZELLIK","OGUTMEN"];
+let firmalar=load("battal_firmalar")||[];
+// varsayılan firmaları (eksik olanları) ekle — kullanıcının eklediklerini korur
+FIRMALAR_VARSAYILAN.forEach(f=>{if(!firmalar.includes(f))firmalar.push(f);});
+save("battal_firmalar",firmalar);
 function mFirmaDoldur(){const s=$("mFirma");if(!s)return;s.innerHTML=firmalar.map(f=>`<option>${esc(f)}</option>`).join('');}
 function firmaEkle(){const ad=prompt("Firma adı:");if(!ad)return;firmalar.push(ad.trim());save("battal_firmalar",firmalar);mFirmaDoldur();$("mFirma").value=ad.trim();}
 function mBankaDoldur(){
@@ -331,9 +335,12 @@ function hesapPlaniAyikla(satirlar){
 }
 function firmaPlanOzetCiz(){
   const el=$("firmaPlanOzet");if(!el)return;
-  const ks=Object.keys(firmaPlan);
-  if(!ks.length){el.innerHTML='<span class="note">Henüz firma hesap planı yüklenmedi.</span>';return;}
-  el.innerHTML='<b>Yüklü firmalar:</b> '+ks.map(k=>`<span style="display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:2px 8px;margin:2px 4px 2px 0">${esc(k)} · ${firmaPlan[k].length} hesap <span onclick="firmaPlanSil('${esc(k).replace(/'/g,"")}')" style="cursor:pointer;color:var(--err)">✕</span></span>`).join('');
+  const yuklu=Object.keys(firmaPlan).length;
+  el.innerHTML=`<div style="margin-bottom:6px"><b>${firmalar.length} firma</b> tanımlı · <b style="color:var(--ok)">${yuklu}</b> tanesinin gerçek hesap planı .xlsx yüklü. Yüklü olmayanlar standart Tek Düzen Hesap Planı kullanır.</div>`+
+    firmalar.map(f=>{
+      const p=firmaPlan[f];
+      return `<span style="display:inline-block;background:var(--panel);border:1px solid ${p?'var(--ok)':'var(--line)'};border-radius:8px;padding:2px 8px;margin:2px 4px 2px 0;font-size:12px">${p?'📗':'📋'} ${esc(f)}${p?' · '+p.length:''}${p?` <span onclick="firmaPlanSil('${esc(f).replace(/'/g,"")}')" style="cursor:pointer;color:var(--err)">✕</span>`:''}</span>`;
+    }).join('');
 }
 function firmaPlanSil(k){delete firmaPlan[k];save("battal_firma_plan",firmaPlan);firmaPlanOzetCiz();mBankaDoldur();}
 function aktifPlan(){const f=$("mFirma")&&$("mFirma").value;return (f&&firmaPlan[f])?firmaPlan[f]:null;}
