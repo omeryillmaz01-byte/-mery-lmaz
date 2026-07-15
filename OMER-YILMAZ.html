@@ -11733,6 +11733,50 @@ main{flex:1;overflow:auto;padding:24px 20px 50px}
     </div>
   </div>
 
+  <!-- 🏦 BANKALAR & POS MODÜLÜ -->
+  <div class="panel" style="margin-top:20px">
+    <h2>🏦 Banka Hesap Kodları</h2>
+    <p style="font-size:12px;color:var(--mut);margin-bottom:12px">Bankalardan gelen hesapları tekdüzen hesap koduyla tanımla. Excel'den kopyalayıp toplu yapıştırabilirsin (sütunlar: Banka · Hesap Kodu · Hesap Adı · IBAN).</p>
+    <div class="row" style="margin-bottom:12px">
+      <div class="fld" style="max-width:170px"><label>BANKA</label><input id="bhBanka" placeholder="ör. Ziraat, Garanti…" /></div>
+      <div class="fld" style="max-width:130px"><label>HESAP KODU</label><input id="bhKod" placeholder="ör. 102.01" /></div>
+      <div class="fld"><label>HESAP ADI</label><input id="bhAd" placeholder="ör. Ziraat Bankası TL Vadesiz" /></div>
+      <div class="fld" style="max-width:200px"><label>IBAN (opsiyonel)</label><input id="bhIban" placeholder="TR.." /></div>
+      <button class="btn btn-g" id="bhEkle">Ekle</button>
+    </div>
+    <details style="margin-bottom:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--acc)">📋 Excel'den toplu yapıştır</summary>
+      <p style="font-size:11.5px;color:var(--mut);margin:8px 0">Excel'de satırları seçip kopyala, aşağıya yapıştır. Her satır: <b>Banka [TAB] Kod [TAB] Ad [TAB] IBAN</b>. Ondalık/sütun ayırıcı olarak TAB veya noktalı virgün desteklenir.</p>
+      <textarea id="bhToplu" placeholder="Ziraat	102.01	Ziraat TL Vadesiz	TR12...&#10;Garanti	102.02	Garanti TL Vadesiz	TR34..." style="width:100%;min-height:90px;padding:8px;border-radius:8px;border:1px solid var(--border,#2d3a4d);background:var(--glass,#1a2332);color:var(--txt,#e8eef5);font-family:monospace;font-size:12px"></textarea>
+      <button class="btn btn-s" id="bhTopluEkle" style="margin-top:8px">📥 Toplu Ekle</button>
+    </details>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>HESAP KODU</th><th>BANKA</th><th>HESAP ADI</th><th>IBAN</th><th></th></tr></thead>
+        <tbody id="bhBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:20px">
+    <h2>💳 POS Günlük İşlemler (Brüt · Komisyon · Net)</h2>
+    <p style="font-size:12px;color:var(--mut);margin-bottom:12px">Her gün için brüt geçen tutarı ve komisyonu gir; net otomatik hesaplanır. Aynı tarihe birden çok POS eklenebilir, her günün altında toplam çıkar.</p>
+    <div class="row" style="margin-bottom:12px;align-items:flex-end">
+      <div class="fld" style="max-width:150px"><label>TARİH</label><input id="posTarih" type="date" /></div>
+      <div class="fld" style="max-width:160px"><label>BANKA / POS</label><input id="posBanka" placeholder="ör. Garanti POS" list="posBankaListe" /><datalist id="posBankaListe"></datalist></div>
+      <div class="fld" style="max-width:130px"><label>BRÜT (₺)</label><input id="posBrut" type="number" step="0.01" placeholder="0,00" /></div>
+      <div class="fld" style="max-width:120px"><label>KOMİSYON %</label><input id="posOran" type="number" step="0.01" placeholder="ör. 1,75" /></div>
+      <div class="fld" style="max-width:130px"><label>veya KOMİSYON ₺</label><input id="posKomTutar" type="number" step="0.01" placeholder="opsiyonel" /></div>
+      <button class="btn btn-g" id="posEkle">Ekle</button>
+    </div>
+    <div class="sumgrid" style="margin-bottom:16px">
+      <div class="sumcard s1"><div class="lbl">💰 GENEL BRÜT</div><div class="val" id="posGenelBrut">0 ₺</div><div class="sub">Tüm günler</div></div>
+      <div class="sumcard s2"><div class="lbl">✂️ GENEL KOMİSYON</div><div class="val neg" id="posGenelKom">0 ₺</div><div class="sub">Toplam kesinti</div></div>
+      <div class="sumcard s3"><div class="lbl">✅ GENEL NET</div><div class="val pos" id="posGenelNet">0 ₺</div><div class="sub">Hesaba geçen</div></div>
+    </div>
+    <div id="posListe"></div>
+  </div>
+
 </div></main>
 <script>
 const $=id=>document.getElementById(id);
@@ -12134,7 +12178,100 @@ function hesapla(){
     $("hbSonuc").innerHTML=\`Tahmini net: <b style="color:var(--acc2,#29b6f6)">\${f(net)}</b><br>Toplam kesinti: <b>\${f(brut-net)}</b>\`;
   }
 }
-function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender();katButceRender();hesapSec(_hesapAktif)}
+/* ═══ 🏦 BANKA HESAP KODLARI ═══ */
+let bankaHesaplar=load("muh_banka_hesaplar")||[];
+function bhRender(){
+  const body=$("bhBody");
+  if(!bankaHesaplar.length){body.innerHTML='<tr><td colspan="5" style="color:var(--mut);padding:10px 0">Henüz banka hesabı tanımlanmadı. Excel/PDF gelince kodları buraya girebilirsin.</td></tr>';}
+  else{
+    body.innerHTML=bankaHesaplar.map((b,i)=>\`<tr>
+      <td style="font-weight:700;color:var(--acc2,#29b6f6)">\${esc(b.kod||"")}</td>
+      <td>\${esc(b.banka||"")}</td><td>\${esc(b.ad||"")}</td>
+      <td style="font-family:monospace;font-size:12px">\${esc(b.iban||"")}</td>
+      <td><button class="btn btn-r" data-bh="\${i}">Sil</button></td></tr>\`).join('');
+    body.querySelectorAll("[data-bh]").forEach(btn=>btn.onclick=()=>{bankaHesaplar.splice(+btn.dataset.bh,1);save("muh_banka_hesaplar",bankaHesaplar);bhRender();posBankaDatalist();});
+  }
+  posBankaDatalist();
+}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$("bhEkle").onclick=()=>{
+  const banka=$("bhBanka").value.trim(),kod=$("bhKod").value.trim(),ad=$("bhAd").value.trim(),iban=$("bhIban").value.trim();
+  if(!banka&&!kod){alert("En az banka ve hesap kodu gir.");return;}
+  bankaHesaplar.push({banka,kod,ad,iban});save("muh_banka_hesaplar",bankaHesaplar);
+  $("bhBanka").value=$("bhKod").value=$("bhAd").value=$("bhIban").value="";bhRender();
+};
+$("bhTopluEkle").onclick=()=>{
+  const txt=$("bhToplu").value.trim();if(!txt){return;}
+  let n=0;
+  txt.split(/\\r?\\n/).forEach(sat=>{
+    if(!sat.trim())return;
+    const p=sat.split(/\\t|;/).map(x=>x.trim());
+    if(p.length<2)return;
+    bankaHesaplar.push({banka:p[0]||"",kod:p[1]||"",ad:p[2]||"",iban:p[3]||""});n++;
+  });
+  save("muh_banka_hesaplar",bankaHesaplar);$("bhToplu").value="";bhRender();
+  alert(n+" banka hesabı eklendi.");
+};
+function posBankaDatalist(){
+  const dl=$("posBankaListe");if(!dl)return;
+  const adlar=[...new Set(bankaHesaplar.map(b=>b.banka).filter(Boolean))];
+  dl.innerHTML=adlar.map(a=>\`<option value="\${esc(a)}">\`).join('');
+}
+
+/* ═══ 💳 POS GÜNLÜK İŞLEMLER ═══ */
+let posKayitlar=load("muh_pos_gunluk")||[];
+function posHesapNet(brut,oran,komTutar){
+  brut=+brut||0;
+  let kom = (komTutar!==""&&komTutar!=null&&!isNaN(+komTutar)&&+komTutar>0) ? +komTutar : brut*((+oran||0)/100);
+  return {brut,kom,net:brut-kom};
+}
+$("posEkle").onclick=()=>{
+  const tarih=$("posTarih").value||new Date().toISOString().slice(0,10);
+  const banka=$("posBanka").value.trim();
+  const {brut,kom,net}=posHesapNet($("posBrut").value,$("posOran").value,$("posKomTutar").value);
+  if(!brut){alert("Brüt tutar gir.");return;}
+  posKayitlar.push({tarih,banka,brut,kom,net,oran:+$("posOran").value||0});
+  save("muh_pos_gunluk",posKayitlar);
+  $("posBrut").value=$("posKomTutar").value="";
+  posRender();
+};
+function posRender(){
+  const liste=$("posListe");if(!liste)return;
+  if(!posKayitlar.length){liste.innerHTML='<div style="color:var(--mut);font-size:13px;padding:8px 0">Henüz POS kaydı yok.</div>';$("posGenelBrut").textContent="0 ₺";$("posGenelKom").textContent="0 ₺";$("posGenelNet").textContent="0 ₺";return;}
+  const gunler={};
+  posKayitlar.forEach((k,i)=>{(gunler[k.tarih]=gunler[k.tarih]||[]).push({...k,_i:i});});
+  const sirali=Object.keys(gunler).sort().reverse();
+  let gB=0,gK=0,gN=0;
+  liste.innerHTML=sirali.map(t=>{
+    const rows=gunler[t];let tB=0,tK=0,tN=0;
+    const tr=rows.map(r=>{tB+=r.brut;tK+=r.kom;tN+=r.net;
+      return \`<tr>
+        <td>\${esc(r.banka||"—")}\${r.oran?\` <span style="color:var(--mut);font-size:11px">(%\${r.oran})</span>\`:''}</td>
+        <td style="text-align:right">\${fmt(r.brut)}</td>
+        <td style="text-align:right;color:#ef5350">\${fmt(r.kom)}</td>
+        <td style="text-align:right;color:#66bb6a;font-weight:600">\${fmt(r.net)}</td>
+        <td style="text-align:right"><button class="btn btn-r" data-pos="\${r._i}">Sil</button></td></tr>\`;
+    }).join('');
+    gB+=tB;gK+=tK;gN+=tN;
+    const tarihStr=new Date(t).toLocaleDateString("tr-TR",{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+    return \`<div style="margin-bottom:14px;border:1px solid var(--border,#2d3a4d);border-radius:12px;overflow:hidden">
+      <div style="background:var(--panel2,#243447);padding:8px 12px;font-weight:700;font-size:13px">📅 \${tarihStr}</div>
+      <div style="overflow-x:auto"><table class="tbl" style="margin:0">
+        <thead><tr><th>BANKA / POS</th><th style="text-align:right">BRÜT</th><th style="text-align:right">KOMİSYON</th><th style="text-align:right">NET</th><th></th></tr></thead>
+        <tbody>\${tr}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--acc,#4fc3f7);font-weight:800">
+          <td>GÜN TOPLAMI</td>
+          <td style="text-align:right">\${fmt(tB)}</td>
+          <td style="text-align:right;color:#ef5350">\${fmt(tK)}</td>
+          <td style="text-align:right;color:#66bb6a">\${fmt(tN)}</td><td></td></tr></tfoot>
+      </table></div>
+    </div>\`;
+  }).join('');
+  liste.querySelectorAll("[data-pos]").forEach(btn=>btn.onclick=()=>{posKayitlar.splice(+btn.dataset.pos,1);save("muh_pos_gunluk",posKayitlar);posRender();});
+  $("posGenelBrut").textContent=fmt(gB);$("posGenelKom").textContent=fmt(gK);$("posGenelNet").textContent=fmt(gN);
+}
+
+function render(){renderOzet();renderIslemler();renderHedefler();pieChart();barChart();butceRender();abonRender();cariRender();madenRender();katButceRender();hesapSec(_hesapAktif);bhRender();posRender()}
 
 function islemEkleTamamla(fisFoto){
   const tip=$("tipSel").value;
