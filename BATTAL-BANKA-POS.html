@@ -285,6 +285,16 @@ function mBankaDoldur(){
 
 /* ═══ FİRMA HESAP PLANLARI (.xlsx okuma) ═══ */
 let firmaPlan=load("battal_firma_plan")||{};   // {firmaAdı:[{kod,ad}]}
+function firmaNormalize(){
+  // firma adlarını BÜYÜK harfe indir, çift kayıtları birleştir (planlı olanı koru)
+  const yeniPlan={};
+  Object.keys(firmaPlan).forEach(k=>{const u=k.toLocaleUpperCase('tr');if(!yeniPlan[u]||firmaPlan[k].length>yeniPlan[u].length)yeniPlan[u]=firmaPlan[k];});
+  firmaPlan=yeniPlan;
+  const gorulen=new Set(),nf=[];
+  firmalar.forEach(f=>{const u=f.toLocaleUpperCase('tr');if(!gorulen.has(u)){gorulen.add(u);nf.push(u);}});
+  firmalar=nf;
+  save("battal_firma_plan",firmaPlan);save("battal_firmalar",firmalar);
+}
 function planXlsxYukle(inp){
   const files=[...(inp.files||[])];if(!files.length)return;
   if(typeof XLSX==='undefined'){alert("Excel motoru yüklenemedi.");return;}
@@ -297,7 +307,7 @@ function planXlsxYukle(inp){
         const ws=wb.Sheets[wb.SheetNames[0]];
         const satirlar=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
         const plan=hesapPlaniAyikla(satirlar);
-        const firmaAd=f.name.replace(/\.(xlsx|xls)$/i,'').replace(/[_\s]+/g,' ').replace(/hesap ?plan[ıi]?/i,'').trim()||f.name;
+        const firmaAd=(f.name.replace(/\.(xlsx|xls)$/i,'').replace(/[_\s]+/g,' ').replace(/hesap ?plan[ıi]?/i,'').trim()||f.name).toLocaleUpperCase('tr');
         if(plan.length){
           firmaPlan[firmaAd]=plan;
           if(!firmalar.includes(firmaAd)){firmalar.push(firmaAd);}
@@ -639,6 +649,7 @@ function geriYukle(inp){
   r.onload=e=>{try{const p=JSON.parse(e.target.result);if(!confirm("Mevcut veri bu yedekle değiştirilecek. Devam?"))return;
     bankalar=p.bankalar||[];poslar=p.poslar||[];
     if(p.firmalar)firmalar=p.firmalar; if(p.firmaPlan)firmaPlan=p.firmaPlan; if(p.kurallar)kurallar=p.kurallar;
+    firmaNormalize();
     save("battal_banka",bankalar);save("battal_pos",poslar);save("battal_firmalar",firmalar);save("battal_firma_plan",firmaPlan);save("battal_kurallar",kurallar);
     bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();alert("Geri yüklendi.");
   }catch(err){alert("Geçersiz yedek dosyası.");}};
@@ -655,6 +666,7 @@ function planlariDisaAktar(){
 /* init */
 $("posTarih").value=new Date().toISOString().slice(0,10);
 $("mFirma").addEventListener('change',()=>mBankaDoldur());
+firmaNormalize();
 bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();
 </script>
 </body>
