@@ -60,14 +60,75 @@ mark{background:#fde68a;color:#111}
   <button class="gbtn" id="themeBtn" onclick="temaDegis()">🌙</button>
 </header>
 <nav>
-  <a class="active" data-p="pos">💳 POS Günlük</a>
+  <a class="active" data-p="mikro">🔄 Ekstre → Mikro Excel</a>
+  <a data-p="pos">💳 POS Günlük</a>
   <a data-p="banka">🏦 Banka Hesap Kodları</a>
   <a data-p="plan">📚 Hesap Planı</a>
+  <a data-p="kural">🧠 Eşleştirme Kuralları</a>
   <a data-p="ozet">📊 Özet</a>
 </nav>
 <main>
+  <!-- EKSTRE → MİKRO -->
+  <div class="pane active" id="paneMikro">
+    <div class="card">
+      <h2>🔄 Banka Ekstresi → Mikro Excel (otomatik)</h2>
+      <p class="note" style="margin-bottom:12px">Firma & banka hesabını seç, ekstreyi yapıştır veya CSV yükle, <b>DÖNÜŞTÜR</b> de. Açıklamalara göre hesap kodları otomatik eşleşir, düşük güvenli olanları elle düzeltebilirsin. Sonra <b>Mikro Excel'e çıkar</b>.</p>
+      <div class="row" style="margin-bottom:10px">
+        <div class="fld" style="max-width:220px"><label>1. Firma</label>
+          <div style="display:flex;gap:6px"><select id="mFirma" style="flex:1"></select><button class="gbtn" onclick="firmaEkle()" title="Firma ekle">＋</button></div>
+        </div>
+        <div class="fld"><label>2. Banka Hesabı</label><select id="mBankaHesap"></select></div>
+      </div>
+      <label>3. Ekstre (Tarih ⭾ Açıklama ⭾ Tutar — Excel'den kopyala-yapıştır ya da CSV yükle)</label>
+      <textarea id="mEkstre" style="min-height:120px;font-family:monospace;font-size:12px" placeholder="12.07.2026	POS GARANTI KOMISYON	-175,00
+12.07.2026	EFT GELEN ISIK PETROL	5.000,00
+13.07.2026	KIRA ODEMESI	-12.000,00"></textarea>
+      <div class="row" style="margin-top:10px;align-items:center">
+        <button class="gbtn" onclick="document.getElementById('mCsv').click()">📁 CSV Yükle</button>
+        <input type="file" id="mCsv" accept=".csv,text/csv" style="display:none" onchange="csvYukle(this)">
+        <div class="fld" style="max-width:150px"><label>Açılış bakiye (ops.)</label><input id="mAcilis" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="fld" style="max-width:150px"><label>Kapanış bakiye (ops.)</label><input id="mKapanis" type="number" step="0.01" placeholder="0,00"></div>
+        <span class="spacer"></span>
+        <button class="gbtn primary" onclick="donustur()">🔄 DÖNÜŞTÜR (Önizleme)</button>
+        <button class="gbtn" style="background:var(--ok);border-color:var(--ok);color:#04210f" onclick="mikroCikar()">💾 Mikro Excel'e Çıkar</button>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="sc"><div class="l">📋 Toplam Satır</div><div class="v" id="mToplam">0</div></div>
+      <div class="sc"><div class="l">✅ Otomatik</div><div class="v pos" id="mOtomatik">0</div></div>
+      <div class="sc"><div class="l">⚠️ Düşük Güven</div><div class="v" style="color:var(--warn)" id="mDusuk">0</div></div>
+      <div class="sc"><div class="l">💰 Net Tutar</div><div class="v" id="mNet">0 ₺</div></div>
+      <div class="sc"><div class="l">🎯 Bakiye Kontrol</div><div class="v" id="mBakiye" style="font-size:15px">—</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th style="width:90px">Tarih</th><th>Açıklama</th><th class="num" style="width:110px">Tutar</th><th style="width:120px">Hesap Kodu</th><th style="width:90px">Güven</th></tr></thead>
+        <tbody id="mBody"><tr><td colspan="5" style="color:var(--mut);padding:16px">Henüz dönüştürme yapılmadı.</td></tr></tbody>
+      </table></div>
+    </div>
+    <p class="note" style="margin-top:8px">📧 <b>Mailden ekstre:</b> Bankadan gelen ekstre mailini aç → eki (CSV/Excel) telefonuna/masaüstüne indir → yukarıdan "CSV Yükle" ya da kopyala-yapıştır. (Tarayıcı uygulaması Outlook'a doğrudan bağlanamaz; otomatik mail çekme masaüstü sürümü gerektirir.)</p>
+  </div>
+
+  <!-- KURALLAR -->
+  <div class="pane" id="paneKural">
+    <div class="card">
+      <h2>🧠 Otomatik Eşleştirme Kuralları</h2>
+      <p class="note" style="margin-bottom:12px">Ekstre açıklamasında geçen <b>anahtar kelime</b> → hangi <b>hesap koduna</b> gitsin. Dönüştürme bu kurallara göre otomatik eşleştirir. Üstteki kural önce denenir.</p>
+      <div class="row">
+        <div class="fld" style="max-width:220px"><label>Anahtar kelime (açıklamada geçen)</label><input id="kKelime" placeholder="ör. KOMISYON, KIRA, EFT..."></div>
+        <div class="fld" style="max-width:150px"><label>Hesap Kodu</label><input id="kKod" placeholder="653"></div>
+        <div class="fld"><label>Hesap Adı (ops.)</label><input id="kAd" placeholder="Komisyon Giderleri"></div>
+        <button class="gbtn primary" onclick="kuralEkle()">➕ Ekle</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:12px"><table>
+        <thead><tr><th>Anahtar Kelime</th><th>Hesap Kodu</th><th>Hesap Adı</th><th></th></tr></thead>
+        <tbody id="kuralBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
   <!-- POS -->
-  <div class="pane active" id="panePos">
+  <div class="pane" id="panePos">
     <div class="card">
       <h2>💳 POS Günlük İşlem Ekle</h2>
       <p class="note" style="margin-bottom:12px">Brüt tutarı ve komisyonu gir; net otomatik. Aynı güne birden fazla POS eklenebilir, her günün altında toplam çıkar.</p>
@@ -163,7 +224,127 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{
   $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
   if(a.dataset.p==='ozet')ozetCiz();
   if(a.dataset.p==='plan')planCiz();
+  if(a.dataset.p==='kural')kuralRender();
+  if(a.dataset.p==='mikro'){mFirmaDoldur();mBankaDoldur();}
 });
+
+/* ═══ FİRMALAR ═══ */
+let firmalar=load("battal_firmalar")||["ISIK_PETROL"];
+function mFirmaDoldur(){const s=$("mFirma");if(!s)return;s.innerHTML=firmalar.map(f=>`<option>${esc(f)}</option>`).join('');}
+function firmaEkle(){const ad=prompt("Firma adı:");if(!ad)return;firmalar.push(ad.trim());save("battal_firmalar",firmalar);mFirmaDoldur();$("mFirma").value=ad.trim();}
+function mBankaDoldur(){
+  const s=$("mBankaHesap");if(!s)return;
+  s.innerHTML=bankalar.length?bankalar.map(b=>`<option value="${esc(b.kod)}">${esc(b.kod)} — ${esc(b.banka||b.ad||'')}</option>`).join(''):'<option value="">(Önce Banka Hesap Kodları ekle)</option>';
+}
+
+/* ═══ EŞLEŞTİRME KURALLARI ═══ */
+const KURAL_VARSAYILAN=[
+  {kelime:'KOMISYON',kod:'653',ad:'Komisyon Giderleri'},
+  {kelime:'POS',kod:'108',ad:'Diğer Hazır Değerler'},
+  {kelime:'KIRA',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'MAAS',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'MAAŞ',kod:'335',ad:'Personele Borçlar'},
+  {kelime:'SGK',kod:'361',ad:'Ödenecek Sosyal Güvenlik Kesintileri'},
+  {kelime:'VERGI',kod:'360',ad:'Ödenecek Vergi ve Fonlar'},
+  {kelime:'KDV',kod:'360',ad:'Ödenecek Vergi ve Fonlar'},
+  {kelime:'EFT',kod:'120',ad:'Alıcılar'},
+  {kelime:'HAVALE',kod:'120',ad:'Alıcılar'},
+  {kelime:'FAIZ',kod:'642',ad:'Faiz Gelirleri'},
+  {kelime:'MASRAF',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'BSMV',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'ELEKTRIK',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'DOGALGAZ',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'SU FATURA',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'TELEFON',kod:'770',ad:'Genel Yönetim Giderleri'},
+  {kelime:'AKARYAKIT',kod:'153',ad:'Ticari Mallar'},
+  {kelime:'CEK',kod:'103',ad:'Verilen Çekler ve Ödeme Emirleri'},
+  {kelime:'SATICI',kod:'320',ad:'Satıcılar'},
+];
+let kurallar=load("battal_kurallar")||KURAL_VARSAYILAN.slice();
+function kuralRender(){
+  const b=$("kuralBody");
+  b.innerHTML=kurallar.length?kurallar.map((k,i)=>`<tr>
+    <td style="font-weight:600">${esc(k.kelime)}</td><td style="color:var(--acc2);font-weight:700">${esc(k.kod)}</td><td>${esc(k.ad||'')}</td>
+    <td><button class="sil" onclick="kuralSil(${i})">Sil</button></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--mut)">Kural yok.</td></tr>';
+}
+function kuralEkle(){
+  const kelime=$("kKelime").value.trim().toLocaleUpperCase('tr'),kod=$("kKod").value.trim(),ad=$("kAd").value.trim();
+  if(!kelime||!kod)return alert("Anahtar kelime ve hesap kodu gir.");
+  kurallar.unshift({kelime,kod,ad});save("battal_kurallar",kurallar);
+  $("kKelime").value=$("kKod").value=$("kAd").value="";kuralRender();
+}
+function kuralSil(i){kurallar.splice(i,1);save("battal_kurallar",kurallar);kuralRender();}
+
+/* ═══ DÖNÜŞTÜRME MOTORU ═══ */
+let _mSatirlar=[];
+function trTutar(s){
+  s=String(s||"").replace(/[^\d,.\-]/g,"");
+  if(s.indexOf(",")>-1){s=s.replace(/\./g,"").replace(",",".");} // 1.234,56 -> 1234.56
+  return parseFloat(s)||0;
+}
+function hesapKoduBul(aciklama){
+  const up=(aciklama||"").toLocaleUpperCase('tr');
+  for(const k of kurallar){ if(up.includes(k.kelime.toLocaleUpperCase('tr'))) return {kod:k.kod,ad:k.ad||hesapAdiGetir(k.kod),guven:'yüksek'}; }
+  return {kod:'',ad:'',guven:'düşük'};
+}
+function hesapAdiGetir(kod){const h=HESAP_PLANI.find(x=>x.k===kod);return h?h.a:'';}
+function csvYukle(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=e=>{$("mEkstre").value=e.target.result.replace(/;/g,"\t");donustur();};
+  r.readAsText(f,'utf-8');inp.value="";
+}
+function donustur(){
+  const ham=$("mEkstre").value.trim();
+  if(!ham){alert("Önce ekstre yapıştır veya CSV yükle.");return;}
+  _mSatirlar=[];
+  ham.split(/\r?\n/).forEach(sat=>{
+    if(!sat.trim())return;
+    const p=sat.split(/\t|;/).map(x=>x.trim());
+    if(p.length<2)return;
+    // tarih, açıklama, tutar sırası; tutar son sütun
+    const tarih=p[0], tutar=trTutar(p[p.length-1]), aciklama=p.slice(1,p.length-1).join(' ')||p[1];
+    if(!tarih && !tutar)return;
+    const m=hesapKoduBul(aciklama);
+    _mSatirlar.push({tarih,aciklama,tutar,kod:m.kod,ad:m.ad,guven:m.guven});
+  });
+  mBodyCiz();
+}
+function mBodyCiz(){
+  const body=$("mBody");
+  if(!_mSatirlar.length){body.innerHTML='<tr><td colspan="5" style="color:var(--mut);padding:16px">Satır bulunamadı. Format: Tarih ⭾ Açıklama ⭾ Tutar</td></tr>';}
+  else{
+    body.innerHTML=_mSatirlar.map((r,i)=>{
+      const dusuk=r.guven==='düşük';
+      return `<tr style="${dusuk?'background:rgba(245,158,11,.08)':''}">
+        <td>${esc(r.tarih)}</td><td style="font-size:12.5px">${esc(r.aciklama)}</td>
+        <td class="num ${r.tutar<0?'neg':'pos'}">${fmt(r.tutar)}</td>
+        <td><input value="${esc(r.kod)}" onchange="mKodDegis(${i},this.value)" list="kodListe" style="padding:5px 7px;font-size:12px" placeholder="kod"></td>
+        <td>${dusuk?'⚠️ düşük':'✅ yüksek'}</td></tr>`;
+    }).join('');
+  }
+  if(!$("kodListe"))document.body.insertAdjacentHTML('beforeend','<datalist id="kodListe">'+HESAP_PLANI.map(h=>`<option value="${h.k}">${esc(h.a)}</option>`).join('')+'</datalist>');
+  const toplam=_mSatirlar.length, otomatik=_mSatirlar.filter(r=>r.guven==='yüksek').length;
+  const net=_mSatirlar.reduce((s,r)=>s+r.tutar,0);
+  $("mToplam").textContent=toplam;$("mOtomatik").textContent=otomatik;$("mDusuk").textContent=toplam-otomatik;$("mNet").textContent=fmt(net);
+  // bakiye kontrol
+  const ac=parseFloat($("mAcilis").value),ka=parseFloat($("mKapanis").value);
+  if(!isNaN(ac)&&!isNaN(ka)){const fark=(ac+net)-ka;$("mBakiye").innerHTML=Math.abs(fark)<0.01?'<span class="pos">✅ Tutuyor</span>':`<span class="neg">≠ ${fmt(fark)}</span>`;}
+  else $("mBakiye").textContent='—';
+}
+function mKodDegis(i,val){_mSatirlar[i].kod=val.trim();_mSatirlar[i].ad=hesapAdiGetir(val.trim());_mSatirlar[i].guven=val.trim()?'yüksek':'düşük';mBodyCiz();}
+function mikroCikar(){
+  if(!_mSatirlar.length){alert("Önce DÖNÜŞTÜR.");return;}
+  const firma=$("mFirma").value||"", bankaKod=$("mBankaHesap").value||"";
+  const sep=";";const bom="﻿";
+  let csv=bom+["Tarih","Açıklama","Borç","Alacak","Hesap Kodu","Hesap Adı","Karşı Hesap (Banka)","Firma"].join(sep)+"\n";
+  _mSatirlar.forEach(r=>{
+    const borc=r.tutar<0?Math.abs(r.tutar).toFixed(2):"";
+    const alacak=r.tutar>0?r.tutar.toFixed(2):"";
+    csv+=[r.tarih,r.aciklama,borc,alacak,r.kod,r.ad||hesapAdiGetir(r.kod),bankaKod,firma].map(csvAlan).join(sep)+"\n";
+  });
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 
 /* ═══ STANDART TEK DÜZEN HESAP PLANI (gömülü) ═══ */
 const HESAP_PLANI=[
@@ -348,7 +529,7 @@ function geriYukle(inp){
 
 /* init */
 $("posTarih").value=new Date().toISOString().slice(0,10);
-bankaRender();posRender();
+bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();
 </script>
 </body>
 </html>
