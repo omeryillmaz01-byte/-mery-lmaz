@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏦 Battal · Banka & POS Merkezi</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Banka/POS">
+<meta name="theme-color" content="#0b1220">
+<style>
+:root{--bg:#0b1220;--panel:#131c2e;--panel2:#1c2740;--acc:#3b82f6;--acc2:#60a5fa;--txt:#e8eef5;--mut:#8fa0b8;--line:#26324a;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5}
+body[data-theme=light]{--bg:#eef2f8;--panel:#fff;--panel2:#f1f5fb;--txt:#12203a;--mut:#5b6b82;--line:#d8e2ef}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#111a2e,#1c2740);padding:14px 22px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#3b82f6,#60a5fa);display:flex;align-items:center;justify-content:center;font-size:20px}
+h1{font-size:18px;font-weight:800}.sub{font-size:11.5px;color:var(--mut)}
+.spacer{flex:1}
+.gbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 13px;cursor:pointer;font-size:13.5px;font-weight:600}
+.gbtn:hover{border-color:var(--acc)}
+.gbtn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+nav{display:flex;gap:6px;padding:12px 22px;flex-wrap:wrap;border-bottom:1px solid var(--line);position:sticky;top:69px;background:var(--bg);z-index:19}
+nav a{padding:9px 15px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--mut);border:1px solid transparent}
+nav a.active{background:var(--panel2);color:var(--acc2);border-color:var(--line)}
+main{padding:22px;max-width:1000px;margin:0 auto}
+.pane{display:none}.pane.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px}
+.card h2{font-size:16px;margin-bottom:6px}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--mut);margin-bottom:4px;text-transform:uppercase}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fld{flex:1;min-width:120px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.4px;color:var(--mut);text-transform:uppercase}
+.num{text-align:right}
+.sil{background:none;border:1px solid var(--line);color:var(--err);border-radius:7px;padding:3px 9px;cursor:pointer;font-size:12px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sc{background:var(--panel2);border-radius:12px;padding:14px 16px}
+.sc .l{font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase}
+.sc .v{font-size:22px;font-weight:800;margin-top:3px}
+.pos{color:var(--ok)}.neg{color:var(--err)}
+details summary{cursor:pointer;font-size:13px;color:var(--acc2);margin-bottom:8px}
+.note{font-size:11.5px;color:var(--mut);font-style:italic}
+.gunkart{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin-bottom:14px}
+.gunbas{background:var(--panel2);padding:9px 14px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center}
+tfoot td{font-weight:800;border-top:2px solid var(--acc)}
+mark{background:#fde68a;color:#111}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <div class="logo">🏦</div>
+  <div><h1>Battal · Banka & POS Merkezi</h1><div class="sub">Banka hesap kodları · POS günlük brüt/komisyon/net</div></div>
+  <span class="spacer"></span>
+  <button class="gbtn" onclick="disaAktar()">⬇️ Excel/CSV</button>
+  <button class="gbtn" onclick="yedekle()">💾 Yedek</button>
+  <button class="gbtn" onclick="document.getElementById('geriInp').click()">📥 Geri Yükle</button>
+  <input type="file" id="geriInp" accept=".json,application/json" style="display:none" onchange="geriYukle(this)">
+  <button class="gbtn" id="themeBtn" onclick="temaDegis()">🌙</button>
+</header>
+<nav>
+  <a class="active" data-p="pos">💳 POS Günlük</a>
+  <a data-p="banka">🏦 Banka Hesap Kodları</a>
+  <a data-p="ozet">📊 Özet</a>
+</nav>
+<main>
+  <!-- POS -->
+  <div class="pane active" id="panePos">
+    <div class="card">
+      <h2>💳 POS Günlük İşlem Ekle</h2>
+      <p class="note" style="margin-bottom:12px">Brüt tutarı ve komisyonu gir; net otomatik. Aynı güne birden fazla POS eklenebilir, her günün altında toplam çıkar.</p>
+      <div class="row">
+        <div class="fld" style="max-width:150px"><label>Tarih</label><input id="posTarih" type="date"></div>
+        <div class="fld" style="max-width:170px"><label>Banka / POS</label><input id="posBanka" list="bankaList" placeholder="ör. Garanti POS"><datalist id="bankaList"></datalist></div>
+        <div class="fld" style="max-width:140px"><label>Brüt (₺)</label><input id="posBrut" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="fld" style="max-width:120px"><label>Komisyon %</label><input id="posOran" type="number" step="0.01" placeholder="1,75"></div>
+        <div class="fld" style="max-width:140px"><label>veya Komisyon ₺</label><input id="posKom" type="number" step="0.01" placeholder="opsiyonel"></div>
+        <button class="gbtn primary" onclick="posEkle()">➕ Ekle</button>
+      </div>
+      <div id="posNetOnizleme" class="note" style="margin-top:8px"></div>
+    </div>
+    <div class="stat">
+      <div class="sc"><div class="l">💰 Genel Brüt</div><div class="v" id="gBrut">0 ₺</div></div>
+      <div class="sc"><div class="l">✂️ Genel Komisyon</div><div class="v neg" id="gKom">0 ₺</div></div>
+      <div class="sc"><div class="l">✅ Genel Net</div><div class="v pos" id="gNet">0 ₺</div></div>
+    </div>
+    <div id="posListe"></div>
+  </div>
+
+  <!-- BANKA -->
+  <div class="pane" id="paneBanka">
+    <div class="card">
+      <h2>🏦 Banka Hesap Kodu Tanımla</h2>
+      <p class="note" style="margin-bottom:12px">Bankalardan gelen hesapları tekdüzen hesap koduyla tanımla. Excel/PDF'ten aldığın satırları toplu yapıştırabilirsin.</p>
+      <div class="row">
+        <div class="fld" style="max-width:170px"><label>Banka</label><input id="bBanka" placeholder="ör. Ziraat"></div>
+        <div class="fld" style="max-width:130px"><label>Hesap Kodu</label><input id="bKod" placeholder="102.01"></div>
+        <div class="fld"><label>Hesap Adı</label><input id="bAd" placeholder="Ziraat TL Vadesiz"></div>
+        <div class="fld" style="max-width:210px"><label>IBAN</label><input id="bIban" placeholder="TR.."></div>
+        <button class="gbtn primary" onclick="bankaEkle()">➕ Ekle</button>
+      </div>
+      <details style="margin-top:14px">
+        <summary>📋 Excel'den toplu yapıştır</summary>
+        <p class="note" style="margin-bottom:8px">Excel'de satırları kopyala → yapıştır. Sıra: <b>Banka [TAB] Kod [TAB] Ad [TAB] IBAN</b> (TAB veya ; ayırıcı).</p>
+        <textarea id="bToplu" style="min-height:90px;font-family:monospace;font-size:12px" placeholder="Ziraat	102.01	Ziraat TL Vadesiz	TR12...
+Garanti	102.02	Garanti TL Vadesiz	TR34..."></textarea>
+        <button class="gbtn" style="margin-top:8px" onclick="bankaToplu()">📥 Toplu Ekle</button>
+      </details>
+    </div>
+    <div class="card">
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Hesap Kodu</th><th>Banka</th><th>Hesap Adı</th><th>IBAN</th><th></th></tr></thead>
+        <tbody id="bankaBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ÖZET -->
+  <div class="pane" id="paneOzet">
+    <div class="stat">
+      <div class="sc"><div class="l">Tanımlı Banka Hesabı</div><div class="v" id="ozBanka">0</div></div>
+      <div class="sc"><div class="l">Toplam POS Kaydı</div><div class="v" id="ozPos">0</div></div>
+      <div class="sc"><div class="l">İşlem Gün Sayısı</div><div class="v" id="ozGun">0</div></div>
+      <div class="sc"><div class="l">Ortalama Komisyon %</div><div class="v" id="ozKomOran">0</div></div>
+    </div>
+    <div class="card">
+      <h2>🏦 Banka Bazında POS Dağılımı</h2>
+      <div id="ozBankaDagilim"></div>
+    </div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt(n){return Number(n||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function temaDegis(){const t=document.body.dataset.theme==="dark"?"light":"dark";document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";localStorage.setItem("battal_theme",t);}
+if(load("battal_theme")==="light")document.body.dataset.theme="light",$("themeBtn").textContent="☀️";
+
+/* nav */
+document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{
+  document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
+  if(a.dataset.p==='ozet')ozetCiz();
+});
+
+/* ═══ BANKA HESAP KODLARI ═══ */
+let bankalar=load("battal_banka")||[];
+function bankaRender(){
+  const b=$("bankaBody");
+  b.innerHTML=bankalar.length?bankalar.map((x,i)=>`<tr>
+    <td style="font-weight:700;color:var(--acc2)">${esc(x.kod)}</td><td>${esc(x.banka)}</td>
+    <td>${esc(x.ad)}</td><td style="font-family:monospace;font-size:12px">${esc(x.iban)}</td>
+    <td><button class="sil" onclick="bankaSil(${i})">Sil</button></td></tr>`).join(''):
+    '<tr><td colspan="5" style="color:var(--mut)">Henüz banka hesabı yok.</td></tr>';
+  const dl=$("bankaList");dl.innerHTML=[...new Set(bankalar.map(x=>x.banka).filter(Boolean))].map(a=>`<option value="${esc(a)}">`).join('');
+}
+function bankaEkle(){
+  const banka=$("bBanka").value.trim(),kod=$("bKod").value.trim(),ad=$("bAd").value.trim(),iban=$("bIban").value.trim();
+  if(!banka&&!kod)return alert("En az banka ve hesap kodu gir.");
+  bankalar.push({banka,kod,ad,iban});save("battal_banka",bankalar);
+  $("bBanka").value=$("bKod").value=$("bAd").value=$("bIban").value="";bankaRender();
+}
+function bankaToplu(){
+  const t=$("bToplu").value.trim();if(!t)return;let n=0;
+  t.split(/\r?\n/).forEach(s=>{if(!s.trim())return;const p=s.split(/\t|;/).map(x=>x.trim());if(p.length<2)return;bankalar.push({banka:p[0]||"",kod:p[1]||"",ad:p[2]||"",iban:p[3]||""});n++;});
+  save("battal_banka",bankalar);$("bToplu").value="";bankaRender();alert(n+" hesap eklendi.");
+}
+function bankaSil(i){bankalar.splice(i,1);save("battal_banka",bankalar);bankaRender();}
+
+/* ═══ POS GÜNLÜK ═══ */
+let poslar=load("battal_pos")||[];
+function netHesap(brut,oran,kom){brut=+brut||0;let k=(kom!==""&&kom!=null&&!isNaN(+kom)&&+kom>0)?+kom:brut*((+oran||0)/100);return{brut,kom:k,net:brut-k};}
+['posBrut','posOran','posKom'].forEach(id=>document.addEventListener('input',e=>{if(e.target.id===id)posOnizle();}));
+function posOnizle(){const {brut,kom,net}=netHesap($("posBrut").value,$("posOran").value,$("posKom").value);$("posNetOnizleme").textContent=brut?`Önizleme → Brüt ${fmt(brut)} · Komisyon ${fmt(kom)} · Net ${fmt(net)}`:"";}
+function posEkle(){
+  const tarih=$("posTarih").value||new Date().toISOString().slice(0,10);
+  const banka=$("posBanka").value.trim();
+  const {brut,kom,net}=netHesap($("posBrut").value,$("posOran").value,$("posKom").value);
+  if(!brut)return alert("Brüt tutar gir.");
+  poslar.push({tarih,banka,brut,kom,net,oran:+$("posOran").value||0});save("battal_pos",poslar);
+  $("posBrut").value=$("posKom").value="";$("posNetOnizleme").textContent="";posRender();
+}
+function posSil(i){poslar.splice(i,1);save("battal_pos",poslar);posRender();}
+function posRender(){
+  const liste=$("posListe");
+  if(!poslar.length){liste.innerHTML='<div class="card" style="color:var(--mut)">Henüz POS kaydı yok.</div>';$("gBrut").textContent=$("gKom").textContent=$("gNet").textContent="0 ₺";return;}
+  const gun={};poslar.forEach((k,i)=>{(gun[k.tarih]=gun[k.tarih]||[]).push({...k,_i:i});});
+  let gB=0,gK=0,gN=0;
+  liste.innerHTML=Object.keys(gun).sort().reverse().map(t=>{
+    const rows=gun[t];let tB=0,tK=0,tN=0;
+    const tr=rows.map(r=>{tB+=r.brut;tK+=r.kom;tN+=r.net;return `<tr>
+      <td>${esc(r.banka||"—")}${r.oran?` <span style="color:var(--mut);font-size:11px">(%${r.oran})</span>`:''}</td>
+      <td class="num">${fmt(r.brut)}</td><td class="num neg">${fmt(r.kom)}</td>
+      <td class="num pos" style="font-weight:600">${fmt(r.net)}</td>
+      <td class="num"><button class="sil" onclick="posSil(${r._i})">Sil</button></td></tr>`;}).join('');
+    gB+=tB;gK+=tK;gN+=tN;
+    const ts=new Date(t).toLocaleDateString("tr-TR",{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    return `<div class="gunkart"><div class="gunbas"><span>📅 ${ts}</span><span style="font-size:12px;color:var(--mut)">${rows.length} işlem</span></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Banka / POS</th><th class="num">Brüt</th><th class="num">Komisyon</th><th class="num">Net</th><th></th></tr></thead>
+        <tbody>${tr}</tbody>
+        <tfoot><tr><td>GÜN TOPLAMI</td><td class="num">${fmt(tB)}</td><td class="num neg">${fmt(tK)}</td><td class="num pos">${fmt(tN)}</td><td></td></tr></tfoot>
+      </table></div></div>`;
+  }).join('');
+  $("gBrut").textContent=fmt(gB);$("gKom").textContent=fmt(gK);$("gNet").textContent=fmt(gN);
+}
+
+/* ═══ ÖZET ═══ */
+function ozetCiz(){
+  $("ozBanka").textContent=bankalar.length;
+  $("ozPos").textContent=poslar.length;
+  $("ozGun").textContent=new Set(poslar.map(p=>p.tarih)).size;
+  const tB=poslar.reduce((s,p)=>s+p.brut,0),tK=poslar.reduce((s,p)=>s+p.kom,0);
+  $("ozKomOran").textContent=tB?('%'+(tK/tB*100).toFixed(2)):'0';
+  const bd={};poslar.forEach(p=>{const k=p.banka||"—";bd[k]=bd[k]||{brut:0,kom:0,net:0,adet:0};bd[k].brut+=p.brut;bd[k].kom+=p.kom;bd[k].net+=p.net;bd[k].adet++;});
+  const el=$("ozBankaDagilim");
+  const keys=Object.keys(bd).sort((a,b)=>bd[b].brut-bd[a].brut);
+  el.innerHTML=keys.length?`<div style="overflow-x:auto"><table>
+    <thead><tr><th>Banka/POS</th><th class="num">İşlem</th><th class="num">Brüt</th><th class="num">Komisyon</th><th class="num">Net</th><th class="num">Ort. %</th></tr></thead>
+    <tbody>${keys.map(k=>`<tr><td>${esc(k)}</td><td class="num">${bd[k].adet}</td><td class="num">${fmt(bd[k].brut)}</td><td class="num neg">${fmt(bd[k].kom)}</td><td class="num pos">${fmt(bd[k].net)}</td><td class="num">%${bd[k].brut?(bd[k].kom/bd[k].brut*100).toFixed(2):0}</td></tr>`).join('')}</tbody>
+  </table></div>`:'<div style="color:var(--mut)">Veri yok.</div>';
+}
+
+/* ═══ EXCEL/CSV DIŞA AKTAR (Excel'de açılır) ═══ */
+function disaAktar(){
+  const sep=";";const bom="﻿";
+  let csv=bom+"BANKA HESAP KODLARI\nHesap Kodu"+sep+"Banka"+sep+"Hesap Adı"+sep+"IBAN\n";
+  bankalar.forEach(b=>csv+=[b.kod,b.banka,b.ad,b.iban].map(csvAlan).join(sep)+"\n");
+  csv+="\nPOS GÜNLÜK İŞLEMLER\nTarih"+sep+"Banka/POS"+sep+"Brüt"+sep+"Komisyon"+sep+"Net"+sep+"Oran %\n";
+  const g={};poslar.forEach(p=>{(g[p.tarih]=g[p.tarih]||[]).push(p);});
+  Object.keys(g).sort().forEach(t=>{
+    let tB=0,tK=0,tN=0;
+    g[t].forEach(p=>{tB+=p.brut;tK+=p.kom;tN+=p.net;csv+=[t,p.banka,p.brut.toFixed(2),p.kom.toFixed(2),p.net.toFixed(2),p.oran].map(csvAlan).join(sep)+"\n";});
+    csv+=["","GÜN TOPLAMI ("+t+")",tB.toFixed(2),tK.toFixed(2),tN.toFixed(2),""].map(csvAlan).join(sep)+"\n";
+  });
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="battal-banka-pos-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function csvAlan(v){v=String(v==null?"":v);return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+
+/* ═══ YEDEK / GERİ YÜKLE ═══ */
+function yedekle(){
+  const paket={surum:"battal-1",tarih:new Date().toISOString(),bankalar,poslar};
+  const blob=new Blob([JSON.stringify(paket,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="battal-yedek-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function geriYukle(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=e=>{try{const p=JSON.parse(e.target.result);if(!confirm("Mevcut veri bu yedekle değiştirilecek. Devam?"))return;bankalar=p.bankalar||[];poslar=p.poslar||[];save("battal_banka",bankalar);save("battal_pos",poslar);bankaRender();posRender();alert("Geri yüklendi.");}catch(err){alert("Geçersiz yedek dosyası.");}};
+  r.readAsText(f);inp.value="";
+}
+
+/* init */
+$("posTarih").value=new Date().toISOString().slice(0,10);
+bankaRender();posRender();
+</script>
+</body>
+</html>
