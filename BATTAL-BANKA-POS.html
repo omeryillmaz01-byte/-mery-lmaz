@@ -166,8 +166,9 @@ mark{background:#fde68a;color:#111}
         <div style="font-weight:700;font-size:13.5px;margin-bottom:6px">📗 Firma Hesap Planı Excel (.xlsx) Yükle</div>
         <p class="note" style="margin-bottom:8px">Her firmanın <b>hesap planı.xlsx</b> dosyasını yükle — panel kendisi okur (hesap kodu + hesap adı sütunlarını otomatik bulur). Bir kere yükle, cihazında kalır. Birden çok firma yükleyebilirsin.</p>
         <div class="row">
-          <button class="gbtn primary" onclick="document.getElementById('planXlsx').click()">📁 Hesap Planı .xlsx Seç</button>
+          <button class="gbtn primary" onclick="document.getElementById('planXlsx').click()">📁 Hesap Planı .xlsx Seç (çoklu — Ctrl+A)</button>
           <input type="file" id="planXlsx" accept=".xlsx,.xls" multiple style="display:none" onchange="planXlsxYukle(this)">
+          <button class="gbtn" onclick="planlariDisaAktar()">⬇️ Planları JSON çıkar</button>
           <span id="planXlsxDurum" class="note"></span>
         </div>
         <div id="firmaPlanOzet" style="margin-top:10px;font-size:12.5px"></div>
@@ -629,14 +630,26 @@ function csvAlan(v){v=String(v==null?"":v);return /[";\n]/.test(v)?'"'+v.replace
 
 /* ═══ YEDEK / GERİ YÜKLE ═══ */
 function yedekle(){
-  const paket={surum:"battal-1",tarih:new Date().toISOString(),bankalar,poslar};
+  const paket={surum:"battal-2",tarih:new Date().toISOString(),bankalar,poslar,firmalar,firmaPlan,kurallar};
   const blob=new Blob([JSON.stringify(paket,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download="battal-yedek-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function geriYukle(inp){
   const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
-  r.onload=e=>{try{const p=JSON.parse(e.target.result);if(!confirm("Mevcut veri bu yedekle değiştirilecek. Devam?"))return;bankalar=p.bankalar||[];poslar=p.poslar||[];save("battal_banka",bankalar);save("battal_pos",poslar);bankaRender();posRender();alert("Geri yüklendi.");}catch(err){alert("Geçersiz yedek dosyası.");}};
+  r.onload=e=>{try{const p=JSON.parse(e.target.result);if(!confirm("Mevcut veri bu yedekle değiştirilecek. Devam?"))return;
+    bankalar=p.bankalar||[];poslar=p.poslar||[];
+    if(p.firmalar)firmalar=p.firmalar; if(p.firmaPlan)firmaPlan=p.firmaPlan; if(p.kurallar)kurallar=p.kurallar;
+    save("battal_banka",bankalar);save("battal_pos",poslar);save("battal_firmalar",firmalar);save("battal_firma_plan",firmaPlan);save("battal_kurallar",kurallar);
+    bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();alert("Geri yüklendi.");
+  }catch(err){alert("Geçersiz yedek dosyası.");}};
   r.readAsText(f);inp.value="";
+}
+function planlariDisaAktar(){
+  // yüklü firma planlarını tek JSON metin olarak indir (bana yapıştırman için de kullanılabilir)
+  const ks=Object.keys(firmaPlan);
+  if(!ks.length){alert("Önce hesap planı .xlsx dosyalarını yükle.");return;}
+  const blob=new Blob([JSON.stringify(firmaPlan,null,1)],{type:"application/json"});const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="firma-hesap-planlari.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 /* init */
