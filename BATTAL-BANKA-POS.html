@@ -84,14 +84,15 @@ mark{background:#fde68a;color:#111}
 12.07.2026	EFT GELEN ISIK PETROL	5.000,00
 13.07.2026	KIRA ODEMESI	-12.000,00"></textarea>
       <div class="row" style="margin-top:10px;align-items:center">
-        <button class="gbtn" onclick="document.getElementById('mCsv').click()">📁 CSV Yükle</button>
-        <input type="file" id="mCsv" accept=".csv,text/csv" style="display:none" onchange="csvYukle(this)">
+        <button class="gbtn" onclick="document.getElementById('mCsv').click()">📁 Ekstre Yükle — ÇOKLU (Excel/CSV, Ctrl+A)</button>
+        <input type="file" id="mCsv" accept=".xlsx,.xls,.csv,text/csv" multiple style="display:none" onchange="ekstreYukle(this)">
         <div class="fld" style="max-width:150px"><label>Açılış bakiye (ops.)</label><input id="mAcilis" type="number" step="0.01" placeholder="0,00"></div>
         <div class="fld" style="max-width:150px"><label>Kapanış bakiye (ops.)</label><input id="mKapanis" type="number" step="0.01" placeholder="0,00"></div>
         <span class="spacer"></span>
         <button class="gbtn primary" onclick="donustur()">🔄 DÖNÜŞTÜR (Önizleme)</button>
         <button class="gbtn" style="background:var(--ok);border-color:var(--ok);color:#04210f" onclick="mikroCikar()">💾 Mikro Excel'e Çıkar</button>
       </div>
+      <div id="mYukleDurum" class="note" style="margin-top:8px"></div>
     </div>
     <div class="stat">
       <div class="sc"><div class="l">📋 Toplam Satır</div><div class="v" id="mToplam">0</div></div>
@@ -102,8 +103,8 @@ mark{background:#fde68a;color:#111}
     </div>
     <div class="card" style="padding:0;overflow:hidden">
       <div style="overflow-x:auto"><table>
-        <thead><tr><th style="width:90px">Tarih</th><th>Açıklama</th><th class="num" style="width:110px">Tutar</th><th style="width:120px">Hesap Kodu</th><th style="width:90px">Güven</th></tr></thead>
-        <tbody id="mBody"><tr><td colspan="5" style="color:var(--mut);padding:16px">Henüz dönüştürme yapılmadı.</td></tr></tbody>
+        <thead><tr><th style="width:85px">Tarih</th><th>Açıklama</th><th class="num" style="width:105px">Tutar</th><th style="width:115px">Hesap Kodu</th><th style="width:80px">Güven</th><th style="width:120px">Kaynak</th></tr></thead>
+        <tbody id="mBody"><tr><td colspan="6" style="color:var(--mut);padding:16px">Henüz dönüştürme yapılmadı.</td></tr></tbody>
       </table></div>
     </div>
     <p class="note" style="margin-top:8px">📧 <b>Mailden ekstre:</b> Bankadan gelen ekstre mailini aç → eki (CSV/Excel) telefonuna/masaüstüne indir → yukarıdan "CSV Yükle" ya da kopyala-yapıştır. (Tarayıcı uygulaması Outlook'a doğrudan bağlanamaz; otomatik mail çekme masaüstü sürümü gerektirir.)</p>
@@ -411,30 +412,67 @@ function hesapAdiGetir(kod){
   if(plan){const f=plan.find(x=>x.kod===kod);if(f)return f.ad;}
   const h=HESAP_PLANI.find(x=>x.k===kod);return h?h.a:'';
 }
-function csvYukle(inp){
-  const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
-  r.onload=e=>{$("mEkstre").value=e.target.result.replace(/;/g,"\t");donustur();};
-  r.readAsText(f,'utf-8');inp.value="";
+function ekstreYukle(inp){
+  const files=[...(inp.files||[])];if(!files.length)return;
+  if(files.some(f=>/\.(xlsx|xls)$/i.test(f.name))&&typeof XLSX==='undefined'){alert("Excel motoru yüklenemedi.");return;}
+  _mSatirlar=[];           // yeni yükleme = temiz başla (birden çok dosya birleşir)
+  let kalan=files.length,eklenen={};
+  files.forEach(f=>{
+    const xlsx=/\.(xlsx|xls)$/i.test(f.name);
+    const kaynak=f.name.replace(/\.(xlsx|xls|csv)$/i,'');
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        let rows;
+        if(xlsx){
+          const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+        }else{
+          rows=e.target.result.split(/\r?\n/).map(l=>l.split(/\t|;/));
+        }
+        let n=0;
+        rows.forEach(rw=>{if(rw&&rw.some(c=>String(c).trim())){const s=satirIsle(rw,kaynak);if(s){_mSatirlar.push(s);n++;}}});
+        eklenen[kaynak]=n;
+      }catch(err){console.log('ekstre hata',f.name,err.message);}
+      if(--kalan===0){
+        // tarih+kaynak sırala (aynı gün bir arada)
+        _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+        mBodyCiz();
+        const ozet=Object.entries(eklenen).map(([k,v])=>k+' ('+v+')').join(' · ');
+        $("mYukleDurum").textContent='✅ '+files.length+' dosya yüklendi → '+_mSatirlar.length+' hareket. '+ozet;
+      }
+    };
+    if(xlsx)r.readAsArrayBuffer(f);else r.readAsText(f,'utf-8');
+  });
+  inp.value="";
 }
 function donustur(){
   const ham=$("mEkstre").value.trim();
-  if(!ham){alert("Önce ekstre yapıştır veya CSV yükle.");return;}
+  if(!ham){alert("Önce ekstre yapıştır veya dosya yükle.");return;}
   _mSatirlar=[];
   ham.split(/\r?\n/).forEach(sat=>{
     if(!sat.trim())return;
-    const p=sat.split(/\t|;/).map(x=>x.trim());
-    if(p.length<2)return;
-    // tarih, açıklama, tutar sırası; tutar son sütun
-    const tarih=p[0], tutar=trTutar(p[p.length-1]), aciklama=p.slice(1,p.length-1).join(' ')||p[1];
-    if(!tarih && !tutar)return;
-    const m=hesapKoduBul(aciklama);
-    _mSatirlar.push({tarih,aciklama,tutar,kod:m.kod,ad:m.ad,guven:m.guven});
+    const s=satirIsle(sat.split(/\t|;/),'');
+    if(s)_mSatirlar.push(s);
   });
   mBodyCiz();
 }
+// Bir satırı (hücre dizisi) işle: başlık/boş atla, tarih/açıklama/tutar ayıkla, hesap kodu eşleştir
+function satirIsle(hucreler,kaynak){
+  const p=hucreler.map(x=>String(x==null?'':x).trim());
+  if(p.length<2)return null;
+  const tutar=trTutar(p[p.length-1]);
+  const tarih=p[0];
+  const aciklama=p.slice(1,p.length-1).join(' ')||p[1];
+  if(!/\d/.test(tarih)&&tutar===0)return null;   // başlık satırı (tarihte rakam yok + tutar 0)
+  if(!tarih&&!tutar)return null;
+  const m=hesapKoduBul(aciklama);
+  return {tarih,aciklama,tutar,kod:m.kod,ad:m.ad,guven:m.guven,kaynak:kaynak||''};
+}
 function mBodyCiz(){
   const body=$("mBody");
-  if(!_mSatirlar.length){body.innerHTML='<tr><td colspan="5" style="color:var(--mut);padding:16px">Satır bulunamadı. Format: Tarih ⭾ Açıklama ⭾ Tutar</td></tr>';}
+  if(!_mSatirlar.length){body.innerHTML='<tr><td colspan="6" style="color:var(--mut);padding:16px">Satır bulunamadı. Format: Tarih ⭾ Açıklama ⭾ Tutar</td></tr>';}
   else{
     body.innerHTML=_mSatirlar.map((r,i)=>{
       const dusuk=r.guven==='düşük';
@@ -442,7 +480,8 @@ function mBodyCiz(){
         <td>${esc(r.tarih)}</td><td style="font-size:12.5px">${esc(r.aciklama)}</td>
         <td class="num ${r.tutar<0?'neg':'pos'}">${fmt(r.tutar)}</td>
         <td><input value="${esc(r.kod)}" onchange="mKodDegis(${i},this.value)" list="kodListe" style="padding:5px 7px;font-size:12px" placeholder="kod"></td>
-        <td>${dusuk?'⚠️ düşük':'✅ yüksek'}</td></tr>`;
+        <td>${dusuk?'⚠️ düşük':'✅ yüksek'}</td>
+        <td style="font-size:11px;color:var(--mut)">${esc(r.kaynak||'')}</td></tr>`;
     }).join('');
   }
   if(!$("kodListe"))document.body.insertAdjacentHTML('beforeend','<datalist id="kodListe">'+HESAP_PLANI.map(h=>`<option value="${h.k}">${esc(h.a)}</option>`).join('')+'</datalist>');
@@ -459,11 +498,11 @@ function mikroCikar(){
   if(!_mSatirlar.length){alert("Önce DÖNÜŞTÜR.");return;}
   const firma=$("mFirma").value||"", bankaKod=$("mBankaHesap").value||"";
   const sep=";";const bom="﻿";
-  let csv=bom+["Tarih","Açıklama","Borç","Alacak","Hesap Kodu","Hesap Adı","Karşı Hesap (Banka)","Firma"].join(sep)+"\n";
+  let csv=bom+["Tarih","Açıklama","Borç","Alacak","Hesap Kodu","Hesap Adı","Karşı Hesap (Banka)","Kaynak Dosya","Firma"].join(sep)+"\n";
   _mSatirlar.forEach(r=>{
     const borc=r.tutar<0?Math.abs(r.tutar).toFixed(2):"";
     const alacak=r.tutar>0?r.tutar.toFixed(2):"";
-    csv+=[r.tarih,r.aciklama,borc,alacak,r.kod,r.ad||hesapAdiGetir(r.kod),bankaKod,firma].map(csvAlan).join(sep)+"\n";
+    csv+=[r.tarih,r.aciklama,borc,alacak,r.kod,r.ad||hesapAdiGetir(r.kod),bankaKod,r.kaynak||'',firma].map(csvAlan).join(sep)+"\n";
   });
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=url;a.download="mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
