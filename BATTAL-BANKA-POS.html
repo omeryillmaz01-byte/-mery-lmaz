@@ -93,6 +93,19 @@ mark{background:#fde68a;color:#111}
         <button class="gbtn" style="background:var(--ok);border-color:var(--ok);color:#04210f" onclick="mikroCikar()">💾 Mikro Excel'e Çıkar</button>
       </div>
       <div id="mYukleDurum" class="note" style="margin-top:8px"></div>
+      <div id="mKolonEsle" style="display:none;margin-top:10px;padding:12px;background:var(--panel2);border-radius:10px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px">🧩 Sütun Eşleştirme — hangi sütun ne?</div>
+        <div id="mOrnekSatir" style="font-family:monospace;font-size:11px;color:var(--mut);margin-bottom:8px;overflow-x:auto;white-space:nowrap"></div>
+        <div class="row" style="align-items:flex-end">
+          <div class="fld" style="max-width:150px"><label>Tarih sütunu</label><select id="mKolTarih" onchange="reAyikla()"></select></div>
+          <div class="fld"><label>Açıklama sütunu</label><select id="mKolAciklama" onchange="reAyikla()"></select></div>
+          <div class="fld" style="max-width:190px"><label>Tutar kaynağı</label>
+            <select id="mKolTutar" onchange="reAyikla()"></select>
+          </div>
+          <button class="gbtn" onclick="reAyikla()">🔄 Yeniden Ayıkla</button>
+        </div>
+        <p class="note" style="margin-top:6px">💡 "Tutar" yanlış (bakiye) geldiyse doğru sütunu seç. Tutar açıklama metninin sonundaysa "Açıklama sonundaki ± tutar" seçeneğini kullan.</p>
+      </div>
     </div>
     <div class="stat">
       <div class="sc"><div class="l">📋 Toplam Satır</div><div class="v" id="mToplam">0</div></div>
@@ -412,10 +425,11 @@ function hesapAdiGetir(kod){
   if(plan){const f=plan.find(x=>x.kod===kod);if(f)return f.ad;}
   const h=HESAP_PLANI.find(x=>x.k===kod);return h?h.a:'';
 }
+let _mHam=[];   // ham satırlar: {cells:[...], kaynak}
 function ekstreYukle(inp){
   const files=[...(inp.files||[])];if(!files.length)return;
   if(files.some(f=>/\.(xlsx|xls)$/i.test(f.name))&&typeof XLSX==='undefined'){alert("Excel motoru yüklenemedi.");return;}
-  _mSatirlar=[];           // yeni yükleme = temiz başla (birden çok dosya birleşir)
+  _mHam=[];
   let kalan=files.length,eklenen={};
   files.forEach(f=>{
     const xlsx=/\.(xlsx|xls)$/i.test(f.name);
@@ -432,32 +446,70 @@ function ekstreYukle(inp){
           rows=e.target.result.split(/\r?\n/).map(l=>l.split(/\t|;/));
         }
         let n=0;
-        rows.forEach(rw=>{if(rw&&rw.some(c=>String(c).trim())){const s=satirIsle(rw,kaynak);if(s){_mSatirlar.push(s);n++;}}});
+        rows.forEach(rw=>{if(rw&&rw.some(c=>String(c).trim())){_mHam.push({cells:rw.map(c=>String(c==null?'':c).trim()),kaynak});n++;}});
         eklenen[kaynak]=n;
       }catch(err){console.log('ekstre hata',f.name,err.message);}
       if(--kalan===0){
-        // tarih+kaynak sırala (aynı gün bir arada)
-        _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
-        mBodyCiz();
         const ozet=Object.entries(eklenen).map(([k,v])=>k+' ('+v+')').join(' · ');
-        $("mYukleDurum").textContent='✅ '+files.length+' dosya yüklendi → '+_mSatirlar.length+' hareket. '+ozet;
+        $("mYukleDurum").textContent='✅ '+files.length+' dosya yüklendi → '+_mHam.length+' satır. '+ozet;
+        kolonlariDoldur();   // sütun seçicileri hazırla (otomatik tahmin)
+        reAyikla();          // ilk ayıklama
       }
     };
     if(xlsx)r.readAsArrayBuffer(f);else r.readAsText(f,'utf-8');
   });
   inp.value="";
 }
-function donustur(){
-  const ham=$("mEkstre").value.trim();
-  if(!ham){alert("Önce ekstre yapıştır veya dosya yükle.");return;}
+// Sütun sayısını bul, seçicileri doldur, akıllı tahmin yap
+function kolonlariDoldur(){
+  const maxKol=_mHam.reduce((m,r)=>Math.max(m,r.cells.length),0);
+  const kolAd=i=>'Sütun '+(i+1);
+  const opt=(sel,extra)=>{let h='';if(extra)h+=extra;for(let i=0;i<maxKol;i++)h+=`<option value="${i}">${kolAd(i)}</option>`;return h;};
+  // örnek: ilk dolu veri satırı
+  const ornek=_mHam.find(r=>r.cells.some(c=>/\d/.test(c)))||_mHam[0];
+  $("mOrnekSatir").textContent=ornek?ornek.cells.map((c,i)=>'['+(i+1)+'] '+c.slice(0,22)).join('   '):'';
+  // tahmin: tarih = ilk tarih içeren sütun; tutar = en çok ±sayı içeren (bakiye olmayan) sütun
+  const tarihTah=tahminSutun(ornek,'tarih'), tutarTah=tahminSutun(ornek,'tutar'), aciklamaTah=tahminSutun(ornek,'aciklama');
+  $("mKolTarih").innerHTML=opt('t');
+  $("mKolAciklama").innerHTML=opt('a');
+  $("mKolTutar").innerHTML=opt('u','<option value="son">Açıklama sonundaki ± tutar</option>');
+  $("mKolTarih").value=tarihTah; $("mKolAciklama").value=aciklamaTah; $("mKolTutar").value=tutarTah;
+  $("mKolonEsle").style.display='block';
+}
+function tahminSutun(ornek,tip){
+  if(!ornek)return 0;const c=ornek.cells;
+  if(tip==='tarih'){for(let i=0;i<c.length;i++)if(/\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}/.test(c[i]))return i;return 0;}
+  if(tip==='aciklama'){let bi=0,bl=0;for(let i=0;i<c.length;i++){const l=c[i].replace(/[\d.,\-\/ ]/g,'').length;if(l>bl){bl=l;bi=i;}}return bi;}
+  // tutar: ± işaretli, ondalıklı ama en BÜYÜK olmayan (bakiye genelde en büyük ve hep pozitif)
+  let aday=-1;for(let i=c.length-1;i>=0;i--){const v=trTutar(c[i]);if(v!==0 && /[-,]/.test(c[i])){aday=i;break;}}
+  return aday>=0?aday:'son';
+}
+function reAyikla(){
+  if(!_mHam.length){ // dosya yoksa textarea'dan (yapıştırma)
+    const ham=$("mEkstre").value.trim();
+    if(!ham){alert("Önce ekstre yapıştır veya dosya yükle.");return;}
+    _mHam=ham.split(/\r?\n/).filter(l=>l.trim()).map(l=>({cells:l.split(/\t|;/).map(x=>x.trim()),kaynak:''}));
+    kolonlariDoldur();
+  }
+  const kt=$("mKolTarih").value, ka=$("mKolAciklama").value, ku=$("mKolTutar").value;
   _mSatirlar=[];
-  ham.split(/\r?\n/).forEach(sat=>{
-    if(!sat.trim())return;
-    const s=satirIsle(sat.split(/\t|;/),'');
-    if(s)_mSatirlar.push(s);
+  _mHam.forEach(r=>{
+    const c=r.cells;
+    const tarih=c[+kt]||'';
+    let aciklama=c[+ka]||'';
+    let tutar;
+    if(ku==='son'){const m=(aciklama.match(/(-?\d[\d.\s]*,\d{2})\s*$/)||aciklama.match(/(-?\d[\d.]*)\s*$/));tutar=m?trTutar(m[1]):0;}
+    else tutar=trTutar(c[+ku]||'');
+    // başlık/boş satır atla
+    if(!/\d/.test(tarih)&&tutar===0)return;
+    if(!tarih&&!tutar)return;
+    const mm=hesapKoduBul(aciklama);
+    _mSatirlar.push({tarih,aciklama,tutar,kod:mm.kod,ad:mm.ad,guven:mm.guven,kaynak:r.kaynak||''});
   });
+  _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
   mBodyCiz();
 }
+function donustur(){ reAyikla(); }
 // Bir satırı (hücre dizisi) işle: başlık/boş atla, tarih/açıklama/tutar ayıkla, hesap kodu eşleştir
 function satirIsle(hucreler,kaynak){
   const p=hucreler.map(x=>String(x==null?'':x).trim());
