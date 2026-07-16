@@ -371,28 +371,9 @@ function firmaPlanSil(k){delete firmaPlan[k];save("battal_firma_plan",firmaPlan)
 function aktifPlan(){const f=$("mFirma")&&$("mFirma").value;return (f&&firmaPlan[f])?firmaPlan[f]:null;}
 
 /* ═══ EŞLEŞTİRME KURALLARI ═══ */
-const KURAL_VARSAYILAN=[
-  {kelime:'KOMISYON',kod:'653',ad:'Komisyon Giderleri'},
-  {kelime:'POS',kod:'108',ad:'Diğer Hazır Değerler'},
-  {kelime:'KIRA',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'MAAS',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'MAAŞ',kod:'335',ad:'Personele Borçlar'},
-  {kelime:'SGK',kod:'361',ad:'Ödenecek Sosyal Güvenlik Kesintileri'},
-  {kelime:'VERGI',kod:'360',ad:'Ödenecek Vergi ve Fonlar'},
-  {kelime:'KDV',kod:'360',ad:'Ödenecek Vergi ve Fonlar'},
-  {kelime:'EFT',kod:'120',ad:'Alıcılar'},
-  {kelime:'HAVALE',kod:'120',ad:'Alıcılar'},
-  {kelime:'FAIZ',kod:'642',ad:'Faiz Gelirleri'},
-  {kelime:'MASRAF',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'BSMV',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'ELEKTRIK',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'DOGALGAZ',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'SU FATURA',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'TELEFON',kod:'770',ad:'Genel Yönetim Giderleri'},
-  {kelime:'AKARYAKIT',kod:'153',ad:'Ticari Mallar'},
-  {kelime:'CEK',kod:'103',ad:'Verilen Çekler ve Ödeme Emirleri'},
-  {kelime:'SATICI',kod:'320',ad:'Satıcılar'},
-];
+// Varsayılan sabit kural yok — akıllı motor (firma planından) hallediyor.
+// Buraya kullanıcı KENDİ özel kurallarını ekler (motoru ezmek istediği özel durumlar).
+const KURAL_VARSAYILAN=[];
 let kurallar=load("battal_kurallar")||KURAL_VARSAYILAN.slice();
 function kuralRender(){
   const b=$("kuralBody");
@@ -415,11 +396,99 @@ function trTutar(s){
   if(s.indexOf(",")>-1){s=s.replace(/\./g,"").replace(",",".");} // 1.234,56 -> 1234.56
   return parseFloat(s)||0;
 }
-function hesapKoduBul(aciklama){
-  const up=(aciklama||"").toLocaleUpperCase('tr');
-  for(const k of kurallar){ if(up.includes(k.kelime.toLocaleUpperCase('tr'))) return {kod:k.kod,ad:k.ad||hesapAdiGetir(k.kod),guven:'yüksek'}; }
-  return {kod:'',ad:'',guven:'düşük'};
+/* ═══ AKILLI EŞLEŞTİRME MOTORU — Banka Eksiklikleri dökümanı (54 kural) hafızaya gömülü ═══ */
+let KARTSIZ_FIRMALAR=load("battal_kartsiz")||['ERDEM ÖZŞEN','HÜLYA HATUN']; // şirket kartı olmayan firmalar → kart ödemesi 131/331
+function upTr(s){return (s||'').toLocaleUpperCase('tr');}
+function planListe(){const p=aktifPlan();return p&&p.length?p:HESAP_PLANI.map(h=>({kod:h.k,ad:h.a}));}
+function planKodBul(anaKodlar,anahtarlar){
+  const plan=planListe();anaKodlar=[].concat(anaKodlar);
+  if(anahtarlar&&anahtarlar.length){
+    for(const h of plan){const kod=String(h.kod);
+      if(anaKodlar.some(k=>kod.startsWith(k))&&anahtarlar.some(a=>upTr(h.ad).includes(upTr(a))))return {kod:h.kod,ad:h.ad};}
+  }
+  const aday=plan.filter(h=>anaKodlar.some(k=>String(h.kod).startsWith(k)));
+  if(aday.length){aday.sort((a,b)=>String(a.kod).length-String(b.kod).length);return {kod:aday[0].kod,ad:aday[0].ad};}
+  return null;
 }
+function firmaOrtaklar(){return planListe().filter(h=>/^(131|331|500)/.test(String(h.kod))&&h.ad&&h.ad.length>3).map(h=>({kod:h.kod,ad:upTr(h.ad)}));}
+function firmaCariler(){return planListe().filter(h=>/^(120|320)/.test(String(h.kod))&&h.ad&&h.ad.length>3).map(h=>({kod:h.kod,ad:upTr(h.ad)}));}
+function kartHesaplari(){return planListe().filter(h=>/^329/.test(String(h.kod))).map(h=>({kod:h.kod,ad:h.ad,son4:(String(h.ad).match(/(\d{4})(?!.*\d{4})/)||[])[1]}));}
+function bankaAdi(){const s=$("mBankaHesap");const b=(s&&s.selectedOptions[0])?s.selectedOptions[0].textContent:'';const m=upTr(b).match(/GARANT[İI]|HALK|Z[İI]RAAT|VAKIF|[İI]Ş ?BANK|AKBANK|YAPI|DEN[İI]Z|QNB|ING|TEB|HSBC|KUVEYT|ALBARAKA|F[İI]NANS|ŞEKER|PTT/);return m?m[0]:'';}
+function ortakEslesme(A){const list=firmaOrtaklar();for(const o of list){if(o.ad.length>=5&&A.includes(o.ad))return o;}for(const o of list){const p=o.ad.split(/\s+/).slice(0,2).join(' ');if(p.length>=6&&A.includes(p))return o;}return null;}
+function cariEslesme(A){const list=firmaCariler();for(const c of list){const p=c.ad.split(/\s+/).slice(0,2).join(' ');if(p.length>=5&&A.includes(p))return c;}return null;}
+function akilliEslestir(aciklama,tutar){
+  const A=upTr(aciklama);const cikis=(tutar||0)<0;const kucuk=Math.abs(tutar||0)>0&&Math.abs(tutar||0)<1500;const banka=bankaAdi();
+  const S=(kod,guven,etiket)=>({kod:kod||'',ad:kod?hesapAdiGetir(kod):'',guven:guven||'düşük',etiket:etiket||''});
+  const P=(anaKodlar,anahtarlar,guven,etiket)=>{const r=planKodBul(anaKodlar,anahtarlar);return r?{kod:r.kod,ad:r.ad,guven:guven||'yüksek',etiket:etiket||''}:null;};
+  // 1) HESAPLAR ARASI VİRMAN / MEVDUAT GERİ DÖNÜŞÜ (kullanıcı kuralından önce)
+  if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İI] DÖNÜŞ|HESAP AÇILIŞI/.test(A)){
+    if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A)){const r=planKodBul(['102'],['52','VADEL']);if(r)return {kod:r.kod,ad:r.ad,guven:'orta',etiket:'virman'};}
+    return S('','düşük','virman');
+  }
+  // 2) DÖVİZ / ARBİTRAJ
+  if(/DÖV[İI]Z ?(SATIM|SATIŞ|ALIŞ|ALIM)|ARB[İI]TRAJ|MBL-DÖV[İI]Z/.test(A))return S('','düşük','döviz');
+  // 3) KESİNTİ (maaştan ÖNCE!) → 780
+  if(/KES[İI]NT[İI]/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','orta');
+  // 0) Kullanıcı özel kuralları
+  for(const k of kurallar){if(A.includes(upTr(k.kelime)))return S(k.kod,'yüksek');}
+  // 4) Banka masrafı → 780
+  if(/BSMV|KOM[İI]SYON|MASRAF|POS YAZILIM|[İI]ŞLEM ÜCRET|FAST ÜCRET|MKK|ARTI PARA|BAKIM ÜCRET|EFT ÜCRET|HAVALE ÜCRET|HESAP [İI]ŞLET/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','orta');
+  // 5) Damga vergisi ödemesi → 770
+  if(/DAMGA/.test(A))return P(['770'],['DAMGA','GENEL YÖNET'],'orta')||S('770','orta');
+  // 6) Maaş türevleri → 335
+  if(/MAAŞ|HUZUR ?HAKKI|[İI]HBAR TAZM[İI]N|KIDEM TAZM[İI]N|YOL ÜCRET|YEMEK ÜCRET|BAYRAM|MESA[İI]|PR[İI]M ÖDEME|AVANS ÖDEME/.test(A))return P(['335'],null,'orta')||S('335','orta');
+  // 7) POS tahsilatı → 127
+  if(/NET SATIŞ TUTARI|POS.*TAHS[İI]L|ÜYE ?[İI]ŞYER[İI]/.test(A))return P(['127'],banka?[banka]:null,'orta')||S('127','orta');
+  // 8) Faiz stopajı/vergi (faiz bağlamında) → 193
+  if(/(STOPAJ|GEL[İI]R VERG[İI]|VERG[İI])/.test(A)&&/FA[İI]Z|NEMA|VADEL[İI]|ESAS TUTAR|FAİZE/.test(A))return P(['193'],banka?[banka]:null,'orta')||S('193','orta');
+  // 9) Faiz geliri → 642
+  if((/FA[İI]Z|NEMA/.test(A))&&!/VERG[İI]|STOPAJ|ESAS TUTAR/.test(A))return P(['642'],banka?[banka]:null,'orta')||S('642','orta');
+  // 10) Devlet desteği → 679
+  if(/DEVLET DESTE[ĞG]|E-?OKUL|TEŞV[İI]K|MALMÜDÜR/.test(A))return P(['679'],null,'orta')||S('679','orta');
+  // 11) Aidat → 770
+  if(/A[İI]DAT/.test(A))return P(['770'],['GENEL YÖNET','A[İI]DAT'],'orta')||S('770','orta');
+  // 12) Araç giderleri → 770/760
+  if(/\bHGS\b|\bOGS\b|AKARYAKIT|BENZ[İI]N|MOTOR[İI]N|ARAÇ BAKIM|OTOYOL|OTOPARK|LAST[İI]K|\b\d{2}[A-Z]{1,3}\d{2,4}\b/.test(A)){const r=planKodBul(['770','760'],['ARAÇ','TAŞIT','AKARYAKIT']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('770','orta');}
+  // 13) Fon → 102 fon (118'den)
+  if(/FON SATIŞ|FON ALIŞ|PARA P[İI]YASA|FON SATIM/.test(A)){const r=planKodBul(['102'],['FON']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:'fon'}:S('118','orta','fon');}
+  // 14) Çek: ödeme→103, tahsil→101
+  if(/\bÇEK\b/.test(A)){if(cikis||/ÖDEME|TAKAS/.test(A))return S('103',planKodBul(['103'])?'yüksek':'orta');return S('101','orta');}
+  // 15) Senet → 121
+  if(/SENET/.test(A))return P(['121'],null,'orta')||S('121','orta');
+  // 16) Depozito → 126
+  if(/DEPOZ[İI]T/.test(A))return P(['126'],null,'orta')||S('126','orta');
+  // 17) KMH → 300
+  if(/\bKMH\b|KRED[İI]L[İI] MEVDUAT/.test(A))return P(['300'],null,'orta')||S('300','orta');
+  // 18) Taner Battal (muhasebeci) → 195/329
+  if(/TANER BATTAL/.test(A)){const r=planKodBul(['195','329'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('195','düşük');}
+  // 19) Cari servis firmaları (Multinet/Turkcell/TRKDJT/Vodafone/Superonline/Bedaş/enerji) → 320 cari
+  if(/MULT[İI]NET|MULTNT|TURKCELL|TRKCLL|TRKDJT|VODAFONE|SUPERONL[İI]NE|BEDAŞ|BEDAS|TÜRK ?TELEKOM|ENERJ[İI]SA|[İI]GDAŞ|ELEKTR[İI]K|DO[ĞG]ALGAZ/.test(A)){const c=cariEslesme(A);if(c)return {kod:c.kod,ad:hesapAdiGetir(c.kod),guven:'orta',etiket:''};return P(['320'],null,'düşük')||S('320','düşük');}
+  // 20) Ortak adı → 131/331
+  const ort=ortakEslesme(A);if(ort)return {kod:ort.kod,ad:hesapAdiGetir(ort.kod),guven:'orta',etiket:''};
+  // 21) Kıymetli maden / yatırım / bağkur (şahsi) → 131/331
+  if(/VADES[İI]Z ALTIN|GÜMÜŞ|ALTIN MEVDUAT|KIYMETL[İI] MADEN|YATIRIM HESAB|BA[ĞG]KUR|BA[ĞG]-KUR/.test(A)){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
+  // 22) Kira → 329
+  if(/K[İI]RA/.test(A))return P(['329'],null,'orta')||S('329','orta');
+  // 23) Kart ödemesi
+  if(/K\.?KARTI|KRED[İI] KART|EKSTRE BORÇ TAHS[İI]L|KART ÖDEME|OTM\.?ÖDEME|BUSINESS OTM|KKH/.test(A)){
+    const firma=upTr($("mFirma")?$("mFirma").value:'');
+    if(KARTSIZ_FIRMALAR.some(f=>firma.includes(upTr(f)))){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
+    const m=A.match(/(\d{4})\D*$/)||A.match(/\b(\d{4})\b/);const son4=m?m[1]:'';
+    const kart=son4?kartHesaplari().find(k=>k.son4===son4):null;
+    if(kart)return {kod:kart.kod,ad:kart.ad,guven:'yüksek',etiket:''};
+    return P(['329'],null,'orta')||S('999','düşük');
+  }
+  // 24) Nakit / ATM (isim varsa 131/331)
+  if(/QR [İI]LE|\bATM\b|PARA YATIRMA|PARA ÇEKME|NAK[İI]T|PROV[İI]ZYON|KASADAN/.test(A)){const o2=ortakEslesme(A);if(o2)return {kod:o2.kod,ad:hesapAdiGetir(o2.kod),guven:'orta',etiket:''};return P(['100'],null,'orta')||S('100','orta');}
+  // 25) Genel cari isim eşleşmesi
+  const cari=cariEslesme(A);if(cari)return {kod:cari.kod,ad:hesapAdiGetir(cari.kod),guven:'orta',etiket:''};
+  // 26) Maskeli isim → 999
+  if(/\*{2,}/.test(aciklama))return S('999','düşük');
+  // 27) Fallback: küçük tutar + para çıkışı → 780; değilse 999
+  if(cikis&&kucuk)return P(['780'],['MASRAF'],'düşük')||S('780','düşük');
+  return S('999','düşük');
+}
+function hesapKoduBul(aciklama,tutar){return akilliEslestir(aciklama,tutar||0);}
 function hesapAdiGetir(kod){
   const plan=aktifPlan();
   if(plan){const f=plan.find(x=>x.kod===kod);if(f)return f.ad;}
@@ -503,11 +572,24 @@ function reAyikla(){
     // başlık/boş satır atla
     if(!/\d/.test(tarih)&&tutar===0)return;
     if(!tarih&&!tutar)return;
-    const mm=hesapKoduBul(aciklama);
-    _mSatirlar.push({tarih,aciklama,tutar,kod:mm.kod,ad:mm.ad,guven:mm.guven,kaynak:r.kaynak||''});
+    const mm=hesapKoduBul(aciklama,tutar);
+    _mSatirlar.push({tarih,aciklama,tutar,kod:mm.kod,ad:mm.ad,guven:mm.guven,etiket:mm.etiket||'',kaynak:r.kaynak||''});
   });
   _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  virmanMukerrerBul();  // hesaplar arası virman mükerrerlerini işaretle
   mBodyCiz();
+}
+// Hesaplar arası virman: aynı tutar zıt yönde farklı kaynakta ise mükerrer işaretle (biri silinmeli)
+function virmanMukerrerBul(){
+  const v=_mSatirlar.map((r,i)=>({r,i})).filter(x=>x.r.etiket==='virman');
+  const eslesen=new Set();
+  for(const a of v){ if(eslesen.has(a.i))continue;
+    for(const b of v){ if(b.i<=a.i||eslesen.has(b.i))continue;
+      if(Math.abs(Math.abs(a.r.tutar)-Math.abs(b.r.tutar))<0.01 && a.r.kaynak!==b.r.kaynak){
+        a.r.etiket='virman'; b.r.etiket='virman-mukerrer'; eslesen.add(a.i);eslesen.add(b.i);break;
+      }
+    }
+  }
 }
 function donustur(){ reAyikla(); }
 // Bir satırı (hücre dizisi) işle: başlık/boş atla, tarih/açıklama/tutar ayıkla, hesap kodu eşleştir
@@ -519,27 +601,29 @@ function satirIsle(hucreler,kaynak){
   const aciklama=p.slice(1,p.length-1).join(' ')||p[1];
   if(!/\d/.test(tarih)&&tutar===0)return null;   // başlık satırı (tarihte rakam yok + tutar 0)
   if(!tarih&&!tutar)return null;
-  const m=hesapKoduBul(aciklama);
-  return {tarih,aciklama,tutar,kod:m.kod,ad:m.ad,guven:m.guven,kaynak:kaynak||''};
+  const m=hesapKoduBul(aciklama,tutar);
+  return {tarih,aciklama,tutar,kod:m.kod,ad:m.ad,guven:m.guven,etiket:m.etiket||'',kaynak:kaynak||''};
 }
 function mBodyCiz(){
   const body=$("mBody");
   if(!_mSatirlar.length){body.innerHTML='<tr><td colspan="6" style="color:var(--mut);padding:16px">Satır bulunamadı. Format: Tarih ⭾ Açıklama ⭾ Tutar</td></tr>';}
   else{
+    const GUVEN={'yüksek':'✅ yüksek','orta':'🟡 orta','düşük':'⚠️ düşük'};
+    const ETIKET={'virman':'🔁 virman','virman-mukerrer':'❌ MÜKERRER (sil)','döviz':'💱 döviz','fon':'📈 fon'};
     body.innerHTML=_mSatirlar.map((r,i)=>{
-      const dusuk=r.guven==='düşük';
-      return `<tr style="${dusuk?'background:rgba(245,158,11,.08)':''}">
-        <td>${esc(r.tarih)}</td><td style="font-size:12.5px">${esc(r.aciklama)}</td>
+      const bg=r.etiket==='virman-mukerrer'?'rgba(239,68,68,.14)':(r.etiket?'rgba(139,92,246,.10)':(r.guven==='düşük'?'rgba(245,158,11,.08)':''));
+      return `<tr style="${bg?'background:'+bg:''}">
+        <td>${esc(r.tarih)}</td><td style="font-size:12.5px">${esc(r.aciklama)}${r.etiket?' <b style="color:var(--acc2)">['+(ETIKET[r.etiket]||r.etiket)+']</b>':''}</td>
         <td class="num ${r.tutar<0?'neg':'pos'}">${fmt(r.tutar)}</td>
         <td><input value="${esc(r.kod)}" onchange="mKodDegis(${i},this.value)" list="kodListe" style="padding:5px 7px;font-size:12px" placeholder="kod"></td>
-        <td>${dusuk?'⚠️ düşük':'✅ yüksek'}</td>
+        <td style="font-size:11.5px">${GUVEN[r.guven]||r.guven}</td>
         <td style="font-size:11px;color:var(--mut)">${esc(r.kaynak||'')}</td></tr>`;
     }).join('');
   }
   if(!$("kodListe"))document.body.insertAdjacentHTML('beforeend','<datalist id="kodListe">'+HESAP_PLANI.map(h=>`<option value="${h.k}">${esc(h.a)}</option>`).join('')+'</datalist>');
-  const toplam=_mSatirlar.length, otomatik=_mSatirlar.filter(r=>r.guven==='yüksek').length;
+  const toplam=_mSatirlar.length, otomatik=_mSatirlar.filter(r=>r.guven==='yüksek'||r.guven==='orta').length, dusuk=_mSatirlar.filter(r=>r.guven==='düşük').length;
   const net=_mSatirlar.reduce((s,r)=>s+r.tutar,0);
-  $("mToplam").textContent=toplam;$("mOtomatik").textContent=otomatik;$("mDusuk").textContent=toplam-otomatik;$("mNet").textContent=fmt(net);
+  $("mToplam").textContent=toplam;$("mOtomatik").textContent=otomatik;$("mDusuk").textContent=dusuk;$("mNet").textContent=fmt(net);
   // bakiye kontrol
   const ac=parseFloat($("mAcilis").value),ka=parseFloat($("mKapanis").value);
   if(!isNaN(ac)&&!isNaN(ka)){const fark=(ac+net)-ka;$("mBakiye").innerHTML=Math.abs(fark)<0.01?'<span class="pos">✅ Tutuyor</span>':`<span class="neg">≠ ${fmt(fark)}</span>`;}
