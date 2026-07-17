@@ -284,7 +284,10 @@ let firmalar=load("battal_firmalar")||[];
 // varsayılan firmaları (eksik olanları) ekle — kullanıcının eklediklerini korur
 FIRMALAR_VARSAYILAN.forEach(f=>{if(!firmalar.includes(f))firmalar.push(f);});
 save("battal_firmalar",firmalar);
-function mFirmaDoldur(){const s=$("mFirma");if(!s)return;s.innerHTML=firmalar.map(f=>`<option>${esc(f)}</option>`).join('');}
+function mFirmaDoldur(){const s=$("mFirma");if(!s)return;
+  const planli=k=>{const nk=_normFirma(k);return Object.keys(firmaPlan).some(pk=>{const npk=_normFirma(pk);return npk===nk||npk.includes(nk)||nk.includes(npk);});};
+  s.innerHTML=firmalar.map(f=>`<option value="${esc(f)}">${planli(f)?'📗 ':''}${esc(f)}</option>`).join('');
+}
 function firmaEkle(){const ad=prompt("Firma adı:");if(!ad)return;firmalar.push(ad.trim());save("battal_firmalar",firmalar);mFirmaDoldur();$("mFirma").value=ad.trim();}
 function mBankaDoldur(){
   const s=$("mBankaHesap");if(!s)return;
@@ -368,7 +371,15 @@ function firmaPlanOzetCiz(){
     }).join('');
 }
 function firmaPlanSil(k){delete firmaPlan[k];save("battal_firma_plan",firmaPlan);firmaPlanOzetCiz();mBankaDoldur();}
-function aktifPlan(){const f=$("mFirma")&&$("mFirma").value;return (f&&firmaPlan[f])?firmaPlan[f]:null;}
+function _normFirma(s){return String(s||'').toLocaleUpperCase('tr').replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G').replace(/Ü/g,'U').replace(/Ö/g,'O').replace(/Ç/g,'C').replace(/[^A-Z0-9]/g,'');}
+function aktifPlan(){
+  const f=$("mFirma")&&$("mFirma").value; if(!f)return null;
+  if(firmaPlan[f])return firmaPlan[f];
+  // birebir yoksa: ad normalize edilerek gevşek eşleştir (ISIK_PETROL <-> IŞIK PETROL)
+  const nf=_normFirma(f);
+  for(const k of Object.keys(firmaPlan)){ const nk=_normFirma(k); if(nk===nf||nk.includes(nf)||nf.includes(nk))return firmaPlan[k]; }
+  return null;
+}
 
 /* ═══ EŞLEŞTİRME KURALLARI ═══ */
 // Varsayılan sabit kural yok — akıllı motor (firma planından) hallediyor.
