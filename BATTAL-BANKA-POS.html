@@ -515,14 +515,28 @@ function ekstreYukle(inp){
           rows=e.target.result.split(/\r?\n/).map(l=>l.split(/\t|;/));
         }
         let n=0;
-        rows.forEach(rw=>{if(rw&&rw.some(c=>String(c).trim())){_mHam.push({cells:rw.map(c=>String(c==null?'':c).trim()),kaynak});n++;}});
+        const bas=bankaBasligiBul(rows);   // BANKA FORMÜLÜ: başlıktan otomatik kolon tanıma
+        if(bas){
+          for(let i=bas.satir+1;i<rows.length;i++){
+            const rw=rows[i]; if(!rw||!rw.some(c=>String(c).trim()))continue;
+            const g=c=>String((rw[c]!=null?rw[c]:'')).trim();
+            const tarih=bas.tarih>=0?g(bas.tarih):'';
+            if(!/\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}/.test(tarih))continue;  // veri satırı değil
+            _mHam.push({auto:true, tarih, aciklama:bas.aciklama>=0?g(bas.aciklama):'',
+              tutarStr:bas.tutar>=0?g(bas.tutar):'', bakiyeStr:bas.bakiye>=0?g(bas.bakiye):'',
+              ba:bas.ba>=0?g(bas.ba).toLocaleUpperCase('tr').charAt(0):'', kaynak}); n++;
+          }
+        }else{
+          rows.forEach(rw=>{if(rw&&rw.some(c=>String(c).trim())){_mHam.push({cells:rw.map(c=>String(c==null?'':c).trim()),kaynak});n++;}});
+        }
         eklenen[kaynak]=n;
       }catch(err){console.log('ekstre hata',f.name,err.message);}
       if(--kalan===0){
         const ozet=Object.entries(eklenen).map(([k,v])=>k+' ('+v+')').join(' · ');
-        $("mYukleDurum").textContent='✅ '+files.length+' dosya yüklendi → '+_mHam.length+' satır. '+ozet;
-        kolonlariDoldur();   // sütun seçicileri hazırla (otomatik tahmin)
-        reAyikla();          // ilk ayıklama
+        const auto=_mHam.some(r=>r.auto);
+        $("mYukleDurum").textContent='✅ '+files.length+' dosya · '+_mHam.length+' hareket. '+(auto?'🤖 Banka formülü otomatik tanındı.':'')+' '+ozet;
+        if(auto){$("mKolonEsle").style.display='none';}else{kolonlariDoldur();}
+        reAyikla();
       }
     };
     if(xlsx)r.readAsArrayBuffer(f);else r.readAsText(f,'utf-8');
@@ -553,30 +567,61 @@ function tahminSutun(ornek,tip){
   let aday=-1;for(let i=c.length-1;i>=0;i--){const v=trTutar(c[i]);if(v!==0 && /[-,]/.test(c[i])){aday=i;break;}}
   return aday>=0?aday:'son';
 }
+// BANKA FORMÜLÜ: başlık satırından tarih/açıklama/tutar/bakiye kolonlarını tanı (valör'ü atlar)
+function bankaBasligiBul(rows){
+  const U=s=>String(s==null?'':s).toLocaleUpperCase('tr');
+  for(let i=0;i<Math.min(rows.length,45);i++){
+    const r=(rows[i]||[]).map(U);
+    const iac=r.findIndex(c=>c.includes('AÇIKLAMA'));
+    const itut=r.findIndex(c=>c.includes('TUTAR'));
+    const ibak=r.findIndex(c=>c.includes('BAKİYE')||c.includes('BAKIYE'));
+    if(iac>=0 && (itut>=0||ibak>=0)){
+      // tarih: 'GİRİŞ/VALÖR' İÇERMEYEN ilk TARİH kolonu (Hesaba Giriş Tarihi'ni atla)
+      let itar=-1;
+      for(let j=0;j<r.length;j++){ if((r[j].includes('TARİH')||r[j].includes('TARIH')) && !r[j].includes('GİRİŞ')&&!r[j].includes('GIRIS')&&!r[j].includes('VALÖR')&&!r[j].includes('VALOR')){itar=j;break;} }
+      if(itar<0)itar=r.findIndex(c=>c.includes('TARİH')||c.includes('TARIH'));
+      let iba=r.findIndex(c=>c.includes('BORÇ')||c.includes('BORC')||c==='B/A'||c.includes('ALACAK'));
+      return {satir:i,tarih:itar,aciklama:iac,tutar:itut,bakiye:ibak,ba:iba};
+    }
+  }
+  return null;
+}
 function reAyikla(){
-  if(!_mHam.length){ // dosya yoksa textarea'dan (yapıştırma)
+  const otoVar=_mHam.some(r=>r.auto);
+  if(!otoVar && !_mHam.length){ // dosya yoksa textarea'dan (yapıştırma)
     const ham=$("mEkstre").value.trim();
     if(!ham){alert("Önce ekstre yapıştır veya dosya yükle.");return;}
     _mHam=ham.split(/\r?\n/).filter(l=>l.trim()).map(l=>({cells:l.split(/\t|;/).map(x=>x.trim()),kaynak:''}));
     kolonlariDoldur();
   }
-  const kt=$("mKolTarih").value, ka=$("mKolAciklama").value, ku=$("mKolTutar").value;
   _mSatirlar=[];
-  _mHam.forEach(r=>{
-    const c=r.cells;
-    const tarih=c[+kt]||'';
-    let aciklama=c[+ka]||'';
-    let tutar;
-    if(ku==='son'){const m=(aciklama.match(/(-?\d[\d.\s]*,\d{2})\s*$/)||aciklama.match(/(-?\d[\d.]*)\s*$/));tutar=m?trTutar(m[1]):0;}
-    else tutar=trTutar(c[+ku]||'');
-    // başlık/boş satır atla
-    if(!/\d/.test(tarih)&&tutar===0)return;
-    if(!tarih&&!tutar)return;
-    const mm=hesapKoduBul(aciklama,tutar);
-    _mSatirlar.push({tarih,aciklama,tutar,kod:mm.kod,ad:mm.ad,guven:mm.guven,etiket:mm.etiket||'',kaynak:r.kaynak||''});
-  });
+  if(otoVar){
+    // Banka formülü ile tanınmış normalize satırlar
+    _mHam.forEach(r=>{
+      if(!r.auto)return;
+      let tutar=trTutar(r.tutarStr);
+      if(r.ba==='B')tutar=-Math.abs(tutar); else if(r.ba==='A')tutar=Math.abs(tutar);  // B eksi / A artı
+      const bakiye=trTutar(r.bakiyeStr);
+      const aciklama=(r.tarih+' '+r.aciklama).trim();   // tarih açıklamada birleşik
+      if(!r.tarih && !tutar)return;
+      const mm=hesapKoduBul(r.aciklama,tutar);
+      _mSatirlar.push({tarih:r.tarih,aciklama,aciklamaHam:r.aciklama,tutar,bakiye,kod:mm.kod,ad:mm.ad,guven:mm.guven,etiket:mm.etiket||'',kaynak:r.kaynak||''});
+    });
+  }else{
+    const kt=$("mKolTarih").value, ka=$("mKolAciklama").value, ku=$("mKolTutar").value;
+    _mHam.forEach(r=>{
+      const c=r.cells;
+      const tarih=c[+kt]||''; let aciklama=c[+ka]||''; let tutar;
+      if(ku==='son'){const m=(aciklama.match(/(-?\d[\d.\s]*,\d{2})\s*$/)||aciklama.match(/(-?\d[\d.]*)\s*$/));tutar=m?trTutar(m[1]):0;}
+      else tutar=trTutar(c[+ku]||'');
+      if(!/\d/.test(tarih)&&tutar===0)return;
+      if(!tarih&&!tutar)return;
+      const mm=hesapKoduBul(aciklama,tutar);
+      _mSatirlar.push({tarih,aciklama:(tarih+' '+aciklama).trim(),aciklamaHam:aciklama,tutar,bakiye:0,kod:mm.kod,ad:mm.ad,guven:mm.guven,etiket:mm.etiket||'',kaynak:r.kaynak||''});
+    });
+  }
   _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
-  virmanMukerrerBul();  // hesaplar arası virman mükerrerlerini işaretle
+  virmanMukerrerBul();
   mBodyCiz();
 }
 // Hesaplar arası virman: aynı tutar zıt yönde farklı kaynakta ise mükerrer işaretle (biri silinmeli)
@@ -632,16 +677,24 @@ function mBodyCiz(){
 function mKodDegis(i,val){_mSatirlar[i].kod=val.trim();_mSatirlar[i].ad=hesapAdiGetir(val.trim());_mSatirlar[i].guven=val.trim()?'yüksek':'düşük';mBodyCiz();}
 function mikroCikar(){
   if(!_mSatirlar.length){alert("Önce DÖNÜŞTÜR.");return;}
-  const firma=$("mFirma").value||"", bankaKod=$("mBankaHesap").value||"";
-  const sep=";";const bom="﻿";
-  let csv=bom+["Tarih","Açıklama","Borç","Alacak","Hesap Kodu","Hesap Adı","Karşı Hesap (Banka)","Kaynak Dosya","Firma"].join(sep)+"\n";
-  _mSatirlar.forEach(r=>{
-    const borc=r.tutar<0?Math.abs(r.tutar).toFixed(2):"";
-    const alacak=r.tutar>0?r.tutar.toFixed(2):"";
-    csv+=[r.tarih,r.aciklama,borc,alacak,r.kod,r.ad||hesapAdiGetir(r.kod),bankaKod,r.kaynak||'',firma].map(csvAlan).join(sep)+"\n";
+  const firma=$("mFirma").value||"";
+  // MÜKERRER virman satırlarını çıkar (hesaplar arası virmanın ikinci kopyası)
+  const veri=_mSatirlar.filter(r=>r.etiket!=='virman-mukerrer');
+  const aoa=[["Tarih","Açıklama","Tutar","Bakiye","Hesap Kodu","Hesap Adı","Firma","Kaynak"]];
+  veri.forEach(r=>{
+    aoa.push([r.tarih, r.aciklama, r.tutar, r.bakiye||'', r.kod, r.ad||hesapAdiGetir(r.kod), firma, r.kaynak||'']);
   });
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:11},{wch:48},{wch:14},{wch:14},{wch:12},{wch:26},{wch:16},{wch:16}];
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Hareketler");
+    XLSX.writeFile(wb,"mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".xlsx");
+  }else{
+    const sep=";",bom="﻿";
+    let csv=bom+aoa.map(row=>row.map(csvAlan).join(sep)).join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="mikro-"+(firma||"ekstre")+".csv";document.body.appendChild(a);a.click();a.remove();
+  }
 }
 
 /* ═══ STANDART TEK DÜZEN HESAP PLANI (gömülü) ═══ */
