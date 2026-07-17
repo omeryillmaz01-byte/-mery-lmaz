@@ -79,6 +79,7 @@ mark{background:#fde68a;color:#111}
         </div>
         <div class="fld"><label>2. Banka Hesabı</label><select id="mBankaHesap"></select></div>
       </div>
+      <div id="mPlanDurum" style="font-size:12px;margin-bottom:8px"></div>
       <label>3. Ekstre (Tarih ⭾ Açıklama ⭾ Tutar — Excel'den kopyala-yapıştır ya da CSV yükle)</label>
       <textarea id="mEkstre" style="min-height:120px;font-family:monospace;font-size:12px" placeholder="12.07.2026	POS GARANTI KOMISYON	-175,00
 12.07.2026	EFT GELEN ISIK PETROL	5.000,00
@@ -372,6 +373,12 @@ function firmaPlanOzetCiz(){
 }
 function firmaPlanSil(k){delete firmaPlan[k];save("battal_firma_plan",firmaPlan);firmaPlanOzetCiz();mBankaDoldur();}
 function _normFirma(s){return String(s||'').toLocaleUpperCase('tr').replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G').replace(/Ü/g,'U').replace(/Ö/g,'O').replace(/Ç/g,'C').replace(/[^A-Z0-9]/g,'');}
+function planDurumGoster(){
+  const el=$("mPlanDurum");if(!el)return;
+  const f=$("mFirma")?$("mFirma").value:'';const plan=aktifPlan();
+  if(plan&&plan.length)el.innerHTML='📗 <b style="color:#22c55e">'+esc(f)+' hesap planı bağlı</b> ('+plan.length+' hesap) — alt hesaplar kullanılacak.';
+  else el.innerHTML='⚠️ <b style="color:#ef4444">'+esc(f)+' hesap planı BAĞLI DEĞİL</b> — ana hesaplar çıkar. Bu firmanın .xlsx planını "🏦 Banka Hesap Kodları"ndan yükle, sonra 📗 işaretli firmayı seç.';
+}
 function aktifPlan(){
   const f=$("mFirma")&&$("mFirma").value; if(!f)return null;
   if(firmaPlan[f])return firmaPlan[f];
@@ -448,8 +455,11 @@ function akilliEslestir(aciklama,tutar){
   if(/DAMGA/.test(A))return P(['770'],['DAMGA','GENEL YÖNET'],'orta')||S('770','orta');
   // 6) Maaş türevleri → 335
   if(/MAAŞ|HUZUR ?HAKKI|[İI]HBAR TAZM[İI]N|KIDEM TAZM[İI]N|YOL ÜCRET|YEMEK ÜCRET|BAYRAM|MESA[İI]|PR[İI]M ÖDEME|AVANS ÖDEME/.test(A))return P(['335'],null,'orta')||S('335','orta');
-  // 7) POS tahsilatı → 127
-  if(/NET SATIŞ TUTARI|POS.*TAHS[İI]L|ÜYE ?[İI]ŞYER[İI]/.test(A))return P(['127'],banka?[banka]:null,'orta')||S('127','orta');
+  // 7) POS: masraf/ücret mi yoksa tahsilat/ödeme (para girişi) mi?
+  if(/\bPOS\b|NET SATIŞ TUTARI|ÜYE ?[İI]ŞYER[İI]/.test(A)){
+    if(/H[İI]Z|ÜCRET|KOM[İI]SYON|A[İI]DAT|YAZILIM|BAKIM|MASRAF/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','düşük');
+    return P(['127'],banka?[banka]:null,'orta')||S('127','düşük'); // POS ödeme/tahsilat
+  }
   // 8) Faiz stopajı/vergi (faiz bağlamında) → 193
   if(/(STOPAJ|GEL[İI]R VERG[İI]|VERG[İI])/.test(A)&&/FA[İI]Z|NEMA|VADEL[İI]|ESAS TUTAR|FAİZE/.test(A))return P(['193'],banka?[banka]:null,'orta')||S('193','orta');
   // 9) Faiz geliri → 642
@@ -495,8 +505,7 @@ function akilliEslestir(aciklama,tutar){
   const cari=cariEslesme(A);if(cari)return {kod:cari.kod,ad:hesapAdiGetir(cari.kod),guven:'orta',etiket:''};
   // 26) Maskeli isim → 999
   if(/\*{2,}/.test(aciklama))return S('999','düşük');
-  // 27) Fallback: küçük tutar + para çıkışı → 780; değilse 999
-  if(cikis&&kucuk)return P(['780'],['MASRAF'],'düşük')||S('780','düşük');
+  // 27) Bulunamayan → 999 (cari ödemesini asla 780'e atma; sen kontrol edersin)
   return S('999','düşük');
 }
 function hesapKoduBul(aciklama,tutar){return akilliEslestir(aciklama,tutar||0);}
@@ -633,6 +642,7 @@ function reAyikla(){
   }
   _mSatirlar.sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
   virmanMukerrerBul();
+  planDurumGoster();
   mBodyCiz();
 }
 // Hesaplar arası virman: aynı tutar zıt yönde farklı kaynakta ise mükerrer işaretle (biri silinmeli)
@@ -904,9 +914,9 @@ function planlariDisaAktar(){
 
 /* init */
 $("posTarih").value=new Date().toISOString().slice(0,10);
-$("mFirma").addEventListener('change',()=>mBankaDoldur());
+$("mFirma").addEventListener('change',()=>{mBankaDoldur();planDurumGoster();if(_mHam.length)reAyikla();});
 firmaNormalize();
-bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();
+bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();planDurumGoster();
 </script>
 </body>
 </html>
