@@ -930,13 +930,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // BATTAL INIT
   try {
-    console.log('DEBUG: firmalar.length =', firmalar.length);
-    console.log('DEBUG: FIRMALAR_VARSAYILAN.length =', FIRMALAR_VARSAYILAN.length);
-
-    // Hesap planı yükle
-    initBattalPermanent();
-    if(!firmaPlan || Object.keys(firmaPlan).length===0) firmaPlan=FIRMA_HESAP_PLANI_INIT;
+    // GARANTILI: Hesap planlarını HEMEN yükle
+    firmaPlan = FIRMA_HESAP_PLANI_INIT;
+    save("battal_firma_plan", firmaPlan);
     firmaNormalize();
+    console.log('✅ Hesap Planları Yüklendi: ' + Object.keys(firmaPlan).length + ' firma');
 
     // DROPDOWN'I MANUEL DOLDUR (mFirmaDoldur bypass)
     const mFirmaSelect = $("mFirma");
