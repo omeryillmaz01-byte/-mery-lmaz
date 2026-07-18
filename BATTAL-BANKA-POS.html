@@ -41383,6 +41383,28 @@ function initBattalPermanent() {
 }
 
 /* init */
-initBattalPermanent(); // Paneli aç → otomatik tüm firmalar yüklü ✅
-mFirmaDoldur(); // Firma dropdown'ını doldur
-mBankaDoldur(); // Banka hesapları dropdown'ını doldur
+// KALICI FİRMA VE HESAP PLANI YÜKLEMESİ
+(() => {
+  // Adım 1: localStorage'da hesap planı yoksa veya bozuksa, embed'den yükle
+  initBattalPermanent();
+
+  // Adım 2: Firmalar yüklenmemiş veya eksikse, varsayılanları ekle
+  if(!firmalar || firmalar.length < 5) {
+    console.log('🔄 Firmalar yükleniyor...');
+    firmalar = [];
+    FIRMALAR_VARSAYILAN.forEach(f => {
+      if(!firmalar.includes(f)) firmalar.push(f);
+    });
+    save("battal_firmalar", firmalar);
+    console.log('✅ ' + firmalar.length + ' firma eklendi');
+  }
+
+  // Adım 3: Tüm verileri normalize et
+  firmaNormalize();
+
+  // Adım 4: UI'ı doldur
+  mFirmaDoldur();
+  mBankaDoldur();
+
+  console.log('🎯 Battal başlatıldı: ' + Object.keys(firmaPlan).length + ' firma planı, ' + firmalar.length + ' firma');
+})();
