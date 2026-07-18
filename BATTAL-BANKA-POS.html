@@ -387,7 +387,7 @@ function aktifPlan(){
   for(const k of Object.keys(firmaPlan)){ const nk=_normFirma(k); if(nk===nf||nk.includes(nf)||nf.includes(nk))return firmaPlan[k]; }
   return null;
 }
-// Reverse index: açıklama metni → exact hesap kodu (firma planından)
+// Reverse index: açıklama metni → exact hesap kodu (sadece ALT hesaplar: xxx.01, xxx.02, vb.)
 let firmaPlanIndex={};
 function buildPlanIndex(){
   const f=$("mFirma")&&$("mFirma").value; if(!f){firmaPlanIndex={};return;}
@@ -395,6 +395,10 @@ function buildPlanIndex(){
   const idx={};
   for(const h of plan){
     if(!h.kod||!h.ad)continue;
+
+    // ⭐ KURAL: Ana hesapları (100, 200, 780, vb.) KULLANMA — sadece alt hesaplar (xxx.01, xxx.02)
+    if(!h.kod.includes('.')){continue;} // Ana hesapsa, atla
+
     const ad=upTr(h.ad);
 
     // 1) Parentez içi (hesap numarası) sil: "(298189)" → ""
@@ -408,13 +412,13 @@ function buildPlanIndex(){
     // 3) Kelimeler (1+ karakter)
     const kelimeler=adNormalized.split(/[^A-Z0-9]+/).filter(x=>x.length>0);
 
-    // 4) Index'e ekle: her kelime → kod
+    // 4) Index'e ekle: her kelime → alt kod
     for(const kelime of kelimeler){
       if(!idx[kelime])idx[kelime]=[];
       if(!idx[kelime].includes(h.kod))idx[kelime].push(h.kod);
     }
 
-    // 5) Tam ad ve temiz ad da index'e
+    // 5) Tam ad ve temiz ad da index'e (sadece alt hesaplar)
     if(!idx[adNormalized])idx[adNormalized]=[];
     if(!idx[adNormalized].includes(h.kod))idx[adNormalized].push(h.kod);
   }
@@ -480,11 +484,15 @@ function upTr(s){return (s||'').toLocaleUpperCase('tr');}
 function planListe(){const p=aktifPlan();return p&&p.length?p:HESAP_PLANI.map(h=>({kod:h.k,ad:h.a}));}
 function planKodBul(anaKodlar,anahtarlar){
   const plan=planListe();anaKodlar=[].concat(anaKodlar);
+  // ⭐ KURAL: Alt hesapları (xxx.01, xxx.02) öncelikle, ana hesapları (xxx) asla
+  const subAccounts=plan.filter(h=>String(h.kod).includes('.'));
+  const mainAccounts=plan.filter(h=>!String(h.kod).includes('.'));
+
   if(anahtarlar&&anahtarlar.length){
-    for(const h of plan){const kod=String(h.kod);
+    for(const h of subAccounts){const kod=String(h.kod);
       if(anaKodlar.some(k=>kod.startsWith(k))&&anahtarlar.some(a=>upTr(h.ad).includes(upTr(a))))return {kod:h.kod,ad:h.ad};}
   }
-  const aday=plan.filter(h=>anaKodlar.some(k=>String(h.kod).startsWith(k)));
+  const aday=subAccounts.filter(h=>anaKodlar.some(k=>String(h.kod).startsWith(k)));
   if(aday.length){aday.sort((a,b)=>String(a.kod).length-String(b.kod).length);return {kod:aday[0].kod,ad:aday[0].ad};}
   return null;
 }
