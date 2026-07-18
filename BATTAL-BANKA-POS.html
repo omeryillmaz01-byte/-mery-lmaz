@@ -41384,27 +41384,47 @@ function initBattalPermanent() {
 
 /* init */
 // KALICI FİRMA VE HESAP PLANI YÜKLEMESİ
-(() => {
-  // Adım 1: localStorage'da hesap planı yoksa veya bozuksa, embed'den yükle
-  initBattalPermanent();
+setTimeout(() => {
+  try {
+    console.log('=== BATTAL INIT START ===');
+    console.log('1. FIRMALAR_VARSAYILAN.length:', FIRMALAR_VARSAYILAN.length);
+    console.log('2. firmalar before:', firmalar.length);
+    console.log('3. firmaPlan before:', Object.keys(firmaPlan).length);
 
-  // Adım 2: Firmalar yüklenmemiş veya eksikse, varsayılanları ekle
-  if(!firmalar || firmalar.length < 5) {
-    console.log('🔄 Firmalar yükleniyor...');
-    firmalar = [];
-    FIRMALAR_VARSAYILAN.forEach(f => {
-      if(!firmalar.includes(f)) firmalar.push(f);
-    });
-    save("battal_firmalar", firmalar);
-    console.log('✅ ' + firmalar.length + ' firma eklendi');
+    // Adım 1: localStorage'da hesap planı yoksa veya bozuksa, embed'den yükle
+    initBattalPermanent();
+    console.log('4. After initBattalPermanent - firmaPlan:', Object.keys(firmaPlan).length);
+
+    // Adım 2: Firmalar yüklenmemiş veya eksikse, varsayılanları ekle
+    if(!firmalar || firmalar.length < 5) {
+      console.log('5. ⚠️ Firmalar eksik, yeniden yükleniyor...');
+      firmalar = [];
+      FIRMALAR_VARSAYILAN.forEach(f => {
+        firmalar.push(f);
+      });
+      save("battal_firmalar", firmalar);
+      console.log('6. ✅ ' + firmalar.length + ' firma eklendi');
+    } else {
+      console.log('7. ✓ Firmalar zaten var: ' + firmalar.length);
+    }
+
+    // Adım 3: Tüm verileri normalize et
+    console.log('8. Before normalize - firmalar:', firmalar.length);
+    firmaNormalize();
+    console.log('9. After normalize - firmalar:', firmalar.length);
+
+    // Adım 4: UI'ı doldur
+    const mFirmaEl = $("mFirma");
+    console.log('10. mFirma element:', mFirmaEl ? '✅ found' : '❌ NOT FOUND');
+
+    mFirmaDoldur();
+    console.log('11. After mFirmaDoldur - select options:', mFirmaEl ? mFirmaEl.options.length : 0);
+
+    mBankaDoldur();
+    console.log('12. After mBankaDoldur');
+
+    console.log('✅ BATTAL INIT COMPLETE: ' + Object.keys(firmaPlan).length + ' plans, ' + firmalar.length + ' firms');
+  } catch(e) {
+    console.error('❌ BATTAL INIT ERROR:', e.message, e.stack);
   }
-
-  // Adım 3: Tüm verileri normalize et
-  firmaNormalize();
-
-  // Adım 4: UI'ı doldur
-  mFirmaDoldur();
-  mBankaDoldur();
-
-  console.log('🎯 Battal başlatıldı: ' + Object.keys(firmaPlan).length + ' firma planı, ' + firmalar.length + ' firma');
-})();
+}, 100);
