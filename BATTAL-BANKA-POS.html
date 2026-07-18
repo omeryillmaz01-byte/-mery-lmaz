@@ -928,16 +928,34 @@ document.addEventListener('DOMContentLoaded',()=>{
   const modal=$("exportModal");
   if(modal){modal.addEventListener('click',(e)=>{if(e.target===modal)closeExportMenu();});}
 
-  // BATTAL INIT: Hesap planı ve dropdown'ları doldur
+  // BATTAL INIT
   try {
-    initBattalPermanent(); // Embed'den yükle
+    console.log('DEBUG: firmalar.length =', firmalar.length);
+    console.log('DEBUG: FIRMALAR_VARSAYILAN.length =', FIRMALAR_VARSAYILAN.length);
+
+    // Hesap planı yükle
+    initBattalPermanent();
     if(!firmaPlan || Object.keys(firmaPlan).length===0) firmaPlan=FIRMA_HESAP_PLANI_INIT;
     firmaNormalize();
-    mFirmaDoldur();
+
+    // DROPDOWN'I MANUEL DOLDUR (mFirmaDoldur bypass)
+    const mFirmaSelect = $("mFirma");
+    if(mFirmaSelect) {
+      console.log('DEBUG: mFirma element found');
+      let html = '';
+      for(let i=0; i<firmalar.length; i++) {
+        html += '<option value="' + firmalar[i] + '">' + firmalar[i] + '</option>';
+      }
+      mFirmaSelect.innerHTML = html;
+      console.log('DEBUG: Dropdown populated with ' + firmalar.length + ' options');
+    } else {
+      console.error('ERROR: mFirma element NOT found!');
+    }
+
     mBankaDoldur();
-    console.log('✅ BATTAL Ready: ' + firmalar.length + ' firms, ' + Object.keys(firmaPlan).length + ' plans');
+    console.log('✅ BATTAL Ready');
   } catch(e) {
-    console.error('❌ BATTAL Error:', e.message);
+    console.error('❌ Error:', e.message, e.stack);
   }
 });
 function doExport(){
