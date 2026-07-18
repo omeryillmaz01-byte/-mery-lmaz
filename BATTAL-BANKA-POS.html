@@ -922,7 +922,13 @@ function mBodyCiz(){
 }
 function mKodDegis(i,val){_mSatirlar[i].kod=val.trim();_mSatirlar[i].ad=hesapAdiGetir(val.trim());_mSatirlar[i].guven=val.trim()?'yüksek':'düşük';mBodyCiz();}
 /* ═══ EXPORT MODAL ═══ */
-function showExportMenu(){$("exportModal").classList.add("active");}
+function showExportMenu(){
+  // Toplu export için firma + hesap no bilgisi ekle
+  const firma=$("mFirma").value;
+  const hesap=$("mBankaHesap").value;
+  if(!firma||!_mSatirlar.length){alert("Önce firma seç ve Excel yükle.");return;}
+  $("exportModal").classList.add("active");
+}
 function closeExportMenu(){$("exportModal").classList.remove("active");}
 document.addEventListener('DOMContentLoaded',()=>{
   const modal=$("exportModal");
@@ -966,12 +972,29 @@ function doExport(){
   closeExportMenu();
 }
 
+function getBankaAdiVeHesap(){
+  const hesapKodu=$("mBankaHesap").value||"";
+  const plan=aktifPlan();
+  let bankaAdi="BANKA";
+  if(plan){
+    const hesap=plan.find(h=>h.kod===hesapKodu);
+    if(hesap){
+      const ad=hesap.ad||"";
+      bankaAdi=ad.split(' ')[0].toUpperCase();
+    }
+  }
+  return {kod:hesapKodu,adi:bankaAdi};
+}
+
 function mikroCikar(format='full',toDesktop=false){
   if(!_mSatirlar.length){alert("Önce DÖNÜŞTÜR.");return;}
   const firma=$("mFirma").value||"";
+  const {kod:hesapKodu,adi:bankaAdi}=getBankaAdiVeHesap();
   // MÜKERRER virman satırlarını çıkar (hesaplar arası virmanın ikinci kopyası)
   const veri=_mSatirlar.filter(r=>r.etiket!=='virman-mukerrer');
   let aoa,wsCol,filename;
+
+  const baseFilename=firma && hesapKodu ? `${firma}-${bankaAdi}(${hesapKodu})` : (firma||"ekstre");
 
   if(format==='minimal'){
     aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu"]];
@@ -979,14 +1002,14 @@ function mikroCikar(format='full',toDesktop=false){
     veri.forEach(r=>{
       aoa.push([r.tarih, r.aciklamaHam, r.tutar, r.kod]);
     });
-    filename="mikro-minimal-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".xlsx";
+    filename=baseFilename+".xlsx";
   }else if(format==='muhasebe'){
     aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu","Hesap Adı"]];
     wsCol=[{wch:11},{wch:48},{wch:14},{wch:12},{wch:26}];
     veri.forEach(r=>{
       aoa.push([r.tarih, r.aciklamaHam, r.tutar, r.kod, r.ad||hesapAdiGetir(r.kod)]);
     });
-    filename="mikro-muhasebe-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".xlsx";
+    filename=baseFilename+".xlsx";
   }else if(format==='csv'){
     aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu","Hesap Adı","Güven","Kaynak"]];
     veri.forEach(r=>{
@@ -995,7 +1018,7 @@ function mikroCikar(format='full',toDesktop=false){
     const sep=";",bom="﻿";
     let csv=bom+aoa.map(row=>row.map(csvAlan).join(sep)).join("\n");
     const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download="mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".csv";
+    const a=document.createElement("a");a.href=url;a.download=baseFilename+".csv";
     a.setAttribute('data-desktop',toDesktop?'true':'false');
     document.body.appendChild(a);a.click();a.remove();
     return;
@@ -1005,7 +1028,7 @@ function mikroCikar(format='full',toDesktop=false){
     veri.forEach(r=>{
       aoa.push([r.tarih, r.aciklama, r.tutar, r.bakiye||'', r.kod, r.ad||hesapAdiGetir(r.kod), firma, r.kaynak||'']);
     });
-    filename="mikro-"+(firma||"ekstre")+"-"+new Date().toISOString().slice(0,10)+".xlsx";
+    filename=baseFilename+".xlsx";
   }
 
   if(typeof XLSX!=='undefined'){
