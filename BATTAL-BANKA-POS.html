@@ -396,29 +396,53 @@ function buildPlanIndex(){
   for(const h of plan){
     if(!h.kod||!h.ad)continue;
     const ad=upTr(h.ad);
-    // Kelime ayıkla: "GARANTİ VADESİZ TL (298189)" → ["GARANTİ","VADESİZ","TL","298189"]
-    const kelimeler=ad.split(/[^A-Z0-9]+/).filter(x=>x.length>1);
+
+    // 1) Parentez içi (hesap numarası) sil: "(298189)" → ""
+    const adClean=ad.replace(/\([^)]*\)/g,'').trim();
+
+    // 2) Kısaltmaları açarak ayıkla:
+    //    "T.İŞ BANKASI" → "TİŞ BANKASI"
+    //    "HİZ.LTD.ŞTİ." → "HİZLTDŞTİ"
+    const adNormalized=adClean.replace(/\.+/g,'');
+
+    // 3) Kelimeler (1+ karakter)
+    const kelimeler=adNormalized.split(/[^A-Z0-9]+/).filter(x=>x.length>0);
+
+    // 4) Index'e ekle: her kelime → kod
     for(const kelime of kelimeler){
       if(!idx[kelime])idx[kelime]=[];
-      idx[kelime].push(h.kod);
+      if(!idx[kelime].includes(h.kod))idx[kelime].push(h.kod);
     }
-    // Tam ad → kod (uzun description için)
-    idx[ad]=h.kod;
+
+    // 5) Tam ad ve temiz ad da index'e
+    if(!idx[adNormalized])idx[adNormalized]=[];
+    if(!idx[adNormalized].includes(h.kod))idx[adNormalized].push(h.kod);
   }
   firmaPlanIndex=idx;
 }
 function planEslestir(aciklama){
-  // Plan index'inde açıklama'yı ara; EXACT match veriş yüksek güven
   if(!Object.keys(firmaPlanIndex).length)return null;
-  const A=upTr(aciklama);
-  // 1) Tam eşleşme (örn: "SATICILAR" = 320 ana hesabı)
-  if(firmaPlanIndex[A])return firmaPlanIndex[A];
-  // 2) Kelime bazlı: en uzun eşleşme (specificity)
-  let best=null,bestLen=0;
-  for(const kelime of Object.keys(firmaPlanIndex)){
-    if(kelime.length>bestLen && A.includes(kelime)){
-      best=firmaPlanIndex[kelime];
-      bestLen=kelime.length;
+  const A=upTr(aciklama).replace(/\([^)]*\)/g,'').replace(/\.+/g,'').trim();
+
+  // Tam ad eşleşme
+  if(firmaPlanIndex[A])return firmaPlanIndex[A][0];
+
+  // Scoring: Kaç kelime ve ne kadar uzun → Best match
+  const aKelimeler=A.split(/[^A-Z0-9]+/).filter(x=>x.length>0);
+  const scores={};
+  for(const kelime of aKelimeler){
+    if(firmaPlanIndex[kelime]){
+      for(const kod of firmaPlanIndex[kelime]){
+        scores[kod]=(scores[kod]||0)+kelime.length; // Uzun kelimeler ağır
+      }
+    }
+  }
+
+  let best=null,bestScore=0;
+  for(const kod in scores){
+    if(scores[kod]>bestScore){
+      best=kod;
+      bestScore=scores[kod];
     }
   }
   return best;
