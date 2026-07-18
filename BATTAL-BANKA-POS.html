@@ -503,71 +503,80 @@ function bankaAdi(){const s=$("mBankaHesap");const b=(s&&s.selectedOptions[0])?s
 function ortakEslesme(A){const list=firmaOrtaklar();for(const o of list){if(o.ad.length>=5&&A.includes(o.ad))return o;}for(const o of list){const p=o.ad.split(/\s+/).slice(0,2).join(' ');if(p.length>=6&&A.includes(p))return o;}return null;}
 function cariEslesme(A){const list=firmaCariler();for(const c of list){const p=c.ad.split(/\s+/).slice(0,2).join(' ');if(p.length>=5&&A.includes(p))return c;}return null;}
 function akilliEslestir(aciklama,tutar){
-  const A=upTr(aciklama);const cikis=(tutar||0)<0;const kucuk=Math.abs(tutar||0)>0&&Math.abs(tutar||0)<1500;const banka=bankaAdi();
+  const A=upTr(aciklama);const cikis=(tutar||0)<0;const banka=bankaAdi();
   const S=(kod,guven,etiket)=>({kod:kod||'',ad:kod?hesapAdiGetir(kod):'',guven:guven||'düşük',etiket:etiket||''});
   const P=(anaKodlar,anahtarlar,guven,etiket)=>{const r=planKodBul(anaKodlar,anahtarlar);return r?{kod:r.kod,ad:r.ad,guven:guven||'yüksek',etiket:etiket||''}:null;};
 
-  // 0) ★ PLAN INDEX İLK KAYNAK: Firma'nın gerçek hesap planında tam eşleşme ara
+  // ★ 0) PLAN INDEX İLK KAYNAK: Firma'nın gerçek hesap planında (alt hesaplar) ara
   const planEsles=planEslestir(aciklama);
-  if(planEsles){
-    const kod=Array.isArray(planEsles)?planEsles[0]:planEsles;
-    return {kod:kod,ad:hesapAdiGetir(kod),guven:'yüksek',etiket:''};
-  }
+  if(planEsles){const kod=Array.isArray(planEsles)?planEsles[0]:planEsles;return {kod:kod,ad:hesapAdiGetir(kod),guven:'yüksek',etiket:''};}
 
-  // 1) HESAPLAR ARASI VİRMAN / MEVDUAT GERİ DÖNÜŞÜ (kullanıcı kuralından önce)
-  if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İ]İ DÖNÜŞ|HESAP AÇILIŞI/.test(A)){
-    if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A)){const r=planKodBul(['102'],['52','VADEL']);if(r)return {kod:r.kod,ad:r.ad,guven:'orta',etiket:'virman'};}
+  // ★ 1) VIRMAN / HESAPLAR ARASI TRANSFER (MEVDUAT GERİ DÖNÜŞ, VADEL[İ] HESABA, vb.)
+  if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İI] DÖNÜŞ|HESAP AÇILIŞI|PARA TRANSFER[İI]/.test(A)){
+    if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A))return P(['102'],['VADELİ','52','51'],'orta')||S('102','orta','virman');
     return S('','düşük','virman');
   }
-  // 2) DÖVİZ / ARBİTRAJ
-  if(/DÖV[İI]Z ?(SATIM|SATIŞ|ALIŞ|ALIM)|ARB[İI]TRAJ|MBL-DÖV[İI]Z/.test(A))return S('','düşük','döviz');
-  // 3) KESİNTİ (maaştan ÖNCE!) → 780
-  if(/KES[İI]NT[İI]/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','orta');
-  // 0) Kullanıcı özel kuralları
+
+  // ★ 2) DÖVİZ / ARBİTRAJ (TL/USD/EUR bölme)
+  if(/DÖV[İI]Z ?(SATIM|SATIŞ|ALIŞ|ALIM)|ARB[İI]TRAJ|MBL-DÖV[İI]Z|MOBIL.*ARBITRAJ/.test(A))return S('','düşük','döviz');
+
+  // ★ 3) KESİNTİ → 780 MASRAF (KESİNTİ VE EKLERİ-Maaş Avansı, KESİNTİ VE EKLERİ-Prim → MASRAF'tır!)
+  if(/KES[İI]NT[İI]/.test(A)&&!/MAAŞ|PR[İI]M|AVANS|BAYRAM/.test(A))return P(['780'],null,'orta')||S('780','orta');
+  if(/KES[İI]NT[İI]/.test(A))return P(['780'],null,'orta')||S('780','orta'); // KESİNTİ her zaman 780
+
+  // ★ 4) KULLNICI ÖZELKuralları
   for(const k of kurallar){if(A.includes(upTr(k.kelime)))return S(k.kod,'yüksek');}
-  // 4) Banka masrafı → 780
-  if(/BSMV|KOM[İI]SYON|MASRAF|POS YAZILIM|[İI]ŞLEM ÜCRET|FAST ÜCRET|MKK|ARTI PARA|BAKIM ÜCRET|EFT ÜCRET|HAVALE ÜCRET|HESAP [İI]ŞLET/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','orta');
-  // 5) Damga vergisi ödemesi → 770
-  if(/DAMGA/.test(A))return P(['770'],['DAMGA','GENEL YÖNET'],'orta')||S('770','orta');
-  // 6) Maaş türevleri → 335
-  if(/MAAŞ|HUZUR ?HAKKI|[İI]HBAR TAZM[İI]N|KIDEM TAZM[İI]N|YOL ÜCRET|YEMEK ÜCRET|BAYRAM|MESA[İI]|PR[İI]M ÖDEME|AVANS ÖDEME/.test(A))return P(['335'],null,'orta')||S('335','orta');
-  // 7) POS: masraf/ücret mi yoksa tahsilat/ödeme (para girişi) mi?
-  if(/\bPOS\b|NET SATIŞ TUTARI|ÜYE ?[İI]ŞYER[İI]/.test(A)){
-    if(/H[İI]Z|ÜCRET|KOM[İI]SYON|A[İI]DAT|YAZILIM|BAKIM|MASRAF/.test(A))return P(['780'],['MASRAF','KOM[İI]SYON','BANKA'],'orta')||S('780','düşük');
-    return P(['127'],banka?[banka]:null,'orta')||S('127','düşük'); // POS ödeme/tahsilat
-  }
-  // 8) Faiz stopajı/vergi (faiz bağlamında) → 193
-  if(/(STOPAJ|GEL[İI]R VERG[İI]|VERG[İI])/.test(A)&&/FA[İI]Z|NEMA|VADEL[İI]|ESAS TUTAR|FAİZE/.test(A))return P(['193'],banka?[banka]:null,'orta')||S('193','orta');
-  // 9) Faiz geliri → 642
-  if((/FA[İI]Z|NEMA/.test(A))&&!/VERG[İI]|STOPAJ|ESAS TUTAR/.test(A))return P(['642'],banka?[banka]:null,'orta')||S('642','orta');
-  // 10) Devlet desteği → 679
+
+  // ★ 5) BANKA MASRAFI / KOMİSYON → 780 (BSMV, KOMİSYON, MASRAF, POS yazılım, EFT, MKK, FAST, etc.)
+  if(/BSMV|KOM[İI]SYON|MASRAF|POS ?(YAZILIM|BAKIM|ÜCRET)|[İI]ŞLEM ÜCRET|FAST ÜCRET|MKK|ARTI PARA|BAKIM ÜCRET|EFT ÜCRET|HAVALE ÜCRET|HESAP [İI]ŞLET|PARA VERGİ/.test(A))return P(['780'],null,'orta')||S('780','orta');
+
+  // ★ 6) DAMGA VERGİSİ → 770
+  if(/DAMGA VERG[İI]|MUHTASAR DAMGA|DAMGA/.test(A))return P(['770'],['DAMGA'],'orta')||S('770','orta');
+
+  // ★ 7) MAAŞ / HUZUR HAKKI / PR[İ]M / TAZM[İ]NAT → 335 (NOT KESİNTİ, NOT 361)
+  if(/MAAŞ|HUZUR ?HAKKI|[İI]HBAR TAZM[İI]N|KIDEM TAZM[İI]N|YOL ÜCRET|YEMEK ÜCRET|BAYRAM|MESA[İI]|PR[İI]M ÖDEME|AVANS|ÖDEME$/i.test(A))return P(['335'],null,'orta')||S('335','orta');
+
+  // ★ 8) FAİZ STOPAJI (Interest withholding: VERGİ + FAİZ context) → 193
+  if(/(STOPAJ|GEL[İI]R VERG[İI]|VERG[İI])/.test(A)&&/FA[İI]Z|VADEL[İI]|FAİZE|NEMA/.test(A))return P(['193'],null,'orta')||S('193','orta');
+
+  // ★ 9) FAİZ GEL[İ]R[İ] (Interest income: FAİZ but NOT tax) → 642
+  if(/FA[İI]Z|NEMA/.test(A)&&!/STOPAJ|VERG[İI]|ESAS TUTAR/.test(A)&&!/KES[İI]NT[İI]/.test(A))return P(['642'],null,'orta')||S('642','orta');
+
+  // ★ 10) DEVLET DESTEĞİ (State support: E-OKUL, TEŞV[İ]K) → 679
   if(/DEVLET DESTE[ĞG]|E-?OKUL|TEŞV[İI]K|MALMÜDÜR/.test(A))return P(['679'],null,'orta')||S('679','orta');
-  // 11) Aidat → 770
-  if(/A[İI]DAT/.test(A))return P(['770'],['GENEL YÖNET','A[İI]DAT'],'orta')||S('770','orta');
-  // 12) Araç giderleri → 770/760
-  if(/\bHGS\b|\bOGS\b|AKARYAKIT|BENZ[İI]N|MOTOR[İI]N|ARAÇ BAKIM|OTOYOL|OTOPARK|LAST[İI]K|\b\d{2}[A-Z]{1,3}\d{2,4}\b/.test(A)){const r=planKodBul(['770','760'],['ARAÇ','TAŞIT','AKARYAKIT']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('770','orta');}
-  // 13) Fon → 102 fon (118'den)
-  if(/FON SATIŞ|FON ALIŞ|PARA P[İI]YASA|FON SATIM/.test(A)){const r=planKodBul(['102'],['FON']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:'fon'}:S('118','orta','fon');}
-  // 14) Çek: ödeme→103, tahsil→101
-  if(/\bÇEK\b/.test(A)){if(cikis||/ÖDEME|TAKAS/.test(A))return S('103',planKodBul(['103'])?'yüksek':'orta');return S('101','orta');}
-  // 15) Senet → 121
+
+  // ★ 11) A[İ]DAT (Building fee) → 770
+  if(/A[İI]DAT/.test(A))return P(['770'],['A[İI]DAT','YÖNET'],'orta')||S('770','orta');
+
+  // ★ 12) ARAÇ GİDERLERİ (HGS, araç bakım, akaryakıt, otoyol) → 760/770
+  if(/\bHGS\b|\bOGS\b|AKARYAKIT|BENZ[İI]N|MOTOR[İI]N|ARAÇ BAKIM|ARAÇ.?ONARIM|OTOYOL|OTOPARK|LAST[İI]K/.test(A)){const r=planKodBul(['770','760'],['ARAÇ','TAŞIT']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('770','orta');}
+
+  // ★ 13) BEDAŞ (Cari) → 320 cari, else 100
+  if(/BEDAŞ|BEDAS/.test(A)){const c=cariEslesme(A);if(c)return {kod:c.kod,ad:hesapAdiGetir(c.kod),guven:'orta',etiket:''};return P(['320'],null,'düşük')||S('100','düşük');}
+
+  // ★ 14) FON (FON SATIŞ, FON ALIŞ, PARA PİYASA) → 102
+  if(/FON ?(SATIŞ|ALIŞ|SATIM)|PARA P[İI]YASA/.test(A)){const r=planKodBul(['102'],['FON']);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:'fon'}:S('118','orta','fon');}
+
+  // ★ 15) ÇEK (Check payment/collection) → 103 (ödeme), 101 (tahsilat)
+  if(/\bÇEK\b/.test(A)){if(cikis||/ÖDEME|TAKAS/.test(A))return P(['103'],null,'orta')||S('103','orta');return P(['101'],null,'orta')||S('101','orta');}
+
+  // ★ 16) SENET → 121
   if(/SENET/.test(A))return P(['121'],null,'orta')||S('121','orta');
-  // 16) Depozito → 126
+
+  // ★ 17) DEPOZ[İ]T → 126
   if(/DEPOZ[İI]T/.test(A))return P(['126'],null,'orta')||S('126','orta');
-  // 17) KMH → 300
-  if(/\bKMH\b|KRED[İI]L[İI] MEVDUAT/.test(A))return P(['300'],null,'orta')||S('300','orta');
-  // 18) Taner Battal (muhasebeci) → 195/329
-  if(/TANER BATTAL/.test(A)){const r=planKodBul(['195','329'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('195','düşük');}
-  // 19) Cari servis firmaları (Multinet/Turkcell/TRKDJT/Vodafone/Superonline/Bedaş/enerji) → 320 cari
-  if(/MULT[İI]NET|MULTNT|TURKCELL|TRKCLL|TRKDJT|VODAFONE|SUPERONL[İI]NE|BEDAŞ|BEDAS|TÜRK ?TELEKOM|ENERJ[İI]SA|[İI]GDAŞ|ELEKTR[İI]K|DO[ĞG]ALGAZ/.test(A)){const c=cariEslesme(A);if(c)return {kod:c.kod,ad:hesapAdiGetir(c.kod),guven:'orta',etiket:''};return P(['320'],null,'düşük')||S('320','düşük');}
-  // 20) Ortak adı → 131/331
-  const ort=ortakEslesme(A);if(ort)return {kod:ort.kod,ad:hesapAdiGetir(ort.kod),guven:'orta',etiket:''};
-  // 21) Kıymetli maden / yatırım / bağkur (şahsi) → 131/331
-  if(/VADES[İI]Z ALTIN|GÜMÜŞ|ALTIN MEVDUAT|KIYMETL[İI] MADEN|YATIRIM HESAB|BA[ĞG]KUR|BA[ĞG]-KUR/.test(A)){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
-  // 22) Kira → 329
-  if(/K[İI]RA/.test(A))return P(['329'],null,'orta')||S('329','orta');
-  // 23) Kart ödemesi
-  if(/K\.?KARTI|KRED[İI] KART|EKSTRE BORÇ TAHS[İI]L|KART ÖDEME|OTM\.?ÖDEME|BUSINESS OTM|KKH/.test(A)){
+
+  // ★ 18) KMH (ANAPARA BORCU, KREDİLİ MEVDUAT) → 300
+  if(/\bKMH\b|KRED[İI]L[İI] MEVDUAT|ANAPARA BORCU/.test(A))return P(['300'],null,'orta')||S('300','orta');
+
+  // ★ 19) TANER BATTAL (NOT 120/320) → 195/329
+  if(/TANER BATTAL|MUHASEBE ÖDEME|MUHASEBE HIZMET/.test(A)){const r=planKodBul(['195','329'],null);return r?{kod:r.kod,ad:r.ad,guven:'yüksek',etiket:''}:S('195','düşük');}
+
+  // ★ 20) CARİ/VENDOR (MULTINET, TURKCELL, VODAFONE, SUPERONLINE, ENERJİSA, ENERJI) → 320
+  if(/MULT[İI]NET|MULTNT|TURKCELL|TRKCLL|TRKDJT|VODAFONE|SUPERONL[İI]NE|TÜRK ?TELEKOM|ENERJ[İI]SA|ENERJİ|[İI]GDAŞ|ELEKTR[İI]K|DO[ĞG]ALGAZ/.test(A)){const c=cariEslesme(A);if(c)return {kod:c.kod,ad:hesapAdiGetir(c.kod),guven:'orta',etiket:''};return P(['320'],null,'düşük')||S('320','düşük');}
+
+  // ★ 21) KART ÖDEME (K.KARTI, EKSTRE BORÇ TAHSILATI 4177/7013) → 329
+  if(/K\.?KARTI|KRED[İI] KART|EKSTRE BORÇ TAHS[İI]L|KART ÖDEME|OTM\.?ÖDEME|BUSINESS OTM|KKH|A\.BUSINESS/.test(A)){
     const firma=upTr($("mFirma")?$("mFirma").value:'');
     if(KARTSIZ_FIRMALAR.some(f=>firma.includes(upTr(f)))){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
     const m=A.match(/(\d{4})\D*$/)||A.match(/\b(\d{4})\b/);const son4=m?m[1]:'';
@@ -575,13 +584,29 @@ function akilliEslestir(aciklama,tutar){
     if(kart)return {kod:kart.kod,ad:kart.ad,guven:'yüksek',etiket:''};
     return P(['329'],null,'orta')||S('999','düşük');
   }
-  // 24) Nakit / ATM (isim varsa 131/331)
-  if(/QR [İI]LE|\bATM\b|PARA YATIRMA|PARA ÇEKME|NAK[İI]T|PROV[İI]ZYON|KASADAN/.test(A)){const o2=ortakEslesme(A);if(o2)return {kod:o2.kod,ad:hesapAdiGetir(o2.kod),guven:'orta',etiket:''};return P(['100'],null,'orta')||S('100','orta');}
-  // 25) Genel cari isim eşleşmesi
+
+  // ★ 22) K[İ]RA (KIRAYA, KİRA) → 329
+  if(/K[İI]RA/.test(A))return P(['329'],['K[İI]RA'],'orta')||S('329','orta');
+
+  // ★ 23) ORTAK/OWNER (Transfer, Havale, EFT with name; NOT Salary) → 131/331
+  const ort=ortakEslesme(A);if(ort&&!/MAAŞ|HUZUR|PR[İI]M|BAYRAM|TAZM[İI]N/.test(A))return {kod:ort.kod,ad:hesapAdiGetir(ort.kod),guven:'orta',etiket:''};
+
+  // ★ 24) SGK / BAĞKUR (Personal insurance, not employer) → 131/331
+  if(/SGK|BAĞKUR|BA[ĞG]-KUR/.test(A)&&!/ÖDEYENİ/.test(A)){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
+
+  // ★ 25) KIYMETLİ MADEN (ALTIN, GÜMÜŞ, altın mevduat) → 131/331
+  if(/VADES[İI]Z ALTIN|GÜMÜŞ|ALTIN MEVDUAT|KIYMETL[İI] MADEN|YATIRIM HESAB/.test(A)){const r=planKodBul(['131','331'],null);return r?{kod:r.kod,ad:r.ad,guven:'orta',etiket:''}:S('131','düşük');}
+
+  // ★ 26) NAKIT / ATM / PARA YATIRMA (Cash, ATM, withdrawal; if name → 131/331) → 100 (else partner)
+  if(/QR [İI]LE|\bATM\b|PARA YATIRMA|PARA ÇEKME|NAK[İI]T|PROV[İI]ZYON|KASADAN|P\.ÇEKME/.test(A)){const o2=ortakEslesme(A);if(o2)return {kod:o2.kod,ad:hesapAdiGetir(o2.kod),guven:'orta',etiket:''};return P(['100'],null,'orta')||S('100','orta');}
+
+  // ★ 27) CARİ İSİM EŞLEŞMESİ (Generic cari name) → 320/120
   const cari=cariEslesme(A);if(cari)return {kod:cari.kod,ad:hesapAdiGetir(cari.kod),guven:'orta',etiket:''};
-  // 26) Maskeli isim → 999
+
+  // ★ 28) MASKELİ İSİM → 999
   if(/\*{2,}/.test(aciklama))return S('999','düşük');
-  // 27) Bulunamayan → 999 (cari ödemesini asla 780'e atma; sen kontrol edersin)
+
+  // ★ 29) BULUNAMAYAN → 999 (Fallback, safe)
   return S('999','düşük');
 }
 function hesapKoduBul(aciklama,tutar){return akilliEslestir(aciklama,tutar||0);}
