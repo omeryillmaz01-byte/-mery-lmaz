@@ -151,8 +151,8 @@ mark{background:#fde68a;color:#111}
 12.07.2026	EFT GELEN ISIK PETROL	5.000,00
 13.07.2026	KIRA ODEMESI	-12.000,00"></textarea>
       <div class="row" style="margin-top:10px;align-items:center">
-        <button class="gbtn" onclick="document.getElementById('mCsv').click()">📁 Ekstre Yükle — ÇOKLU (Excel/CSV, Ctrl+A)</button>
-        <input type="file" id="mCsv" accept=".xlsx,.xls,.csv,text/csv" multiple style="display:none" onchange="ekstreYukle(this)">
+        <button class="gbtn" onclick="document.getElementById('mCsv').click()">📁 Ekstre Yükle — ÇOKLU (Excel/CSV/PDF, Ctrl+A)</button>
+        <input type="file" id="mCsv" accept=".xlsx,.xls,.csv,text/csv,.pdf,application/pdf" multiple style="display:none" onchange="ekstreYukle(this)">
         <div class="fld" style="max-width:150px"><label>Açılış bakiye (ops.)</label><input id="mAcilis" type="number" step="0.01" placeholder="0,00"></div>
         <div class="fld" style="max-width:150px"><label>Kapanış bakiye (ops.)</label><input id="mKapanis" type="number" step="0.01" placeholder="0,00"></div>
         <span class="spacer"></span>
@@ -689,7 +689,9 @@ function ekstreYukle(inp){
   let kalan=files.length,eklenen={};
   files.forEach(f=>{
     const xlsx=/\.(xlsx|xls)$/i.test(f.name);
-    const kaynak=f.name.replace(/\.(xlsx|xls|csv)$/i,'');
+    const csv=/\.(csv)$/i.test(f.name);
+    const pdf=/\.(pdf)$/i.test(f.name);
+    const kaynak=f.name.replace(/\.(xlsx|xls|csv|pdf)$/i,'');
     const r=new FileReader();
     r.onload=e=>{
       try{
@@ -698,6 +700,10 @@ function ekstreYukle(inp){
           const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
           const ws=wb.Sheets[wb.SheetNames[0]];
           rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+        }else if(pdf){
+          // PDF: Simple text extraction (satır satır)
+          const text=e.target.result;
+          rows=text.split(/\n/).map(l=>l.trim().split(/\s{2,}|\t/)).filter(r=>r.some(c=>String(c).trim()));
         }else{
           rows=e.target.result.split(/\r?\n/).map(l=>l.split(/\t|;/));
         }
