@@ -544,6 +544,41 @@ function trTutar(s){
   if(s.indexOf(",")>-1){s=s.replace(/\./g,"").replace(",",".");} // 1.234,56 -> 1234.56
   return parseFloat(s)||0;
 }
+/* ═══ SEMANTİK DOĞRULAMA — Kural-Çıktı Tutarlılığı ═══ */
+const SEMANTIK_KATEGORILER={
+  '100':'Nakit/Kasa - para, ATM, nakitler',
+  '101':'Çekler - alınan çekler, ödeme çekleri',
+  '102':'Bankalar - banka hesapları, mevduatlar',
+  '103':'Banka ödeme çekleri - çek ödeme işlemleri',
+  '120':'Satıcılar - tedarikçi cari, borçlu hesap',
+  '121':'Senetler - senetler, poliçeler',
+  '126':'Depozitler - teminat, depozit',
+  '131':'Ortaklar - ortaklar, kurucular, sahibi',
+  '193':'Stopaj - vergi kesintisi, gelir vergisi',
+  '195':'İç vergi borçları - vergi borcu',
+  '300':'KMH - kredili mevduat, kredi',
+  '320':'Alıcılar/Müşteriler - cari hesap, satış',
+  '329':'Kart - kredi kartı, banka kartı',
+  '331':'Ortaklar borç - ortaklara verilmiş tutar',
+  '335':'Personel - maaş, görevlendirme, ücret',
+  '361':'Sosyal sigorta - SGK, BAĞKUR borcu',
+  '642':'Faiz gelirleri - banka faizi, mevduat geliri',
+  '679':'Diğer gelirleri - devlet desteği, tazminat',
+  '760':'Pazarlama/Dağıtım - taşıt, yol, araç',
+  '770':'Genel yönetim - aidiyer, damga, masraf',
+  '780':'Finansman - banka masrafı, komisyon, BSMV'
+};
+
+function semantikKontrol(kod,aciklama){
+  // Kodun anlamı, işlemin tarifindeki kelimelerle uyuşuyor mu?
+  const kategori=SEMANTIK_KATEGORILER[kod.split('.')[0]];if(!kategori)return true; // unknown kod = skip
+  const aUst=upTr(aciklama);const kUst=upTr(kategori);
+  // Kategori açıklamasında işlem açıklamasından kelime var mı?
+  const kategoriFt=kategori.split(' - ')[1].split(/[,;]/); // "Nakit - para, ATM, nakitler" → ["para", "ATM", "nakitler"]
+  const hızlıEşleş=kategoriFt.some(k=>aUst.includes(upTr(k)));
+  return hızlıEşleş?true:(kategori.split(/[,;-\s]/).some(w=>w.length>3&&aUst.includes(upTr(w)))); // fallback: herhangi kelime
+}
+
 /* ═══ AKILLI EŞLEŞTİRME MOTORU — Banka Eksiklikleri dökümanı (54 kural) hafızaya gömülü ═══ */
 let KARTSIZ_FIRMALAR=load("battal_kartsiz")||['ERDEM ÖZŞEN','HÜLYA HATUN']; // şirket kartı olmayan firmalar → kart ödemesi 131/331
 function upTr(s){return (s||'').toLocaleUpperCase('tr');}
@@ -570,17 +605,18 @@ function ortakEslesme(A){const list=firmaOrtaklar();for(const o of list){if(o.ad
 function cariEslesme(A){const list=firmaCariler();for(const c of list){const p=c.ad.split(/\s+/).slice(0,2).join(' ');if(p.length>=5&&A.includes(p))return c;}return null;}
 function akilliEslestir(aciklama,tutar){
   const A=upTr(aciklama);const cikis=(tutar||0)<0;const banka=bankaAdi();
-  const S=(kod,guven,etiket)=>({kod:kod||'',ad:kod?hesapAdiGetir(kod):'',guven:guven||'düşük',etiket:etiket||''});
-  const P=(anaKodlar,anahtarlar,guven,etiket)=>{const r=planKodBul(anaKodlar,anahtarlar);return r?{kod:r.kod,ad:r.ad,guven:guven||'yüksek',etiket:etiket||''}:null;};
+  const S=(kod,guven,etiket)=>({kod:kod||'',ad:kod?hesapAdiGetir(kod):'',guven:guven||'düşük',etiket:etiket||'',neden:'Fallback'});
+  const P=(anaKodlar,anahtarlar,guven,etiket)=>{const r=planKodBul(anaKodlar,anahtarlar);return r?{kod:r.kod,ad:r.ad,guven:guven||'yüksek',etiket:etiket||'',neden:'Plan Eşleşmesi'}:null;};
+  const V=(kod,guven,etiket,neden)=>({kod,ad:hesapAdiGetir(kod),guven:guven||'düşük',etiket:etiket||'',neden:neden||'Doğrulandı'});
 
   // ★ 0) PLAN INDEX İLK KAYNAK: Firma'nın gerçek hesap planında (alt hesaplar) ara
   const planEsles=planEslestir(aciklama);
-  if(planEsles){const kod=Array.isArray(planEsles)?planEsles[0]:planEsles;return {kod:kod,ad:hesapAdiGetir(kod),guven:'yüksek',etiket:''};}
+  if(planEsles){const kod=Array.isArray(planEsles)?planEsles[0]:planEsles;if(semantikKontrol(kod,aciklama))return V(kod,'yüksek','','Plan Index Eşleşmesi');}
 
   // ★ 1) VIRMAN / HESAPLAR ARASI TRANSFER (MEVDUAT GERİ DÖNÜŞ, VADEL[İ] HESABA, vb.)
   if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İI] DÖNÜŞ|HESAP AÇILIŞI|PARA TRANSFER[İI]/.test(A)){
-    if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A))return P(['102'],['VADELİ','52','51'],'orta')||S('102','orta','virman');
-    return S('','düşük','virman');
+    if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A)){const r=P(['102'],['VADELİ','52','51'],'orta');if(r&&semantikKontrol(r.kod,aciklama))return {...r,neden:'Vadeli Mevduat'};}
+    return V('','düşük','virman','Virman - Kodlanmadı');
   }
 
   // ★ 2) DÖVİZ / ARBİTRAJ (TL/USD/EUR bölme)
@@ -675,7 +711,16 @@ function akilliEslestir(aciklama,tutar){
   // ★ 29) BULUNAMAYAN → 999 (Fallback, safe)
   return S('999','düşük');
 }
-function hesapKoduBul(aciklama,tutar){return akilliEslestir(aciklama,tutar||0);}
+function hesapKoduBul(aciklama,tutar){
+  const sonuc=akilliEslestir(aciklama,tutar||0);
+  // SEMANTİK DOĞRULAMA: Eğer kod atandıysa ve doğrulanmışsa kabul et
+  // Eğer doğrulanmadıysa, güven seviyesini düşük yap ve not ekle
+  if(sonuc.kod && !semantikKontrol(sonuc.kod,aciklama)){
+    sonuc.guven='düşük';
+    sonuc.neden=(sonuc.neden||'')+'⚠️ Semantik uyarı: Kod atanırken kelime uyuşması oldu ama kategori tanımıyla kısmen ilişkili';
+  }
+  return sonuc;
+}
 function hesapAdiGetir(kod){
   const plan=aktifPlan();
   if(plan){const f=plan.find(x=>x.kod===kod);if(f)return f.ad;}
@@ -851,11 +896,12 @@ function mBodyCiz(){
     const ETIKET={'virman':'🔁 virman','virman-mukerrer':'❌ MÜKERRER (sil)','döviz':'💱 döviz','fon':'📈 fon'};
     body.innerHTML=_mSatirlar.map((r,i)=>{
       const bg=r.etiket==='virman-mukerrer'?'rgba(239,68,68,.14)':(r.etiket?'rgba(139,92,246,.10)':(r.guven==='düşük'?'rgba(245,158,11,.08)':''));
+      const ndenBilgi=r.neden?` title="${esc(r.neden)}"`:' title="Otomatik kodlama"';
       return `<tr style="${bg?'background:'+bg:''}">
         <td>${esc(r.tarih)}</td><td style="font-size:12.5px">${esc(r.aciklama)}${r.etiket?' <b style="color:var(--acc2)">['+(ETIKET[r.etiket]||r.etiket)+']</b>':''}</td>
         <td class="num ${r.tutar<0?'neg':'pos'}">${fmt(r.tutar)}</td>
         <td><input value="${esc(r.kod)}" onchange="mKodDegis(${i},this.value)" list="kodListe" style="padding:5px 7px;font-size:12px" placeholder="kod"></td>
-        <td style="font-size:11.5px">${GUVEN[r.guven]||r.guven}</td>
+        <td style="font-size:11.5px;cursor:help"${ndenBilgi}>${GUVEN[r.guven]||r.guven}</td>
         <td style="font-size:11px;color:var(--mut)">${esc(r.kaynak||'')}</td></tr>`;
     }).join('');
   }
