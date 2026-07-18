@@ -334,7 +334,7 @@ function planXlsxYukle(inp){
       }catch(err){console.log('xlsx hata',f.name,err.message);}
       if(--kalan===0){
         save("battal_firma_plan",firmaPlan);save("battal_firmalar",firmalar);
-        firmaPlanOzetCiz();mFirmaDoldur();mBankaDoldur();
+        firmaPlanOzetCiz();mFirmaDoldur();mBankaDoldur();buildPlanIndex();
         $("planXlsxDurum").textContent=eklenen.length?('✅ '+eklenen.join(' · ')):'⚠️ Hesap kodu/adı sütunu bulunamadı.';
       }
     };
@@ -387,6 +387,42 @@ function aktifPlan(){
   for(const k of Object.keys(firmaPlan)){ const nk=_normFirma(k); if(nk===nf||nk.includes(nf)||nf.includes(nk))return firmaPlan[k]; }
   return null;
 }
+// Reverse index: açıklama metni → exact hesap kodu (firma planından)
+let firmaPlanIndex={};
+function buildPlanIndex(){
+  const f=$("mFirma")&&$("mFirma").value; if(!f){firmaPlanIndex={};return;}
+  const plan=aktifPlan(); if(!plan){firmaPlanIndex={};return;}
+  const idx={};
+  for(const h of plan){
+    if(!h.kod||!h.ad)continue;
+    const ad=upTr(h.ad);
+    // Kelime ayıkla: "GARANTİ VADESİZ TL (298189)" → ["GARANTİ","VADESİZ","TL","298189"]
+    const kelimeler=ad.split(/[^A-Z0-9]+/).filter(x=>x.length>1);
+    for(const kelime of kelimeler){
+      if(!idx[kelime])idx[kelime]=[];
+      idx[kelime].push(h.kod);
+    }
+    // Tam ad → kod (uzun description için)
+    idx[ad]=h.kod;
+  }
+  firmaPlanIndex=idx;
+}
+function planEslestir(aciklama){
+  // Plan index'inde açıklama'yı ara; EXACT match veriş yüksek güven
+  if(!Object.keys(firmaPlanIndex).length)return null;
+  const A=upTr(aciklama);
+  // 1) Tam eşleşme (örn: "SATICILAR" = 320 ana hesabı)
+  if(firmaPlanIndex[A])return firmaPlanIndex[A];
+  // 2) Kelime bazlı: en uzun eşleşme (specificity)
+  let best=null,bestLen=0;
+  for(const kelime of Object.keys(firmaPlanIndex)){
+    if(kelime.length>bestLen && A.includes(kelime)){
+      best=firmaPlanIndex[kelime];
+      bestLen=kelime.length;
+    }
+  }
+  return best;
+}
 
 /* ═══ EŞLEŞTİRME KURALLARI ═══ */
 // Varsayılan sabit kural yok — akıllı motor (firma planından) hallediyor.
@@ -438,8 +474,16 @@ function akilliEslestir(aciklama,tutar){
   const A=upTr(aciklama);const cikis=(tutar||0)<0;const kucuk=Math.abs(tutar||0)>0&&Math.abs(tutar||0)<1500;const banka=bankaAdi();
   const S=(kod,guven,etiket)=>({kod:kod||'',ad:kod?hesapAdiGetir(kod):'',guven:guven||'düşük',etiket:etiket||''});
   const P=(anaKodlar,anahtarlar,guven,etiket)=>{const r=planKodBul(anaKodlar,anahtarlar);return r?{kod:r.kod,ad:r.ad,guven:guven||'yüksek',etiket:etiket||''}:null;};
+
+  // 0) ★ PLAN INDEX İLK KAYNAK: Firma'nın gerçek hesap planında tam eşleşme ara
+  const planEsles=planEslestir(aciklama);
+  if(planEsles){
+    const kod=Array.isArray(planEsles)?planEsles[0]:planEsles;
+    return {kod:kod,ad:hesapAdiGetir(kod),guven:'yüksek',etiket:''};
+  }
+
   // 1) HESAPLAR ARASI VİRMAN / MEVDUAT GERİ DÖNÜŞÜ (kullanıcı kuralından önce)
-  if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İI] DÖNÜŞ|HESAP AÇILIŞI/.test(A)){
+  if(/HESAPLAR ?ARASI|HESAPLARARASI|V[İI]RMAN|VADEL[İI] HESABA|VADES[İI]Z HESABA AKTAR|MEVDUAT GER[İ]İ DÖNÜŞ|HESAP AÇILIŞI/.test(A)){
     if(/MEVDUAT GER[İI] DÖNÜŞ|VADEL[İI]/.test(A)){const r=planKodBul(['102'],['52','VADEL']);if(r)return {kod:r.kod,ad:r.ad,guven:'orta',etiket:'virman'};}
     return S('','düşük','virman');
   }
@@ -914,9 +958,9 @@ function planlariDisaAktar(){
 
 /* init */
 $("posTarih").value=new Date().toISOString().slice(0,10);
-$("mFirma").addEventListener('change',()=>{mBankaDoldur();planDurumGoster();if(_mHam.length)reAyikla();});
+$("mFirma").addEventListener('change',()=>{buildPlanIndex();mBankaDoldur();planDurumGoster();if(_mHam.length)reAyikla();});
 firmaNormalize();
-bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();planDurumGoster();
+bankaRender();posRender();mFirmaDoldur();mBankaDoldur();kuralRender();firmaPlanOzetCiz();planDurumGoster();buildPlanIndex();
 </script>
 </body>
 </html>
