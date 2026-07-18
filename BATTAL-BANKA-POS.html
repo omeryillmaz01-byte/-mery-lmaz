@@ -329,8 +329,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 const $=id=>document.getElementById(id);
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmt(n){return Number(n||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";}
-function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+// GLOBAL CACHE (localStorage fallback - file:// protokolü için)
+const GLOBAL_CACHE={};
+function save(k,v){
+  GLOBAL_CACHE[k]=v;
+  try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+}
+function load(k){
+  try{const v=localStorage.getItem(k);if(v)return JSON.parse(v);}catch(e){}
+  return GLOBAL_CACHE[k]||null;
+}
 function temaDegis(){const t=document.body.dataset.theme==="dark"?"light":"dark";document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";localStorage.setItem("battal_theme",t);}
 if(load("battal_theme")==="light")document.body.dataset.theme="light",$("themeBtn").textContent="☀️";
 
@@ -347,9 +355,7 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{
 
 /* ═══ FİRMALAR ═══ */
 const FIRMALAR_VARSAYILAN=["ISIK_PETROL","2AA","AKÇA AĞIZ","BESA GIDA","BILPARK BILIŞIM","BİLPARK YAZILIM","BODUR","BURAK CET ADİ ORT.","CET ENERJİ","DECOR PEOPLE","DTB YAZILIM","ERDA GÜMRÜK","ERDEM ÖZŞEN","ERLAMER","ESNI BILIŞIM","GIZEM GÖKER ADİ ORT.","HACIKERIMOĞLU GIDA","HÜLYA HATUN","İSTANBUL PLASTİK","KARIYERKÜRE","KARMAKENT","KIRPI","KNA","MARMARAGES","MD","NEN","NES GÜZELLIK","OGUTMEN","OSNAK","SAMBAZ SUKUSU","SCF BILIŞIM","SINAN YILMAZ","SSC GÜVENLİK","STS","SVI"];
-let firmalar=load("battal_firmalar")||[];
-// varsayılan firmaları (eksik olanları) ekle — kullanıcının eklediklerini korur
-FIRMALAR_VARSAYILAN.forEach(f=>{if(!firmalar.includes(f))firmalar.push(f);});
+let firmalar=FIRMALAR_VARSAYILAN.slice(); // HEMEN yükle, geciktirme yok!
 save("battal_firmalar",firmalar);
 function mFirmaDoldur(){const s=$("mFirma");if(!s)return;
   const planli=k=>{const nk=_normFirma(k);return Object.keys(firmaPlan).some(pk=>{const npk=_normFirma(pk);return npk===nk||npk.includes(nk)||nk.includes(npk);});};
@@ -922,36 +928,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   const modal=$("exportModal");
   if(modal){modal.addEventListener('click',(e)=>{if(e.target===modal)closeExportMenu();});}
 
-  // BATTAL INIT: DOM hazır olduktan sonra başlat
+  // BATTAL INIT: Hesap planı ve dropdown'ları doldur
   try {
-    console.log('=== BATTAL INIT (DOMContentLoaded) ===');
-    console.log('1. FIRMALAR_VARSAYILAN:', FIRMALAR_VARSAYILAN.length);
-    console.log('2. firmalar before:', firmalar ? firmalar.length : 0);
-    console.log('3. firmaPlan before:', firmaPlan ? Object.keys(firmaPlan).length : 0);
-
-    // Hesap planlarını yükle
-    initBattalPermanent();
-    console.log('4. After initBattalPermanent - firmaPlan:', Object.keys(firmaPlan).length);
-
-    // Firmalar eksikse yeniden yükle
-    if(!firmalar || firmalar.length < 5) {
-      console.log('5. ⚠️ Firmalar eksik, yeniden yükleniyor...');
-      firmalar = FIRMALAR_VARSAYILAN.slice();
-      save("battal_firmalar", firmalar);
-      console.log('6. ✅ ' + firmalar.length + ' firma eklendi');
-    }
-
-    // Normalize et
+    initBattalPermanent(); // Embed'den yükle
+    if(!firmaPlan || Object.keys(firmaPlan).length===0) firmaPlan=FIRMA_HESAP_PLANI_INIT;
     firmaNormalize();
-    console.log('7. After normalize - firmalar:', firmalar.length);
-
-    // UI doldur
     mFirmaDoldur();
     mBankaDoldur();
-    console.log('✅ BATTAL INIT COMPLETE: ' + Object.keys(firmaPlan).length + ' plans, ' + firmalar.length + ' firms');
+    console.log('✅ BATTAL Ready: ' + firmalar.length + ' firms, ' + Object.keys(firmaPlan).length + ' plans');
   } catch(e) {
-    console.error('❌ BATTAL INIT ERROR:', e.message);
-    console.error(e.stack);
+    console.error('❌ BATTAL Error:', e.message);
   }
 });
 function doExport(){
