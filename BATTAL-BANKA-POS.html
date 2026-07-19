@@ -388,10 +388,15 @@ function mBankaDoldur(){
   }
 
   let kaynak=[];
-  if(plan){ // seçili firmanın planındaki banka hesapları (102.01, 102.02 vb. - SADECE ALT HESAPLAR)
-    kaynak=plan.filter(h=>/^10[0-8]\.\d+$/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
+  if(plan&&plan.length){
+    // 1. ÖNCE alt hesapları dene (102.01, 102.02 vb.)
+    kaynak=plan.filter(h=>/^10[0-8]\.\d+/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
+    // 2. Alt hesap yoksa, 102/103/108 ile başlayan TÜM hesapları göster (ana dahil)
+    if(!kaynak.length)kaynak=plan.filter(h=>/^10[2-8]/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
   }
+  // 3. Hiçbiri yoksa banka listesinden
   if(!kaynak||!kaynak.length)kaynak=bankalar.map(b=>({kod:b.kod,banka:b.banka||b.ad||''}));
+  console.log('🏦 mBankaDoldur: firma='+firma+' plan='+(plan?plan.length:0)+' hesap, banka='+kaynak.length+' bulundu');
   s.innerHTML=kaynak.length?kaynak.map(b=>`<option value="${esc(b.kod)}">${esc(b.kod)} — ${esc(b.banka||'')}</option>`).join(''):'<option value="">(Firma hesap planı yükle veya banka hesabı ekle)</option>';
 }
 
