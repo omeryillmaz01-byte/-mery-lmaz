@@ -364,8 +364,30 @@ function mFirmaDoldur(){const s=$("mFirma");if(!s)return;
 function firmaEkle(){const ad=prompt("Firma adı:");if(!ad)return;firmalar.push(ad.trim());save("battal_firmalar",firmalar);mFirmaDoldur();$("mFirma").value=ad.trim();}
 function mBankaDoldur(){
   const s=$("mBankaHesap");if(!s)return;
-  const plan=aktifPlan();
-  let kaynak;
+  const firma=$("mFirma").value;
+  let plan=null;
+
+  // 1. Doğru firma adıyla ara
+  if(firmaPlan[firma]) plan=firmaPlan[firma];
+  // 2. Normalized araştır
+  else if(Object.keys(firmaPlan).length) {
+    const nf=_normFirma(firma);
+    for(const k of Object.keys(firmaPlan)){
+      if(_normFirma(k)===nf){plan=firmaPlan[k];break;}
+    }
+  }
+  // 3. FIRMA_HESAP_PLANI_INIT'ten ara (yedek)
+  if(!plan && FIRMA_HESAP_PLANI_INIT){
+    if(FIRMA_HESAP_PLANI_INIT[firma]) plan=FIRMA_HESAP_PLANI_INIT[firma];
+    else {
+      const nf=_normFirma(firma);
+      for(const k of Object.keys(FIRMA_HESAP_PLANI_INIT)){
+        if(_normFirma(k)===nf){plan=FIRMA_HESAP_PLANI_INIT[k];break;}
+      }
+    }
+  }
+
+  let kaynak=[];
   if(plan){ // seçili firmanın planındaki banka hesapları (102/108 ile başlayan)
     kaynak=plan.filter(h=>/^10[0-8]/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
   }
