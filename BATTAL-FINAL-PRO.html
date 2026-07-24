@@ -81,6 +81,7 @@
       <button class="tab-btn" onclick="switchTab(event, 'firmalar')">✓ Firmalar</button>
       <button class="tab-btn" onclick="switchTab(event, 'hesaplar')">📋 Hesap Planları</button>
       <button class="tab-btn" onclick="switchTab(event, 'export')">📊 Export</button>
+      <button class="tab-btn" onclick="switchTab(event, 'validasyon')">✓ Validasyon</button>
       <button class="tab-btn" onclick="switchTab(event, 'ayarlar')">⚙️ Ayarlar</button>
     </div>
 
@@ -217,7 +218,55 @@
       </div>
     </div>
 
-    <!-- TAB 5: Ayarlar -->
+    <!-- TAB 5: Validasyon Kuralları -->
+    <div id="validasyon" class="tab-content">
+      <div class="card">
+        <h2>✓ Validasyon Kuralları & Kod Eşleştirmesi</h2>
+
+        <div style="margin-bottom: 20px;">
+          <h3>🏦 Banka Masrafları / Komisyon</h3>
+          <div style="background: #1c2740; padding: 12px; border-radius: 6px; border-left: 3px solid #ef4444; margin-bottom: 10px;">
+            <strong>Hesap Kodu:</strong> 780 (değişkenlik gösterebilir)<br>
+            <strong>Anahtar Kelimeler:</strong> masraf, komisyon, faiz, gider<br>
+            <strong>⚠️ ÖNEMLİ:</strong> Her firmanın hesap planına bakıp eşleştir, ezbere yapma!
+          </div>
+
+          <h3>💰 Maaş & Çalışan Ödemeleri</h3>
+          <div style="background: #1c2740; padding: 12px; border-radius: 6px; border-left: 3px solid #22c55e; margin-bottom: 10px;">
+            <strong>Hesap Kodu:</strong> 335<br>
+            <strong>Kapsamı:</strong> Maaş, Avans, İhbar Tazminatı, Kıdem Tazminatı, Yemek, Yol, Bayram, Mesai<br>
+            <strong>✅ KURALı:</strong> TÜM çalışan ödemeleri 335 hesabında topla!
+          </div>
+
+          <h3>👤 Taner Battal Carisi</h3>
+          <div style="background: #1c2740; padding: 12px; border-radius: 6px; border-left: 3px solid #60a5fa; margin-bottom: 10px;">
+            <strong>✅ Doğru Kodlar:</strong> 195 veya 329<br>
+            <strong>❌ Yanlış Kodlar:</strong> 120, 320 (BU KODLARı KULLANMA!)<br>
+            <strong>Banka Açıklaması:</strong> "Taner Battal" görmek, hesap planında ara, sonra 195/329 ata
+          </div>
+
+          <h3>📊 Excel Format Kuralları</h3>
+          <div style="background: #1c2740; padding: 12px; border-radius: 6px; border-left: 3px solid #60a5fa; margin-bottom: 10px;">
+            <strong>Sütunlar:</strong> Tarih | Açıklama | Tutar | Hesap Kodu<br>
+            <strong>Başlık Satırı:</strong> 1. satırda başlamalı<br>
+            <strong>Boş Satırlar:</strong> Olmamalı
+          </div>
+        </div>
+
+        <h3 style="margin-top: 30px; margin-bottom: 15px;">🔍 Kod Kontrolcü</h3>
+        <div class="row">
+          <div class="field" style="min-width: 200px;">
+            <label>Banka Açıklaması</label>
+            <input type="text" id="validateInput" placeholder="Örn: Banka Masrafı, Maaş Ödemesi, Taner Battal" />
+          </div>
+          <button onclick="validateCode()" class="success">Kontrol Et</button>
+        </div>
+
+        <div id="validateResult" style="margin-top: 20px; display: none; padding: 15px; background: #1c2740; border-radius: 6px; border-left: 3px solid #60a5fa;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Ayarlar -->
     <div id="ayarlar" class="tab-content">
       <div class="card">
         <h2>⚙️ Ayarlar & Bilgiler</h2>
@@ -104671,6 +104720,45 @@
       document.getElementById('hesapContent').innerHTML = html;
     }
 
+    // ==================== VALIDASYON ====================
+    function validateCode() {
+      const input = document.getElementById('validateInput').value.toLowerCase().trim();
+      const result = document.getElementById('validateResult');
+      let suggestion = '';
+      let color = '#60a5fa';
+
+      if (!input) {
+        result.style.display = 'none';
+        return;
+      }
+
+      // Banka Masrafları Kontrolü
+      if (input.includes('masraf') || input.includes('komisyon') || input.includes('faiz') || input.includes('gider')) {
+        suggestion = '💡 <strong>Tavsiye: 780 Hesabı</strong><br>⚠️ UYARI: Firma hesap planında kontrol et, her firma farklı olabilir!<br>✅ Alternatifleri kontrol: 780.01, 780.02, 780.10 vb.';
+        color = '#ef4444';
+      }
+      // Maaş & Çalışan Ödemeleri
+      else if (input.includes('maaş') || input.includes('avans') || input.includes('tazminat') ||
+               input.includes('yemek') || input.includes('yol') || input.includes('bayram') ||
+               input.includes('mesai') || input.includes('bonus')) {
+        suggestion = '✅ <strong>Doğru Hesap: 335</strong><br>ℹ️ Tüm çalışan ödemeleri bu hesapta topla<br>💡 Kontrol: 335.01, 335.02, 335.10 vb alt hesapları kontrol et';
+        color = '#22c55e';
+      }
+      // Taner Battal Kontrolü
+      else if (input.includes('taner') || input.includes('battal')) {
+        suggestion = '⚠️ <strong>UYARI!</strong><br>❌ Yanlış Kodlar: 120, 320 (KULLANMA!)<br>✅ Doğru Kodlar: 195 veya 329<br>Hesap planından taner battal satırını ara ve karşısındaki kodu al';
+        color = '#fbbf24';
+      }
+      else {
+        suggestion = '❓ Açıklama eşleşmedi. Lütfen:<br>1. "Masraf", "Maaş", "Taner Battal" gibi anahtar kelimeler kullan<br>2. Veya hesap planından direkt kod ara';
+        color = '#8fa0b8';
+      }
+
+      result.style.display = 'block';
+      result.style.borderLeftColor = color;
+      result.innerHTML = suggestion;
+    }
+
     // ==================== EXPORT ====================
     function exportData() {
       const format = document.getElementById('exportFormat').value;
@@ -104732,6 +104820,14 @@
     window.addEventListener('load', () => {
       initFirmas();
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      // Enter tuşu ile validasyon
+      const validateInput = document.getElementById('validateInput');
+      if (validateInput) {
+        validateInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') validateCode();
+        });
+      }
     });
   </script>
 </body>
