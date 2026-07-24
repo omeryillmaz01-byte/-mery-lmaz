@@ -333,7 +333,7 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function fmt(n){return Number(n||0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";}
 
 // Firma hesap planları (external JSON'dan yüklenir)
-let FIRMA_HESAP_PLANI_INIT = {};
+let EMBEDDED_HESAP_PLANI = {};
 /// GLOBAL CACHE + IndexedDB Fallback (localStorage backup)
 const GLOBAL_CACHE={};
 let db=null;
@@ -409,18 +409,18 @@ function mBankaDoldur(){
       }
     }
   }
-  // 3. FIRMA_HESAP_PLANI_INIT'ten ara (yedek)
-  if(!plan && FIRMA_HESAP_PLANI_INIT){
-    console.log('  FIRMA_HESAP_PLANI_INIT\'den ara (yedek)...');
-    if(FIRMA_HESAP_PLANI_INIT[firma]) {
-      plan=FIRMA_HESAP_PLANI_INIT[firma];
+  // 3. EMBEDDED_HESAP_PLANI'ten ara (yedek)
+  if(!plan && EMBEDDED_HESAP_PLANI){
+    console.log('  EMBEDDED_HESAP_PLANI\'den ara (yedek)...');
+    if(EMBEDDED_HESAP_PLANI[firma]) {
+      plan=EMBEDDED_HESAP_PLANI[firma];
       console.log('  ✓ INIT doğrudan bulundu: '+firma+' → '+plan.length+' hesap');
     }
     else {
       const nf=_normFirma(firma);
-      for(const k of Object.keys(FIRMA_HESAP_PLANI_INIT)){
+      for(const k of Object.keys(EMBEDDED_HESAP_PLANI)){
         if(_normFirma(k)===nf){
-          plan=FIRMA_HESAP_PLANI_INIT[k];
+          plan=EMBEDDED_HESAP_PLANI[k];
           console.log('  ✓ INIT normalized bulundu: '+k+' → '+plan.length+' hesap');
           break;
         }
@@ -1025,239 +1025,51 @@ function closeExportMenu(){$("exportModal").classList.remove("active");}
 async function loadHesapPlanlari(){
   try {
     console.log('📥 Hesap planları yükleniyor...');
-
+    
     // 1. localStorage'dan kontrol et
     const cached = await load('battal_firma_plan');
     if(cached && Object.keys(cached).length >= 5){
-      console.log('✅ Cache\'den yüklendi: '+Object.keys(cached).length+' firma');
+      console.log('✅ Cache'den yüklendi: '+Object.keys(cached).length+' firma');
       return cached;
     }
-
-    // 2. External JSON dosyasından yükle
-    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-    const jsonPath = basePath + '/hesap-planlari.json';
-
-    console.log('📄 JSON yükleniyor: '+jsonPath);
-    const response = await fetch(jsonPath);
-
-    if(!response.ok) throw new Error('HTTP '+response.status);
-
-    const data = await response.json();
-    console.log('✅ JSON yüklendi: '+Object.keys(data).length+' firma, '+Object.values(data).reduce((a,b)=>a+b.length,0)+' hesap');
-
-    // Cache'e kaydet
-    await save('battal_firma_plan', data);
-    return data;
-
+    
+    // 2. Gömülü veriden yükle (file:// protokolü için)
+    if(typeof EMBEDDED_HESAP_PLANI !== 'undefined' && EMBEDDED_HESAP_PLANI && Object.keys(EMBEDDED_HESAP_PLANI).length >= 5) {
+      await save('battal_firma_plan', EMBEDDED_HESAP_PLANI);
+      console.log('✅ Gömülü veriden yüklendi: ' + Object.keys(EMBEDDED_HESAP_PLANI).length + ' firma');
+      return EMBEDDED_HESAP_PLANI;
+    }
+    
+    // 3. External JSON dosyasından yükle (ağ ortamında)
+    if(window.location.protocol === 'http:' || window.location.protocol === 'https:'){
+      const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+      const jsonPath = basePath + '/hesap-planlari.json';
+      
+      try {
+        const response = await fetch(jsonPath, {cache: 'force-cache'});
+        if(!response.ok) throw new Error('HTTP '+response.status);
+        
+        const data = await response.json();
+        await save('battal_firma_plan', data);
+        console.log('✅ Ağdan yüklendi: ' + Object.keys(data).length + ' firma');
+        return data;
+      } catch(fetchErr) {
+        console.warn('⚠️ Ağdan yükleme başarısız: ' + fetchErr.message);
+        if(typeof EMBEDDED_HESAP_PLANI !== 'undefined') return EMBEDDED_HESAP_PLANI;
+        throw fetchErr;
+      }
+    }
+    
+    throw new Error('Veri kaynağı bulunamadı');
   } catch(e) {
-    console.error('❌ JSON yüklenemedi: '+e.message);
-    console.log('⚠️ Fallback: Boş plan kullanılacak');
+    console.error('❌ Hesap planları yüklenemedi: '+e.message);
+    if(typeof EMBEDDED_HESAP_PLANI !== 'undefined' && EMBEDDED_HESAP_PLANI) {
+      console.log('↪️ Fallback: Gömülü veri kullanılıyor');
+      return EMBEDDED_HESAP_PLANI;
+    }
     return {};
   }
-}
-
-document.addEventListener('DOMContentLoaded',async ()=>{
-  // IndexedDB init
-  await initDB();
-
-  const modal=$("exportModal");
-  if(modal){modal.addEventListener('click',(e)=>{if(e.target===modal)closeExportMenu();});}
-
-  // BATTAL INIT
-  try {
-    // Hesap planlarını yükle (cache → JSON → fallback)
-    firmaPlan = await loadHesapPlanlari();
-    FIRMA_HESAP_PLANI_INIT = firmaPlan;
-
-    if(Object.keys(firmaPlan).length > 0){
-      firmaNormalize();
-      console.log('✅ Hesap Planları Hazır: ' + Object.keys(firmaPlan).length + ' firma');
-    } else {
-      console.warn('⚠️ Hesap planları yüklenemedi');
-    }
-
-    // DROPDOWN'I MANUEL DOLDUR
-    const mFirmaSelect = $("mFirma");
-    if(mFirmaSelect) {
-      let html = '<option value="">-- Firma Seç --</option>';
-      for(let i=0; i<firmalar.length; i++) {
-        html += '<option value="' + firmalar[i] + '">' + firmalar[i] + '</option>';
-      }
-      mFirmaSelect.innerHTML = html;
-
-      // İlk firmayı seç
-      if(firmalar.length > 0) {
-        mFirmaSelect.value = firmalar[0];
-        console.log('✅ Default firma: ' + firmalar[0]);
-      }
-    }
-
-    // Hesapları yükle
-    mBankaDoldur();
-    buildPlanIndex();
-    planDurumGoster();
-
-    const banka=$("mBankaHesap");
-    console.log('📊 FINAL: Firmalar='+(firmalar.length)+' | Planlar='+(Object.keys(firmaPlan).length)+' | Banka hesapları='+(banka?banka.options.length:0));
-    console.log('🚀 BATTAL READY');
-  } catch(e) {
-    console.error('❌ STARTUP ERROR: ', e.message);
-  }
-});
-function doExport(){
-  const type=document.querySelector('input[name="exportType"]:checked').value;
-  const desktop=document.getElementById("exportDesktop").checked;
-  if(type==='full')mikroCikar('full',desktop);
-  else if(type==='minimal')mikroCikar('minimal',desktop);
-  else if(type==='muhasebe')mikroCikar('muhasebe',desktop);
-  else if(type==='csv')mikroCikar('csv',desktop);
-  closeExportMenu();
-}
-
-function getBankaAdiVeHesap(){
-  const hesapKodu=$("mBankaHesap").value||"";
-  const plan=aktifPlan();
-  let bankaAdi="BANKA";
-  if(plan){
-    const hesap=plan.find(h=>h.kod===hesapKodu);
-    if(hesap){
-      const ad=hesap.ad||"";
-      bankaAdi=ad.split(' ')[0].toUpperCase();
-    }
-  }
-  return {kod:hesapKodu,adi:bankaAdi};
-}
-
-function mikroCikar(format='full',toDesktop=false){
-  if(!_mSatirlar.length){alert("Önce DÖNÜŞTÜR.");return;}
-  const firma=$("mFirma").value||"";
-  const {kod:hesapKodu,adi:bankaAdi}=getBankaAdiVeHesap();
-  // MÜKERRER virman satırlarını çıkar (hesaplar arası virmanın ikinci kopyası)
-  const veri=_mSatirlar.filter(r=>r.etiket!=='virman-mukerrer');
-  let aoa,wsCol,filename;
-
-  const baseFilename=firma && hesapKodu ? `${firma}-${bankaAdi}(${hesapKodu})` : (firma||"ekstre");
-
-  if(format==='minimal'){
-    aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu"]];
-    wsCol=[{wch:11},{wch:48},{wch:14},{wch:12}];
-    veri.forEach(r=>{
-      aoa.push([r.tarih, r.aciklamaHam, r.tutar, r.kod]);
-    });
-    filename=baseFilename+".xlsx";
-  }else if(format==='muhasebe'){
-    aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu","Hesap Adı"]];
-    wsCol=[{wch:11},{wch:48},{wch:14},{wch:12},{wch:26}];
-    veri.forEach(r=>{
-      aoa.push([r.tarih, r.aciklamaHam, r.tutar, r.kod, r.ad||hesapAdiGetir(r.kod)]);
-    });
-    filename=baseFilename+".xlsx";
-  }else if(format==='csv'){
-    aoa=[["Tarih","Açıklama","Tutar","Hesap Kodu","Hesap Adı","Güven","Kaynak"]];
-    veri.forEach(r=>{
-      aoa.push([r.tarih, r.aciklamaHam, r.tutar, r.kod, r.ad||hesapAdiGetir(r.kod), r.guven, r.kaynak||'']);
-    });
-    const sep=";",bom="﻿";
-    let csv=bom+aoa.map(row=>row.map(csvAlan).join(sep)).join("\n");
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=baseFilename+".csv";
-    a.setAttribute('data-desktop',toDesktop?'true':'false');
-    document.body.appendChild(a);a.click();a.remove();
-    return;
-  }else{  // full (default)
-    aoa=[["Tarih","Açıklama","Tutar","Bakiye","Hesap Kodu","Hesap Adı","Firma","Kaynak"]];
-    wsCol=[{wch:11},{wch:48},{wch:14},{wch:14},{wch:12},{wch:26},{wch:16},{wch:16}];
-    veri.forEach(r=>{
-      aoa.push([r.tarih, r.aciklama, r.tutar, r.bakiye||'', r.kod, r.ad||hesapAdiGetir(r.kod), firma, r.kaynak||'']);
-    });
-    filename=baseFilename+".xlsx";
-  }
-
-  if(typeof XLSX!=='undefined'){
-    const ws=XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols']=wsCol;
-    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Hareketler");
-    XLSX.writeFile(wb,filename);
-    if(toDesktop){
-      downloadToDesktop(filename);
-    }
-  }else{
-    const sep=";",bom="﻿";
-    let csv=bom+aoa.map(row=>row.map(csvAlan).join(sep)).join("\n");
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=filename.replace('.xlsx','.csv');document.body.appendChild(a);a.click();a.remove();
-  }
-}
-
-function downloadToDesktop(filename){
-  console.log('📁 İhraç: '+filename+' → Desktop/battal-export klasörüne kaydedildi.');
-  alert('✅ '+filename+' indirildi.\n\n📂 Desktop/battal-export klasörüne otomatik kaydetmek için:\n1. Node.js helper başlat: node battal-export-helper.js\n2. Veya: Windows Dosya Gezgini → İndirilenler klasörü → Sürükle Desktop/battal-export\'e');
-}
-
-/* ═══ STANDART TEK DÜZEN HESAP PLANI (gömülü) ═══ */
-const HESAP_PLANI=[
-  {k:'100',a:'KASA',g:'1 Dönen V.'},{k:'101',a:'ALINAN ÇEKLER',g:'1 Dönen V.'},{k:'102',a:'BANKALAR',g:'1 Dönen V.'},
-  {k:'103',a:'VERİLEN ÇEKLER VE ÖDEME EMİRLERİ (-)',g:'1 Dönen V.'},{k:'108',a:'DİĞER HAZIR DEĞERLER',g:'1 Dönen V.'},
-  {k:'110',a:'HİSSE SENETLERİ',g:'1 Dönen V.'},{k:'111',a:'ÖZEL KESİM TAHVİL, SENET VE BONOLARI',g:'1 Dönen V.'},
-  {k:'112',a:'KAMU KESİMİ TAHVİL, SENET VE BONOLARI',g:'1 Dönen V.'},{k:'118',a:'DİĞER MENKUL KIYMETLER',g:'1 Dönen V.'},
-  {k:'119',a:'MENKUL KIYMETLER DEĞER DÜŞÜKLÜĞÜ KARŞ. (-)',g:'1 Dönen V.'},
-  {k:'120',a:'ALICILAR',g:'1 Dönen V.'},{k:'121',a:'ALACAK SENETLERİ',g:'1 Dönen V.'},{k:'122',a:'ALACAK SENETLERİ REESKONTU (-)',g:'1 Dönen V.'},
-  {k:'126',a:'VERİLEN DEPOZİTO VE TEMİNATLAR',g:'1 Dönen V.'},{k:'127',a:'DİĞER TİCARİ ALACAKLAR',g:'1 Dönen V.'},
-  {k:'128',a:'ŞÜPHELİ TİCARİ ALACAKLAR',g:'1 Dönen V.'},{k:'129',a:'ŞÜPHELİ TİCARİ ALACAKLAR KARŞILIĞI (-)',g:'1 Dönen V.'},
-  {k:'131',a:'ORTAKLARDAN ALACAKLAR',g:'1 Dönen V.'},{k:'136',a:'DİĞER ÇEŞİTLİ ALACAKLAR',g:'1 Dönen V.'},
-  {k:'150',a:'İLK MADDE VE MALZEME',g:'1 Dönen V.'},{k:'151',a:'YARI MAMULLER - ÜRETİM',g:'1 Dönen V.'},{k:'152',a:'MAMULLER',g:'1 Dönen V.'},
-  {k:'153',a:'TİCARİ MALLAR',g:'1 Dönen V.'},{k:'157',a:'DİĞER STOKLAR',g:'1 Dönen V.'},{k:'159',a:'VERİLEN SİPARİŞ AVANSLARI',g:'1 Dönen V.'},
-  {k:'180',a:'GELECEK AYLARA AİT GİDERLER',g:'1 Dönen V.'},{k:'181',a:'GELİR TAHAKKUKLARI',g:'1 Dönen V.'},
-  {k:'190',a:'DEVREDEN KDV',g:'1 Dönen V.'},{k:'191',a:'İNDİRİLECEK KDV',g:'1 Dönen V.'},{k:'193',a:'PEŞİN ÖDENEN VERGİLER VE FONLAR',g:'1 Dönen V.'},
-  {k:'195',a:'İŞ AVANSLARI',g:'1 Dönen V.'},{k:'196',a:'PERSONEL AVANSLARI',g:'1 Dönen V.'},{k:'197',a:'SAYIM VE TESELLÜM NOKSANLARI',g:'1 Dönen V.'},
-  {k:'220',a:'ALICILAR (Uzun V.)',g:'2 Duran V.'},{k:'221',a:'ALACAK SENETLERİ (Uzun V.)',g:'2 Duran V.'},
-  {k:'226',a:'VERİLEN DEPOZİTO VE TEMİNATLAR (Uzun V.)',g:'2 Duran V.'},{k:'231',a:'ORTAKLARDAN ALACAKLAR (Uzun V.)',g:'2 Duran V.'},
-  {k:'240',a:'BAĞLI MENKUL KIYMETLER',g:'2 Duran V.'},{k:'242',a:'İŞTİRAKLER',g:'2 Duran V.'},{k:'245',a:'BAĞLI ORTAKLIKLAR',g:'2 Duran V.'},
-  {k:'250',a:'ARAZİ VE ARSALAR',g:'2 Duran V.'},{k:'251',a:'YERALTI VE YERÜSTÜ DÜZENLERİ',g:'2 Duran V.'},{k:'252',a:'BİNALAR',g:'2 Duran V.'},
-  {k:'253',a:'TESİS, MAKİNE VE CİHAZLAR',g:'2 Duran V.'},{k:'254',a:'TAŞITLAR',g:'2 Duran V.'},{k:'255',a:'DEMİRBAŞLAR',g:'2 Duran V.'},
-  {k:'256',a:'DİĞER MADDİ DURAN VARLIKLAR',g:'2 Duran V.'},{k:'257',a:'BİRİKMİŞ AMORTİSMANLAR (-)',g:'2 Duran V.'},
-  {k:'258',a:'YAPILMAKTA OLAN YATIRIMLAR',g:'2 Duran V.'},{k:'259',a:'VERİLEN AVANSLAR',g:'2 Duran V.'},
-  {k:'260',a:'HAKLAR',g:'2 Duran V.'},{k:'261',a:'ŞEREFİYE',g:'2 Duran V.'},{k:'264',a:'ÖZEL MALİYETLER',g:'2 Duran V.'},
-  {k:'267',a:'DİĞER MADDİ OLMAYAN DURAN VARLIKLAR',g:'2 Duran V.'},{k:'268',a:'BİRİKMİŞ AMORTİSMANLAR (-)',g:'2 Duran V.'},
-  {k:'280',a:'GELECEK YILLARA AİT GİDERLER',g:'2 Duran V.'},{k:'281',a:'GELİR TAHAKKUKLARI',g:'2 Duran V.'},
-  {k:'300',a:'BANKA KREDİLERİ (Kısa V.)',g:'3 KVYK'},{k:'303',a:'UZUN V. KREDİLERİN ANAPARA TAKSİT VE FAİZLERİ',g:'3 KVYK'},
-  {k:'320',a:'SATICILAR',g:'3 KVYK'},{k:'321',a:'BORÇ SENETLERİ',g:'3 KVYK'},{k:'322',a:'BORÇ SENETLERİ REESKONTU (-)',g:'3 KVYK'},
-  {k:'326',a:'ALINAN DEPOZİTO VE TEMİNATLAR',g:'3 KVYK'},{k:'329',a:'DİĞER TİCARİ BORÇLAR',g:'3 KVYK'},
-  {k:'331',a:'ORTAKLARA BORÇLAR',g:'3 KVYK'},{k:'335',a:'PERSONELE BORÇLAR',g:'3 KVYK'},{k:'336',a:'DİĞER ÇEŞİTLİ BORÇLAR',g:'3 KVYK'},
-  {k:'340',a:'ALINAN SİPARİŞ AVANSLARI',g:'3 KVYK'},
-  {k:'360',a:'ÖDENECEK VERGİ VE FONLAR',g:'3 KVYK'},{k:'361',a:'ÖDENECEK SOSYAL GÜVENLİK KESİNTİLERİ',g:'3 KVYK'},
-  {k:'368',a:'VADESİ GEÇMİŞ ERTELENMİŞ TAKSİTLENDİRİLMİŞ VERGİ',g:'3 KVYK'},{k:'369',a:'ÖDENECEK DİĞER YÜKÜMLÜLÜKLER',g:'3 KVYK'},
-  {k:'370',a:'DÖNEM KÂRI VERGİ VE DİĞER YASAL YÜK. KARŞ.',g:'3 KVYK'},{k:'371',a:'DÖNEM KÂRININ PEŞİN ÖDENEN VERGİ VE YÜK. (-)',g:'3 KVYK'},
-  {k:'373',a:'MALİYET GİDERLERİ KARŞILIĞI',g:'3 KVYK'},{k:'391',a:'HESAPLANAN KDV',g:'3 KVYK'},{k:'392',a:'DİĞER KDV',g:'3 KVYK'},
-  {k:'397',a:'SAYIM VE TESELLÜM FAZLALARI',g:'3 KVYK'},
-  {k:'400',a:'BANKA KREDİLERİ (Uzun V.)',g:'4 UVYK'},{k:'420',a:'SATICILAR (Uzun V.)',g:'4 UVYK'},{k:'421',a:'BORÇ SENETLERİ (Uzun V.)',g:'4 UVYK'},
-  {k:'426',a:'ALINAN DEPOZİTO VE TEMİNATLAR (Uzun V.)',g:'4 UVYK'},{k:'431',a:'ORTAKLARA BORÇLAR (Uzun V.)',g:'4 UVYK'},
-  {k:'472',a:'KIDEM TAZMİNATI KARŞILIĞI',g:'4 UVYK'},{k:'480',a:'GELECEK YILLARA AİT GELİRLER',g:'4 UVYK'},
-  {k:'500',a:'SERMAYE',g:'5 Özkaynak'},{k:'501',a:'ÖDENMEMİŞ SERMAYE (-)',g:'5 Özkaynak'},
-  {k:'520',a:'HİSSE SENEDİ İHRAÇ PRİMLERİ',g:'5 Özkaynak'},{k:'522',a:'MADDİ DURAN VARLIK YENİDEN DEĞERLEME ARTIŞLARI',g:'5 Özkaynak'},
-  {k:'540',a:'YASAL YEDEKLER',g:'5 Özkaynak'},{k:'541',a:'STATÜ YEDEKLERİ',g:'5 Özkaynak'},{k:'542',a:'OLAĞANÜSTÜ YEDEKLER',g:'5 Özkaynak'},
-  {k:'570',a:'GEÇMİŞ YILLAR KÂRLARI',g:'5 Özkaynak'},{k:'580',a:'GEÇMİŞ YILLAR ZARARLARI (-)',g:'5 Özkaynak'},{k:'590',a:'DÖNEM NET KÂRI',g:'5 Özkaynak'},{k:'591',a:'DÖNEM NET ZARARI (-)',g:'5 Özkaynak'},
-  {k:'600',a:'YURTİÇİ SATIŞLAR',g:'6 Gelir Tab.'},{k:'601',a:'YURTDIŞI SATIŞLAR',g:'6 Gelir Tab.'},{k:'602',a:'DİĞER GELİRLER',g:'6 Gelir Tab.'},
-  {k:'610',a:'SATIŞTAN İADELER (-)',g:'6 Gelir Tab.'},{k:'611',a:'SATIŞ İSKONTOLARI (-)',g:'6 Gelir Tab.'},
-  {k:'620',a:'SATILAN MAMULLER MALİYETİ (-)',g:'6 Gelir Tab.'},{k:'621',a:'SATILAN TİCARİ MALLAR MALİYETİ (-)',g:'6 Gelir Tab.'},{k:'622',a:'SATILAN HİZMET MALİYETİ (-)',g:'6 Gelir Tab.'},
-  {k:'630',a:'ARAŞTIRMA VE GELİŞTİRME GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'631',a:'PAZARLAMA SATIŞ VE DAĞITIM GİD. (-)',g:'6 Gelir Tab.'},{k:'632',a:'GENEL YÖNETİM GİDERLERİ (-)',g:'6 Gelir Tab.'},
-  {k:'642',a:'FAİZ GELİRLERİ',g:'6 Gelir Tab.'},{k:'645',a:'MENKUL KIYMET SATIŞ KÂRLARI',g:'6 Gelir Tab.'},{k:'646',a:'KAMBİYO KÂRLARI',g:'6 Gelir Tab.'},
-  {k:'648',a:'ENFLASYON DÜZELTMESİ KÂRLARI',g:'6 Gelir Tab.'},{k:'649',a:'DİĞER OLAĞAN GELİR VE KÂRLAR',g:'6 Gelir Tab.'},
-  {k:'653',a:'KOMİSYON GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'654',a:'KARŞILIK GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'656',a:'KAMBİYO ZARARLARI (-)',g:'6 Gelir Tab.'},
-  {k:'658',a:'ENFLASYON DÜZELTMESİ ZARARLARI (-)',g:'6 Gelir Tab.'},{k:'659',a:'DİĞER OLAĞAN GİDER VE ZARARLAR (-)',g:'6 Gelir Tab.'},
-  {k:'660',a:'KISA VADELİ BORÇLANMA GİDERLERİ (-)',g:'6 Gelir Tab.'},{k:'661',a:'UZUN VADELİ BORÇLANMA GİDERLERİ (-)',g:'6 Gelir Tab.'},
-  {k:'679',a:'DİĞER OLAĞANDIŞI GELİR VE KÂRLAR',g:'6 Gelir Tab.'},{k:'689',a:'DİĞER OLAĞANDIŞI GİDER VE ZARARLAR (-)',g:'6 Gelir Tab.'},
-  {k:'690',a:'DÖNEM KÂRI VEYA ZARARI',g:'6 Gelir Tab.'},{k:'691',a:'DÖNEM KÂRI VERGİ VE YASAL YÜK. KARŞ. (-)',g:'6 Gelir Tab.'},{k:'692',a:'DÖNEM NET KÂRI VEYA ZARARI',g:'6 Gelir Tab.'},
-  {k:'700',a:'MALİYET MUHASEBESİ BAĞLANTI HESABI',g:'7 Maliyet'},{k:'710',a:'DİREKT İLK MADDE VE MALZEME GİDERLERİ',g:'7 Maliyet'},
-  {k:'720',a:'DİREKT İŞÇİLİK GİDERLERİ',g:'7 Maliyet'},{k:'730',a:'GENEL ÜRETİM GİDERLERİ',g:'7 Maliyet'},{k:'740',a:'HİZMET ÜRETİM MALİYETİ',g:'7 Maliyet'},
-  {k:'750',a:'ARAŞTIRMA VE GELİŞTİRME GİDERLERİ',g:'7 Maliyet'},{k:'760',a:'PAZARLAMA SATIŞ VE DAĞITIM GİDERLERİ',g:'7 Maliyet'},{k:'770',a:'GENEL YÖNETİM GİDERLERİ',g:'7 Maliyet'},{k:'780',a:'FİNANSMAN GİDERLERİ',g:'7 Maliyet'},
-];
-function planCiz(){
-  const q=($("planAra").value||'').toLocaleLowerCase('tr').trim();
-  const liste=HESAP_PLANI.filter(h=>!q||(h.k+' '+h.a).toLocaleLowerCase('tr').includes(q));
-  const vur=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):t;
-  $("planBody").innerHTML=liste.length?liste.map(h=>`<tr><td style="font-weight:700;color:var(--acc2)">${vur(h.k)}</td><td>${vur(h.a)}</td><td style="color:var(--mut);font-size:12px">${h.g}</td></tr>`).join(''):'<tr><td colspan="3" style="color:var(--mut)">Eşleşen hesap yok.</td></tr>';
-}
+}}
 function bankaHesaplariniYukle(){
   const bankaKodlari=HESAP_PLANI.filter(h=>['100','101','102','103','108'].includes(h.k));
   let n=0;
@@ -1398,11 +1210,11 @@ function initBattalPermanent() {
   const saved = load("battal_firma_plan");
   if (!saved || Object.keys(saved).length < 5) {
     console.log('📂 Battal: Tüm hesap planları kalıcı yükleniyor...');
-    save("battal_firma_plan", FIRMA_HESAP_PLANI_INIT);
-    firmaPlan = FIRMA_HESAP_PLANI_INIT;
+    save("battal_firma_plan", EMBEDDED_HESAP_PLANI);
+    firmaPlan = EMBEDDED_HESAP_PLANI;
     if (typeof firmaNormalize === 'function') firmaNormalize();
-    console.log('✅ Başarılı: ' + Object.keys(FIRMA_HESAP_PLANI_INIT).length + ' firma, ' + 
-      Object.values(FIRMA_HESAP_PLANI_INIT).reduce((a,b) => a + b.length, 0) + ' hesap');
+    console.log('✅ Başarılı: ' + Object.keys(EMBEDDED_HESAP_PLANI).length + ' firma, ' + 
+      Object.values(EMBEDDED_HESAP_PLANI).reduce((a,b) => a + b.length, 0) + ' hesap');
   }
 }
 
