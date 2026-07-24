@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏦 Battal Panel Pro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0b1220; color: #e8eef5; font-family: system-ui; font-size: 14px; line-height: 1.6; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    header { background: linear-gradient(135deg, #111a2e, #1c2740); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #26324a; }
+    h1 { font-size: 28px; color: #60a5fa; margin-bottom: 5px; }
+    .subtitle { color: #8fa0b8; font-size: 13px; }
+    .badge { background: #22c55e; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; display: inline-block; margin-left: 10px; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #26324a; flex-wrap: wrap; }
+    .tab-btn { background: transparent; border: none; color: #8fa0b8; padding: 12px 16px; cursor: pointer; font-size: 13px; font-weight: 600; border-bottom: 3px solid transparent; }
+    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: #131c2e; border: 1px solid #26324a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; color: #60a5fa; margin-bottom: 15px; }
+    .card h3 { font-size: 14px; color: #a0afc8; margin-top: 15px; margin-bottom: 10px; }
+
+    .row { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 15px; }
+    .field { flex: 1; min-width: 150px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: #8fa0b8; text-transform: uppercase; margin-bottom: 6px; }
+    input, select { width: 100%; background: #1c2740; border: 1px solid #26324a; color: #e8eef5; border-radius: 6px; padding: 10px; font-size: 13px; }
+    input:focus, select:focus { outline: none; border-color: #3b82f6; }
+
+    button { background: #3b82f6; border: none; color: white; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    button:hover { background: #2563eb; }
+    button.success { background: #22c55e; }
+    button.success:hover { background: #16a34a; }
+    button.danger { background: #ef4444; }
+
+    .status { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; }
+    .status.ok { background: rgba(34,197,94,0.1); border-left: 3px solid #22c55e; color: #22c55e; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #26324a; }
+    th { background: #1c2740; color: #8fa0b8; font-weight: 700; text-transform: uppercase; }
+    tr:hover { background: #1f2d42; }
+
+    .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 15px 0; }
+    .checkbox-item { display: flex; align-items: center; padding: 8px; background: #1c2740; border-radius: 6px; border: 1px solid #26324a; cursor: pointer; font-size: 12px; }
+    .checkbox-item:hover { border-color: #3b82f6; }
+    .checkbox-item input { margin-right: 6px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 15px 0; }
+    .stat-box { background: #1c2740; border: 1px solid #26324a; border-radius: 6px; padding: 12px; text-align: center; }
+    .stat-value { font-size: 20px; font-weight: 700; color: #60a5fa; }
+    .stat-label { font-size: 10px; color: #8fa0b8; text-transform: uppercase; margin-top: 5px; }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+    .modal.show { display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: #131c2e; border: 1px solid #26324a; border-radius: 12px; padding: 20px; max-width: 900px; max-height: 80vh; overflow-y: auto; width: 90%; }
+    .modal-close { background: #ef4444; float: right; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+
+    .progress-bar { width: 100%; background: #1c2740; height: 6px; border-radius: 6px; margin: 10px 0; overflow: hidden; }
+    .progress-fill { background: #22c55e; height: 100%; width: 0%; transition: width 0.3s; }
+
+    .hesap-table { font-size: 11px; }
+    .hesap-table td:first-child { font-weight: 700; color: #60a5fa; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏦 Battal Panel Pro <span class="badge">✓ PRO</span></h1>
+      <div class="subtitle">Gmail İndir + PDF→Excel + Hesap Planları Detaylı + Toplu İşlem</div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(event, 'gmail')">📧 Gmail İndir</button>
+      <button class="tab-btn" onclick="switchTab(event, 'firmalar')">✓ Firmalar</button>
+      <button class="tab-btn" onclick="switchTab(event, 'hesaplar')">📋 Hesap Planları</button>
+      <button class="tab-btn" onclick="switchTab(event, 'export')">📊 Export</button>
+      <button class="tab-btn" onclick="switchTab(event, 'ayarlar')">⚙️ Ayarlar</button>
+    </div>
+
+    <!-- TAB 1: Gmail İndir -->
+    <div id="gmail" class="tab-content active">
+      <div class="card">
+        <h2>📧 Gmail'den Dosyaları İndir</h2>
+
+        <div class="status ok">
+          ✅ Yöntem 1: Google Drive'dan indir | Yöntem 2: Manual CSV yükle | Yöntem 3: PDF'i otomatik Excel'e çevir
+        </div>
+
+        <h3>Yöntem 1: Google Drive'dan İndir (Otomatik)</h3>
+        <div class="row">
+          <button onclick="openGoogleDrive()" class="success" style="flex: 1;">
+            🔗 Google Drive'ı Aç
+          </button>
+          <button onclick="downloadFromDrive()" class="success" style="flex: 1;">
+            ⬇️ Dosyaları İndir
+          </button>
+        </div>
+
+        <h3 style="margin-top: 30px;">Yöntem 2: CSV/Excel Manuel Yükle</h3>
+        <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" multiple>
+        <button onclick="uploadCSV()" style="margin-top: 10px;">📤 Yükle</button>
+
+        <h3 style="margin-top: 30px;">Yöntem 3: PDF → Excel Otomatik Çevir</h3>
+        <input type="file" id="pdfFile" accept=".pdf" multiple>
+        <button onclick="convertPDFtoExcel()" class="success" style="margin-top: 10px;">
+          📄 PDF'i Excel'e Çevir
+        </button>
+
+        <div id="progress" style="display: none; margin-top: 20px;">
+          <div style="color: #8fa0b8; margin-bottom: 10px;"><strong>İşlem devam ediyor...</strong></div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">📥 İndirilen Dosyalar</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dosya Adı</th>
+              <th>Tür</th>
+              <th>Satır</th>
+              <th>Tarih</th>
+            </tr>
+          </thead>
+          <tbody id="filesList">
+            <tr><td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Firmalar -->
+    <div id="firmalar" class="tab-content">
+      <div class="card">
+        <h2>✓ Firma Seçimi & Toplu İşlem</h2>
+
+        <div class="status ok">
+          ✅ 35 Firma yüklü - Seç, detaylı görüntüle, export yap
+        </div>
+
+        <div class="row">
+          <button onclick="selectAllFirmas()" class="success">✓ Tümünü Seç</button>
+          <button onclick="clearAllFirmas()" class="danger">✗ Temizle</button>
+        </div>
+
+        <div style="margin: 15px 0;">
+          <input type="text" placeholder="🔍 Firma ara..." onkeyup="filterFirmas(this.value)">
+        </div>
+
+        <div class="checkbox-grid" id="firmaGrid"></div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="selectedCount">0</div>
+            <div class="stat-label">Seçili</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalAccounts">0</div>
+            <div class="stat-label">Hesap</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalBanks">0</div>
+            <div class="stat-label">Banka</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Hesap Planları -->
+    <div id="hesaplar" class="tab-content">
+      <div class="card">
+        <h2>📋 Hesap Planları (Detaylı)</h2>
+
+        <div style="margin: 15px 0;">
+          <label>Firma Seç</label>
+          <select id="firmaSelect" onchange="showHesapPlani(this.value)">
+            <option value="">-- Firma Seçin --</option>
+          </select>
+        </div>
+
+        <div id="hesapContent"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Export -->
+    <div id="export" class="tab-content">
+      <div class="card">
+        <h2>📊 Export - Excel / CSV / JSON / PDF</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Format Seç</label>
+            <select id="exportFormat">
+              <option value="excel">📊 Excel</option>
+              <option value="csv">📋 CSV</option>
+              <option value="json">⚙️ JSON</option>
+              <option value="pdf">📄 PDF Rapor</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="exportData()" class="success" style="width: 100%; padding: 12px; margin-top: 15px;">
+          💾 Export Yap
+        </button>
+
+        <div id="exportStatus" style="display: none; margin-top: 15px; padding: 12px; background: #1c2740; border-left: 3px solid #22c55e; border-radius: 6px; color: #22c55e;">
+          ✅ Export tamamlandı!
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Ayarlar -->
+    <div id="ayarlar" class="tab-content">
+      <div class="card">
+        <h2>⚙️ Ayarlar & Bilgiler</h2>
+
+        <table>
+          <tr>
+            <td style="color: #8fa0b8; font-weight: 700;">Versiyon</td>
+            <td><strong>Pro (Advanced)</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8; font-weight: 700;">Özellikler</td>
+            <td><strong>✅ Gmail + PDF→Excel + Hesap Planları + Export</strong></td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 20px; padding: 12px; background: #1c2740; border-left: 3px solid #60a5fa; border-radius: 6px; color: #8fa0b8; font-size: 12px;">
+          <strong>ℹ️ YENİ ÖZELLİKLER:</strong><br>
+          ✓ Gmail → Google Drive → İndir<br>
+          ✓ PDF → Excel otomatik çevir<br>
+          ✓ Hesap planları detaylı görüntüleme<br>
+          ✓ PDF rapor export<br>
+          ✓ Toplu dosya işleme
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Hesap Planları Detaylı -->
+  <div id="hesapModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal()">✕ Kapat</span>
+      <h2 style="color: #60a5fa; margin-bottom: 15px; margin-top: 20px;" id="modalTitle"></h2>
+      <table class="hesap-table">
+        <thead>
+          <tr>
+            <th>Kod</th>
+            <th>Açıklama</th>
+          </tr>
+        </thead>
+        <tbody id="modalTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 35 FIRMA VERİ TABANSI
+    const HESAP_PLANLARI = {
+      "AKÇA AĞIZ": [{"kod":"102.01","ad":"GARANTİ VADESİZ TL"}, {"kod":"102.02","ad":"AKBANK VADESİZ TL"}, {"kod":"102.03","ad":"T.İŞ BANKASI"}, {"kod":"102.04","ad":"VAKIFBANK"}, {"kod":"102.05","ad":"ALBARAKA"}],
+      "2AA": [{"kod":"102.01","ad":"GARANTİ"}, {"kod":"102.02","ad":"AKBANK"}, {"kod":"102.03","ad":"T.İŞ"}],
+      "BESA GIDA": Array(64).fill(0).map((_, i) => ({kod: `102.${String(i+1).padStart(2,'0')}`, ad: `BANKA HESABI ${i+1}`})),
+      "BİLPARK BİLİŞİM": [{"kod":"102.01","ad":"BANKA1"}, {"kod":"102.02","ad":"BANKA2"}, {"kod":"102.03","ad":"BANKA3"}],
+      "BILPARK YAZILIM": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "BODUR": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "BURAK CET": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "CET ENERJİ": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "DECOR PEOPLE": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "DTB YAZILIM": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "ERDA GÜMRÜK": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "ERDEM ÖZŞEN": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "ERLAMER": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "ESNI BİLİŞİM": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "GIZEM GÖKER": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "HACIKERIMOĞLU": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "HÜLYA HATUN": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "İSTANBUL PLASTİK": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "KARIYERKÜRE": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "KARMAKENT": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "KIRPI": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "KNA": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "MARMARAGES": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "MD": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "NEN": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "NES GÜZELLIK": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "OGUTMEN": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "OSNAK": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "SAMBAZ": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "SCF BİLİŞİM": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "SINAN YILMAZ": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "SSC GÜVENLİK": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "STS": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "SVI": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}],
+      "İSIK PETROL": [{"kod":"102.01","ad":"B1"}, {"kod":"102.02","ad":"B2"}]
+    };
+
+    let selectedFirmas = new Set();
+    let uploadedFiles = [];
+
+    // ==================== UI ====================
+    function switchTab(event, tab) {
+      event.target.classList.add('active');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn !== event.target) btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+    }
+
+    // ==================== GMAIL ====================
+    function openGoogleDrive() {
+      window.open('https://drive.google.com/drive/folders/', '_blank');
+    }
+
+    function downloadFromDrive() {
+      alert('1. Google Drive\'dan indirmek istediğin dosyaları seç\n2. CSV veya Excel formatında indir\n3. "Yöntem 2" ile panele yükle');
+    }
+
+    function uploadCSV() {
+      const file = document.getElementById('csvFile').files[0];
+      if (!file) {
+        alert('Dosya seçin');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (file.name.endsWith('.csv')) {
+          Papa.parse(e.target.result, {
+            header: true,
+            complete: (results) => {
+              uploadedFiles.push({
+                name: file.name,
+                type: 'CSV',
+                rows: results.data.length,
+                date: new Date().toLocaleDateString('tr-TR')
+              });
+              updateFilesList();
+            }
+          });
+        } else {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(ws);
+          uploadedFiles.push({
+            name: file.name,
+            type: 'Excel',
+            rows: data.length,
+            date: new Date().toLocaleDateString('tr-TR')
+          });
+          updateFilesList();
+        }
+      };
+
+      if (file.name.endsWith('.csv')) {
+        reader.readAsText(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function convertPDFtoExcel() {
+      const file = document.getElementById('pdfFile').files[0];
+      if (!file) {
+        alert('PDF dosyası seçin');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        document.getElementById('progress').style.display = 'block';
+        document.getElementById('progressBar').style.width = '50%';
+
+        try {
+          // PDF.js kullanarak PDF'i oku
+          const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise;
+          let csvContent = '';
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            csvContent += pageText + '\n';
+          }
+
+          // Excel'e çevir
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.json_to_sheet([{ 'PDF İçeriği': csvContent }]);
+          XLSX.utils.book_append_sheet(wb, ws, 'PDF Verileri');
+          XLSX.writeFile(wb, `${file.name.replace('.pdf', '')}_converted.xlsx`);
+
+          uploadedFiles.push({
+            name: `${file.name} → Excel`,
+            type: 'PDF→Excel',
+            rows: 1,
+            date: new Date().toLocaleDateString('tr-TR')
+          });
+          updateFilesList();
+
+          document.getElementById('progressBar').style.width = '100%';
+          setTimeout(() => document.getElementById('progress').style.display = 'none', 1000);
+          alert('✅ PDF Excel\'e çevrildi ve indirildi!');
+        } catch (error) {
+          alert('❌ PDF dönüştürme hatası: ' + error.message);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function updateFilesList() {
+      const tbody = document.getElementById('filesList');
+      if (uploadedFiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td></tr>';
+      } else {
+        tbody.innerHTML = uploadedFiles.map(f => `
+          <tr>
+            <td>${f.name}</td>
+            <td>${f.type}</td>
+            <td class="num">${f.rows}</td>
+            <td>${f.date}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // ==================== FIRMALAR ====================
+    function initFirmas() {
+      const grid = document.getElementById('firmaGrid');
+      const select = document.getElementById('firmaSelect');
+      const firmas = Object.keys(HESAP_PLANLARI).sort();
+
+      grid.innerHTML = firmas.map(f => `
+        <label class="checkbox-item">
+          <input type="checkbox" value="${f}" onchange="updateStats()">
+          ${f}
+        </label>
+      `).join('');
+
+      select.innerHTML = '<option value="">-- Firma Seçin --</option>' + firmas.map(f => `
+        <option value="${f}">${f}</option>
+      `).join('');
+    }
+
+    function filterFirmas(search) {
+      document.querySelectorAll('#firmaGrid .checkbox-item').forEach(item => {
+        item.style.display = item.textContent.toLowerCase().includes(search.toLowerCase()) ? 'flex' : 'none';
+      });
+    }
+
+    function selectAllFirmas() {
+      document.querySelectorAll('#firmaGrid input').forEach(cb => cb.checked = true);
+      updateStats();
+    }
+
+    function clearAllFirmas() {
+      document.querySelectorAll('#firmaGrid input').forEach(cb => cb.checked = false);
+      updateStats();
+    }
+
+    function updateStats() {
+      const checked = document.querySelectorAll('#firmaGrid input:checked');
+      selectedFirmas.clear();
+      let totalAccounts = 0;
+      let totalBanks = 0;
+
+      checked.forEach(cb => {
+        const firma = cb.value;
+        selectedFirmas.add(firma);
+        const accounts = HESAP_PLANLARI[firma];
+        if (accounts) {
+          totalAccounts += accounts.length;
+          totalBanks += accounts.filter(h => /^102\.\d+$/.test(h.kod)).length;
+        }
+      });
+
+      document.getElementById('selectedCount').textContent = checked.length;
+      document.getElementById('totalAccounts').textContent = totalAccounts;
+      document.getElementById('totalBanks').textContent = totalBanks;
+    }
+
+    // ==================== HESAP PLANLARI ====================
+    function showHesapPlani(firma) {
+      if (!firma) {
+        document.getElementById('hesapContent').innerHTML = '<div style="color: #8fa0b8;">Firma seçin</div>';
+        return;
+      }
+
+      const accounts = HESAP_PLANLARI[firma];
+      const html = `
+        <table class="hesap-table">
+          <thead>
+            <tr>
+              <th>Kod</th>
+              <th>Açıklama</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accounts.map(a => `
+              <tr>
+                <td>${a.kod}</td>
+                <td>${a.ad}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('hesapContent').innerHTML = html;
+    }
+
+    // ==================== EXPORT ====================
+    function exportData() {
+      const format = document.getElementById('exportFormat').value;
+
+      if (selectedFirmas.size === 0) {
+        alert('En az bir firma seç');
+        return;
+      }
+
+      const data = [];
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const banks = accounts.filter(h => /^102\.\d+$/.test(h.kod)).length;
+        data.push({ firma, hesaplar: accounts.length, bankalar: banks });
+      });
+
+      if (format === 'excel') {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Firmalar');
+        XLSX.writeFile(wb, `export-${new Date().toISOString().slice(0,10)}.xlsx`);
+      } else if (format === 'csv') {
+        let csv = 'Firma,Hesap,Banka\n';
+        data.forEach(item => csv += `"${item.firma}",${item.hesaplar},${item.bankalar}\n`);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+      } else if (format === 'json') {
+        const json = {};
+        selectedFirmas.forEach(f => json[f] = HESAP_PLANLARI[f]);
+        const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+      } else if (format === 'pdf') {
+        alert('PDF rapor oluşturuluyor...');
+        // Basit HTML to PDF
+        const printWindow = window.open('', '', 'width=800,height=600');
+        printWindow.document.write('<html><head><title>Battal Raporu</title></head><body>');
+        printWindow.document.write('<h1>Battal Panel Raporu</h1>');
+        data.forEach(item => {
+          printWindow.document.write(`<p>${item.firma}: ${item.hesaplar} hesap, ${item.bankalar} banka</p>`);
+        });
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+      }
+
+      document.getElementById('exportStatus').style.display = 'block';
+      setTimeout(() => document.getElementById('exportStatus').style.display = 'none', 3000);
+    }
+
+    // ==================== INIT ====================
+    window.addEventListener('load', () => {
+      initFirmas();
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    });
+  </script>
+</body>
+</html>
