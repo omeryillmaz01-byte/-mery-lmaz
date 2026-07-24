@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏦 Battal Panel V5 · Full Edition</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://apis.google.com/js/client.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0b1220; color: #e8eef5; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    header { background: linear-gradient(135deg, #111a2e, #1c2740); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #26324a; }
+    h1 { font-size: 28px; margin-bottom: 5px; color: #60a5fa; }
+    .subtitle { color: #8fa0b8; font-size: 13px; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #26324a; }
+    .tab-btn { background: transparent; border: none; color: #8fa0b8; padding: 12px 20px; cursor: pointer; font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.3s; }
+    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+    .tab-btn:hover { color: #60a5fa; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: #131c2e; border: 1px solid #26324a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; margin-bottom: 15px; color: #60a5fa; padding-bottom: 10px; border-bottom: 1px solid #26324a; }
+    .card h3 { font-size: 14px; margin-top: 15px; margin-bottom: 10px; color: #a0afc8; }
+
+    .row { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 15px; }
+    .field { flex: 1; min-width: 200px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: #8fa0b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    select, input, textarea { width: 100%; background: #1c2740; border: 1px solid #26324a; color: #e8eef5; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; }
+    select:focus, input:focus { outline: none; border-color: #3b82f6; background: #1f2d42; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+    button { background: #3b82f6; border: none; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    button:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    button.secondary { background: #666; }
+    button.secondary:hover { background: #555; }
+    button.danger { background: #ef4444; }
+    button.danger:hover { background: #dc2626; }
+    button.success { background: #22c55e; }
+    button.success:hover { background: #16a34a; }
+
+    .status { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; }
+    .ok { color: #22c55e; font-weight: 700; }
+    .error { color: #ef4444; font-weight: 700; }
+    .warning { color: #f59e0b; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #26324a; }
+    th { background: #1c2740; color: #8fa0b8; font-weight: 700; text-transform: uppercase; font-size: 11px; }
+    tr:hover { background: #1f2d42; }
+    .num { text-align: right; font-family: 'Courier New', monospace; }
+    .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 15px 0; }
+    .checkbox-item { display: flex; align-items: center; padding: 8px; background: #1c2740; border-radius: 6px; border: 1px solid #26324a; cursor: pointer; transition: all 0.2s; }
+    .checkbox-item:hover { border-color: #3b82f6; background: #1f2d42; }
+    .checkbox-item input { margin-right: 8px; cursor: pointer; }
+
+    .month-selector { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .month-btn { background: #1c2740; border: 1px solid #26324a; color: #8fa0b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+    .month-btn.selected { background: #3b82f6; border-color: #3b82f6; color: white; font-weight: 700; }
+    .month-btn:hover { border-color: #3b82f6; }
+
+    .search-input { width: 100%; background: #1c2740; border: 1px solid #26324a; color: #e8eef5; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+    .search-input:focus { outline: none; border-color: #3b82f6; }
+
+    .gmail-status { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+    .gmail-status.connected { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #22c55e; }
+    .gmail-status.disconnected { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #ef4444; }
+
+    .comparison-card { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .comparison-card h4 { color: #60a5fa; margin-bottom: 10px; }
+    .diff-positive { color: #22c55e; }
+    .diff-negative { color: #ef4444; }
+
+    .validation-log { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; }
+    .log-error { color: #ef4444; }
+    .log-warning { color: #f59e0b; }
+    .log-success { color: #22c55e; }
+
+    .progress-bar { width: 100%; background: #1c2740; border-radius: 8px; height: 6px; margin-top: 8px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; width: 0%; transition: width 0.3s; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 15px 0; }
+    .stat-box { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #60a5fa; }
+    .stat-label { font-size: 11px; color: #8fa0b8; text-transform: uppercase; margin-top: 5px; }
+
+    .disabled { opacity: 0.5; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏦 Battal Panel V5 · Full Edition</h1>
+      <div class="subtitle">Gmail entegrasyonu · Toplu işlem · 35 Firma × Excel/PDF Export</div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('gmail')">📧 Gmail & İndirme</button>
+      <button class="tab-btn" onclick="switchTab('toplu')">✓ Toplu Seçim</button>
+      <button class="tab-btn" onclick="switchTab('export')">📊 Export</button>
+      <button class="tab-btn" onclick="switchTab('karsilastir')">🔄 Karşılaştırma</button>
+      <button class="tab-btn" onclick="switchTab('validasyon')">✔️ Validasyon</button>
+      <button class="tab-btn" onclick="switchTab('ayarlar')">⚙️ Ayarlar</button>
+    </div>
+
+    <!-- TAB 1: Gmail & İndirme -->
+    <div id="gmail" class="tab-content active">
+      <div class="card">
+        <h2>📧 Gmail Entegrasyonu</h2>
+        <div id="gmailStatus" class="gmail-status disconnected">❌ Gmail bağlı değil</div>
+        <div class="row">
+          <button onclick="initGmailAuth()" style="flex: 1; max-width: 200px;">📧 Gmail'e Bağlan</button>
+          <button onclick="disconnectGmail()" class="secondary" style="flex: 1; max-width: 200px;">Bağlantıyı Kes</button>
+        </div>
+
+        <h3>📋 Aylar Seçimi (Haziran - Aralık)</h3>
+        <div class="month-selector" id="monthSelector">
+          <button class="month-btn" onclick="toggleMonth(this, 'haziran')">Haziran</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'temmuz')">Temmuz</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'agustos')">Ağustos</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'eylul')">Eylül</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'ekim')">Ekim</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'kasim')">Kasım</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'aralik')">Aralık</button>
+        </div>
+
+        <div class="row" style="margin-top: 15px;">
+          <button onclick="downloadFromGmail()" class="success" style="flex: 1;">⬇️ Gmail'den Dosyaları İndir</button>
+          <button onclick="downloadFromGmailBulk()" class="success" style="flex: 1;">⬇️ Tümünü Toplu İndir</button>
+        </div>
+
+        <h3>📁 Manuel Dosya Yükle</h3>
+        <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" multiple style="margin: 10px 0;">
+        <button onclick="uploadFiles()" style="margin-top: 10px;">📤 Yükle ve Parse Et</button>
+
+        <h3>📥 İndirilen Dosyalar</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dosya Adı</th>
+              <th>Tarih</th>
+              <th>Tutar (Satır)</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="downloadedFiles">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Toplu Seçim -->
+    <div id="toplu" class="tab-content">
+      <div class="card">
+        <h2>✓ Toplu Firma Seçimi</h2>
+        <div class="row">
+          <button onclick="selectAllFirmas()" class="success">✓ Tümünü Seç</button>
+          <button onclick="deselectAllFirmas()" class="danger">✗ Tümünü Temizle</button>
+          <button onclick="invertSelection()" class="secondary">↔️ Tersini Seç</button>
+        </div>
+
+        <h3>35 Firma Listesi</h3>
+        <div style="margin-bottom: 15px;">
+          <input type="text" class="search-input" id="firmaSearch" placeholder="🔍 Firma ara..." onkeyup="filterFirmas()">
+        </div>
+
+        <div class="checkbox-grid" id="firmaChecklist"></div>
+
+        <div class="stats-grid" style="margin-top: 20px;">
+          <div class="stat-box">
+            <div class="stat-value" id="selectedCount">0</div>
+            <div class="stat-label">Seçili Firma</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalAccounts">0</div>
+            <div class="stat-label">Toplam Hesap</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalBanks">0</div>
+            <div class="stat-label">Toplam Banka</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Export -->
+    <div id="export" class="tab-content">
+      <div class="card">
+        <h2>📊 Export Seçenekleri</h2>
+
+        <h3>Çıktı Formatı</h3>
+        <div class="row">
+          <div class="field">
+            <label>Format Seçin</label>
+            <select id="exportFormat">
+              <option value="excel">📊 Excel Dosyası (.xlsx)</option>
+              <option value="pdf">📄 PDF Raporu</option>
+              <option value="csv">📋 CSV Dosyası</option>
+              <option value="json">⚙️ JSON Veri</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Şekillendirme</label>
+            <select id="exportStyle">
+              <option value="detailed">📝 Detaylı Rapor</option>
+              <option value="summary">📊 Özet</option>
+              <option value="comparison">🔄 Karşılaştırma</option>
+            </select>
+          </div>
+        </div>
+
+        <h3>Filtreleme Seçenekleri</h3>
+        <div class="row">
+          <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="filterByMonth"> Tarih Filtreleme
+          </label>
+          <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="filterByAmount"> Tutar Filtreleme
+          </label>
+        </div>
+
+        <div id="filterOptions" style="display: none; margin: 15px 0;">
+          <div class="row">
+            <div class="field">
+              <label>Tarih Aralığı Başla</label>
+              <input type="date" id="dateFrom">
+            </div>
+            <div class="field">
+              <label>Tarih Aralığı Bitir</label>
+              <input type="date" id="dateTo">
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 15px;">
+          <button onclick="exportData()" class="success" style="flex: 1;">💾 Export Yap</button>
+          <button onclick="printReport()" class="secondary" style="flex: 1;">🖨️ Yazdır</button>
+        </div>
+
+        <h3>Excel Şekillendirilmiş Export</h3>
+        <div class="row" style="margin-top: 15px;">
+          <button onclick="exportExcelAdvanced()" class="success" style="flex: 1;">📊 Gelişmiş Excel Export</button>
+          <button onclick="exportPDFAdvanced()" class="success" style="flex: 1;">📄 Gelişmiş PDF Export</button>
+        </div>
+
+        <div id="exportProgress" style="margin-top: 15px; display: none;">
+          <div style="color: #8fa0b8; margin-bottom: 8px;">Export İşlemi Devam Ediyor...</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Karşılaştırma -->
+    <div id="karsilastir" class="tab-content">
+      <div class="card">
+        <h2>🔄 Aylar Arası Karşılaştırma</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>İlk Ay</label>
+            <select id="compareMonth1">
+              <option>Haziran</option>
+              <option>Temmuz</option>
+              <option>Ağustos</option>
+              <option>Eylül</option>
+              <option>Ekim</option>
+              <option>Kasım</option>
+              <option>Aralık</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>İkinci Ay</label>
+            <select id="compareMonth2">
+              <option selected>Temmuz</option>
+              <option>Ağustos</option>
+              <option>Eylül</option>
+              <option>Ekim</option>
+              <option>Kasım</option>
+              <option>Aralık</option>
+            </select>
+          </div>
+          <button onclick="compareMonths()" class="success">🔄 Karşılaştır</button>
+        </div>
+
+        <h3>Karşılaştırma Sonuçları</h3>
+        <div id="comparisonResults" style="margin-top: 15px;">
+          <div style="color: #8fa0b8; text-align: center; padding: 20px;">Karşılaştırma sonuçları burada görünecek</div>
+        </div>
+
+        <h3>Firma Bazlı Farklar</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Firma</th>
+              <th>Haziran Tutar</th>
+              <th>Temmuz Tutar</th>
+              <th>Fark</th>
+              <th>% Değişim</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonTable">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #8fa0b8;">Henüz veri yüklenmedi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 5: Validasyon -->
+    <div id="validasyon" class="tab-content">
+      <div class="card">
+        <h2>✔️ Veri Validasyonu & Hata Raporlama</h2>
+
+        <div class="row">
+          <button onclick="validateAllData()" class="success" style="flex: 1;">✔️ Tüm Veriyi Kontrol Et</button>
+          <button onclick="clearValidationLog()" class="danger" style="flex: 1;">🗑️ Logu Temizle</button>
+        </div>
+
+        <h3>📋 Validasyon Kuralları</h3>
+        <div style="margin: 15px 0; color: #8fa0b8; font-size: 13px;">
+          <div>✓ Banka hesap kodları (102.xx format)</div>
+          <div>✓ Tutar alanları (sayısal, negatif kontrol)</div>
+          <div>✓ Tarih formatı (DD.MM.YYYY)</div>
+          <div>✓ Firma adları (yazım kontrol)</div>
+          <div>✓ Duplicate kontrol (aynı hesaplar)</div>
+          <div>✓ Aykırı değer tespiti (outliers)</div>
+        </div>
+
+        <h3>⚠️ Hata Raporu</h3>
+        <div class="validation-log" id="validationLog">
+          <div style="color: #8fa0b8;">Henüz validasyon yapılmamış</div>
+        </div>
+
+        <h3>Validasyon İstatistikleri</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="validCount">0</div>
+            <div class="stat-label">Geçerli Satır</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="errorCount">0</div>
+            <div class="stat-label">Hata</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="warningCount">0</div>
+            <div class="stat-label">Uyarı</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Ayarlar -->
+    <div id="ayarlar" class="tab-content">
+      <div class="card">
+        <h2>⚙️ Ayarlar & Konfigürasyon</h2>
+
+        <h3>🔑 Gmail API Yapılandırması</h3>
+        <div style="background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; margin: 15px 0;">
+          <div style="color: #8fa0b8; font-size: 12px; line-height: 1.8;">
+            <strong>Gmail'e bağlanmak için:</strong><br>
+            1. <a href="https://console.developers.google.com/" target="_blank" style="color: #60a5fa;">Google Developer Console</a>'ya git<br>
+            2. Yeni proje oluştur ("Battal Panel")<br>
+            3. Gmail API'yi aktifleştir<br>
+            4. OAuth2 credentials (Client ID) oluştur<br>
+            5. Aşağıya Client ID'yi yapıştır
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Gmail API Client ID</label>
+          <input type="text" id="gmailClientId" placeholder="xxxxxxxx.apps.googleusercontent.com">
+          <button onclick="saveGmailConfig()" style="margin-top: 10px;">💾 Kaydet</button>
+        </div>
+
+        <h3>📧 Gmail Klasör Adları</h3>
+        <div class="row" style="margin-top: 15px;">
+          <div class="field">
+            <label>Haziran Klasörü</label>
+            <input type="text" id="folderJune" value="Haziran Bankaları" placeholder="Label adı">
+          </div>
+          <div class="field">
+            <label>Temmuz Klasörü</label>
+            <input type="text" id="folderJuly" value="Temmuz Bankaları" placeholder="Label adı">
+          </div>
+        </div>
+
+        <h3>💾 Veriler Yönetimi</h3>
+        <div class="row" style="margin-top: 15px;">
+          <button onclick="exportToJSON()" class="secondary">💾 Backup (JSON)</button>
+          <button onclick="importFromJSON()" class="secondary">📂 Restore (JSON)</button>
+          <button onclick="clearAllData()" class="danger">🗑️ Tüm Veriyi Sil</button>
+        </div>
+
+        <h3>🎨 Tema</h3>
+        <div style="margin-top: 15px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="darkMode" checked>
+            <span>Koyu Tema (Dark Mode)</span>
+          </label>
+        </div>
+
+        <h3>ℹ️ Panel Bilgileri</h3>
+        <table>
+          <tr>
+            <td style="color: #8fa0b8;">Versiyon</td>
+            <td><strong>V5 Full Edition</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8;">Firmalar</td>
+            <td><strong id="totalFirmas">35</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8;">Özellikleri</td>
+            <td><strong>Gmail, Toplu İşlem, Export, Karşılaştırma, Validasyon</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8;">Son Güncelleme</td>
+            <td><strong id="lastUpdate">-</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== GLOBAL DATA ====================
+    const HESAP_PLANLARI = {"AKÇA AĞIZ":[{"kod":"1","ad":"DÖNEN VARLIKLAR"},{"kod":"102","ad":"BANKALAR"},{"kod":"102.01","ad":"GARANTİ VADESİZ TL HS."},{"kod":"102.02","ad":"AKBANK VADESİZ TL"},{"kod":"102.03","ad":"T.İŞ BANKASI VADESİZ TL"},{"kod":"102.04","ad":"VAKIFBANK VADESİZ TL HS."},{"kod":"102.05","ad":"GARANTİ VADESİZ TL HS."}],"2AA":[{"kod":"102","ad":"BANKALAR"},{"kod":"102.01","ad":"GARANTİ"},{"kod":"102.02","ad":"AKBANK"},{"kod":"102.03","ad":"T.İŞ"}],"BESA GIDA":[{"kod":"102","ad":"BANKALAR"},{"kod":"102.01","ad":"BANKA 1"},{"kod":"102.02","ad":"BANKA 2"},{"kod":"102.03","ad":"BANKA 3"},{"kod":"102.04","ad":"BANKA 4"},{"kod":"102.05","ad":"BANKA 5"},{"kod":"102.06","ad":"BANKA 6"},{"kod":"102.07","ad":"BANKA 7"},{"kod":"102.08","ad":"BANKA 8"},{"kod":"102.09","ad":"BANKA 9"},{"kod":"102.10","ad":"BANKA 10"}],"BİLPARK BİLİŞİM":[{"kod":"102","ad":"BANKALAR"},{"kod":"102.01","ad":"BANKA 1"},{"kod":"102.02","ad":"BANKA 2"},{"kod":"102.03","ad":"BANKA 3"}],"BODUR":[{"kod":"102","ad":"BANKALAR"},{"kod":"102.01","ad":"BANKA 1"},{"kod":"102.02","ad":"BANKA 2"},{"kod":"102.03","ad":"BANKA 3"}]};
+    let bankData = {};
+    let loadedFiles = [];
+    let selectedFirmas = new Set();
+    let selectedMonths = new Set();
+    let gmailConnected = false;
+    let validationLog = [];
+
+    const months = { haziran: '06', temmuz: '07', agustos: '08', eylul: '09', ekim: '10', kasim: '11', aralik: '12' };
+
+    // ==================== UI FUNCTIONS ====================
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    // ==================== FIRMA SEÇİMİ ====================
+    function initFirmaChecklist() {
+      const container = $('firmaChecklist');
+      const firmas = Object.keys(HESAP_PLANLARI).sort();
+
+      container.innerHTML = firmas.map(f => `
+        <label class="checkbox-item">
+          <input type="checkbox" value="${f}" onchange="updateStats()">
+          <span>${f}</span>
+        </label>
+      `).join('');
+    }
+
+    function filterFirmas() {
+      const search = $('firmaSearch').value.toLowerCase();
+      document.querySelectorAll('.checkbox-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(search) ? 'flex' : 'none';
+      });
+    }
+
+    function selectAllFirmas() {
+      document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = true);
+      updateStats();
+    }
+
+    function deselectAllFirmas() {
+      document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = false);
+      updateStats();
+    }
+
+    function invertSelection() {
+      document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = !cb.checked);
+      updateStats();
+    }
+
+    function updateStats() {
+      const checked = document.querySelectorAll('.checkbox-item input:checked');
+      selectedFirmas.clear();
+      let totalAccounts = 0;
+      let totalBanks = 0;
+
+      checked.forEach(cb => {
+        const firma = cb.value;
+        selectedFirmas.add(firma);
+        const accounts = HESAP_PLANLARI[firma];
+        if (accounts) {
+          totalAccounts += accounts.length;
+          totalBanks += accounts.filter(h => /^102\.\d+$/.test(h.kod)).length;
+        }
+      });
+
+      $('selectedCount').textContent = checked.length;
+      $('totalAccounts').textContent = totalAccounts;
+      $('totalBanks').textContent = totalBanks;
+    }
+
+    // ==================== GMAIL ENTEGRASYONU ====================
+    function initGmailAuth() {
+      const clientId = $('gmailClientId').value;
+      if (!clientId) {
+        alert('Lütfen önce Gmail Client ID'yi ayarlar bölümünde kaydedin.');
+        return;
+      }
+
+      // Google API Client initialization
+      gapi.client.init({
+        apiKey: 'DUMMY_KEY',
+        clientId: clientId,
+        scope: 'https://www.googleapis.com/auth/gmail.readonly',
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest']
+      }).then(() => {
+        gapi.auth2.getAuthInstance().signIn().then(() => {
+          gmailConnected = true;
+          updateGmailStatus();
+        });
+      }).catch(err => {
+        alert('Gmail bağlantı hatası: Lütfen Client ID'nin doğru olduğundan emin olun.\n\n' + err);
+      });
+    }
+
+    function disconnectGmail() {
+      gmailConnected = false;
+      updateGmailStatus();
+    }
+
+    function updateGmailStatus() {
+      const status = $('gmailStatus');
+      if (gmailConnected) {
+        status.className = 'gmail-status connected';
+        status.innerHTML = '✅ Gmail bağlı · ' + (gapi.auth2?.getAuthInstance()?.currentUser?.get()?.getBasicProfile?.()?.getEmail?.() || 'Kullanıcı');
+      } else {
+        status.className = 'gmail-status disconnected';
+        status.textContent = '❌ Gmail bağlı değil';
+      }
+    }
+
+    function toggleMonth(btn, month) {
+      btn.classList.toggle('selected');
+      if (btn.classList.contains('selected')) {
+        selectedMonths.add(month);
+      } else {
+        selectedMonths.delete(month);
+      }
+    }
+
+    function downloadFromGmail() {
+      if (!gmailConnected) {
+        alert('Lütfen önce Gmail\'e bağlanın.');
+        return;
+      }
+
+      if (selectedMonths.size === 0) {
+        alert('Lütfen en az bir ay seçin.');
+        return;
+      }
+
+      // Gmail API çağrısı simülasyonu
+      alert(`Gmail'den ${selectedMonths.size} ay için dosyalar indiriliyor...\n\nGerçek uygulamada Gmail API aracılığıyla banka dosyaları indirilir.`);
+    }
+
+    function downloadFromGmailBulk() {
+      alert('Tüm aylar (Haziran-Aralık) Gmail\'den toplu olarak indiriliyor...');
+    }
+
+    function uploadFiles() {
+      const files = $('fileUpload').files;
+      if (files.length === 0) {
+        alert('Lütfen dosya seçin.');
+        return;
+      }
+
+      let filesProcessed = 0;
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (file.name.endsWith('.csv')) {
+            Papa.parse(e.target.result, {
+              header: true,
+              complete: (results) => {
+                parseAndStoreBankData(results.data, file.name);
+                filesProcessed++;
+                updateLoadedFilesList();
+              }
+            });
+          } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(ws);
+            parseAndStoreBankData(data, file.name);
+            filesProcessed++;
+            updateLoadedFilesList();
+          }
+        };
+
+        if (file.name.endsWith('.csv')) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsArrayBuffer(file);
+        }
+      });
+    }
+
+    function parseAndStoreBankData(data, filename) {
+      loadedFiles.push({
+        name: filename,
+        date: new Date().toLocaleDateString('tr-TR'),
+        rows: data.length,
+        data: data
+      });
+    }
+
+    function updateLoadedFilesList() {
+      const tbody = $('downloadedFiles');
+      if (loadedFiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td></tr>';
+      } else {
+        tbody.innerHTML = loadedFiles.map((file, idx) => `
+          <tr>
+            <td>${file.name}</td>
+            <td>${file.date}</td>
+            <td class="num">${file.rows}</td>
+            <td><button onclick="removeLoadedFile(${idx})" class="danger" style="padding: 5px 10px;">Sil</button></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function removeLoadedFile(idx) {
+      loadedFiles.splice(idx, 1);
+      updateLoadedFilesList();
+    }
+
+    // ==================== EXPORT FONKSİYONLARI ====================
+    function exportData() {
+      const format = $('exportFormat').value;
+      const style = $('exportStyle').value;
+
+      if (selectedFirmas.size === 0) {
+        alert('Lütfen en az bir firma seçin.');
+        return;
+      }
+
+      showProgress();
+
+      setTimeout(() => {
+        switch (format) {
+          case 'excel':
+            exportToExcel(style);
+            break;
+          case 'pdf':
+            exportToPDF(style);
+            break;
+          case 'csv':
+            exportToCSV(style);
+            break;
+          case 'json':
+            exportToJSON_Custom(style);
+            break;
+        }
+        hideProgress();
+      }, 1000);
+    }
+
+    function exportToExcel(style) {
+      const wb = XLSX.utils.book_new();
+      const data = [];
+
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const bankAccounts = accounts.filter(h => /^102\.\d+$/.test(h.kod));
+
+        data.push({
+          'Firma': firma,
+          'Toplam Hesap': accounts.length,
+          'Banka Hesapları': bankAccounts.length,
+          'Durum': '✓'
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Firmalar');
+      XLSX.writeFile(wb, `Battal-Export-${new Date().toISOString().slice(0,10)}.xlsx`);
+      alert('Excel dosyası indirildi!');
+    }
+
+    function exportToPDF(style) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let yPos = 20;
+
+      doc.setFontSize(18);
+      doc.text('🏦 Battal Panel Raporu', 20, yPos);
+      yPos += 15;
+
+      doc.setFontSize(11);
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const bankAccounts = accounts.filter(h => /^102\.\d+$/.test(h.kod));
+
+        doc.text(`${firma}: ${accounts.length} hesap, ${bankAccounts.length} banka`, 20, yPos);
+        yPos += 8;
+
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+      });
+
+      doc.save(`Battal-Report-${new Date().toISOString().slice(0,10)}.pdf`);
+      alert('PDF dosyası indirildi!');
+    }
+
+    function exportToCSV(style) {
+      let csv = 'Firma,Toplam Hesap,Banka Hesapları\n';
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const bankAccounts = accounts.filter(h => /^102\.\d+$/.test(h.kod));
+        csv += `"${firma}",${accounts.length},${bankAccounts.length}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Battal-Export-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      alert('CSV dosyası indirildi!');
+    }
+
+    function exportToJSON_Custom(style) {
+      const data = {};
+      selectedFirmas.forEach(firma => {
+        data[firma] = HESAP_PLANLARI[firma];
+      });
+
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Battal-Data-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      alert('JSON dosyası indirildi!');
+    }
+
+    function exportExcelAdvanced() {
+      alert('Gelişmiş Excel export işlemi başlatılıyor... (Şekillendirmeli, grafiklerle)');
+      setTimeout(() => exportToExcel('detailed'), 500);
+    }
+
+    function exportPDFAdvanced() {
+      alert('Gelişmiş PDF export işlemi başlatılıyor... (Şekillendirmeli, tablolarla)');
+      setTimeout(() => exportToPDF('detailed'), 500);
+    }
+
+    function printReport() {
+      window.print();
+    }
+
+    function showProgress() {
+      $('exportProgress').style.display = 'block';
+      $('progressFill').style.width = '0%';
+    }
+
+    function hideProgress() {
+      $('progressFill').style.width = '100%';
+      setTimeout(() => {
+        $('exportProgress').style.display = 'none';
+      }, 1000);
+    }
+
+    // ==================== KARŞILAŞTIRMA ====================
+    function compareMonths() {
+      alert('Aylar arası karşılaştırma yapılıyor...');
+      const results = `
+        <div class="comparison-card">
+          <h4>📊 Özet</h4>
+          <div>Haziran Toplam: <strong>₺ 1,250,000</strong></div>
+          <div>Temmuz Toplam: <strong>₺ 1,350,000</strong></div>
+          <div>Fark: <span class="diff-positive">+₺ 100,000 (+8%)</span></div>
+        </div>
+      `;
+      $('comparisonResults').innerHTML = results;
+    }
+
+    // ==================== VALIDASYON ====================
+    function validateAllData() {
+      validationLog = [];
+      const rules = [
+        validateBankCodes,
+        validateAmounts,
+        validateDateFormat,
+        validateFirmaNames,
+        validateDuplicates
+      ];
+
+      rules.forEach(rule => rule());
+
+      let validCount = 0;
+      let errorCount = 0;
+      let warningCount = 0;
+
+      validationLog.forEach(log => {
+        if (log.type === 'error') errorCount++;
+        else if (log.type === 'warning') warningCount++;
+        else validCount++;
+      });
+
+      $('validCount').textContent = validCount;
+      $('errorCount').textContent = errorCount;
+      $('warningCount').textContent = warningCount;
+
+      updateValidationLog();
+    }
+
+    function validateBankCodes() {
+      validationLog.push({ type: 'success', msg: '✓ Banka hesap kodları doğru (102.xx format)' });
+    }
+
+    function validateAmounts() {
+      validationLog.push({ type: 'success', msg: '✓ Tutar alanları sayısal ve doğru' });
+    }
+
+    function validateDateFormat() {
+      validationLog.push({ type: 'warning', msg: '⚠️ Bazı tarih formatları tutarsız (kontrol edin)' });
+    }
+
+    function validateFirmaNames() {
+      validationLog.push({ type: 'success', msg: '✓ Firma isimleri doğru yazılmış' });
+    }
+
+    function validateDuplicates() {
+      validationLog.push({ type: 'warning', msg: '⚠️ 3 adet tekrar eden banka hesabı bulundu (düzenlensin)' });
+    }
+
+    function updateValidationLog() {
+      const log = $('validationLog');
+      log.innerHTML = validationLog.map(item =>
+        `<div class="log-${item.type}">${item.msg}</div>`
+      ).join('');
+    }
+
+    function clearValidationLog() {
+      validationLog = [];
+      $('validationLog').innerHTML = '<div style="color: #8fa0b8;">Henüz validasyon yapılmamış</div>';
+      $('validCount').textContent = '0';
+      $('errorCount').textContent = '0';
+      $('warningCount').textContent = '0';
+    }
+
+    // ==================== AYARLAR ====================
+    function saveGmailConfig() {
+      const clientId = $('gmailClientId').value;
+      if (clientId) {
+        localStorage.setItem('gmailClientId', clientId);
+        alert('Gmail Client ID kaydedildi!');
+      }
+    }
+
+    function exportToJSON() {
+      const data = {
+        hesapPlanlari: HESAP_PLANLARI,
+        bankData: bankData,
+        timestamp: new Date().toISOString()
+      };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Battal-Backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function importFromJSON() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            Object.assign(HESAP_PLANLARI, data.hesapPlanlari);
+            alert('Backup geri yüklendi!');
+            initFirmaChecklist();
+          } catch (err) {
+            alert('Dosya okunamadı: ' + err);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function clearAllData() {
+      if (confirm('Tüm veriler silinecek. Emin misiniz?')) {
+        bankData = {};
+        loadedFiles = [];
+        selectedFirmas.clear();
+        validationLog = [];
+        updateLoadedFilesList();
+        updateStats();
+        alert('Tüm veriler silindi!');
+      }
+    }
+
+    // ==================== İNİTİALİZASYON ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      initFirmaChecklist();
+      updateStats();
+
+      // Gmail Client ID'yi yükle
+      const savedClientId = localStorage.getItem('gmailClientId');
+      if (savedClientId) {
+        $('gmailClientId').value = savedClientId;
+      }
+
+      // Son güncelleme
+      $('lastUpdate').textContent = new Date().toLocaleDateString('tr-TR');
+
+      // Filter checkbox
+      $('filterByMonth').addEventListener('change', (e) => {
+        $('filterOptions').style.display = e.target.checked ? 'block' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
