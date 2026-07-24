@@ -367,22 +367,41 @@ function mBankaDoldur(){
   const firma=$("mFirma").value;
   let plan=null;
 
+  // DEBUG LOGGING
+  console.log('🔍 mBankaDoldur başladı: firma="'+firma+'", firmaPlan keys='+Object.keys(firmaPlan).length);
+
   // 1. Doğru firma adıyla ara
-  if(firmaPlan[firma]) plan=firmaPlan[firma];
+  if(firmaPlan[firma]) {
+    plan=firmaPlan[firma];
+    console.log('✓ Doğrudan bulundu: '+firma+' → '+plan.length+' hesap');
+  }
   // 2. Normalized araştır
   else if(Object.keys(firmaPlan).length) {
     const nf=_normFirma(firma);
+    console.log('  Normalize araştırılıyor: "'+firma+'" → "'+nf+'"');
     for(const k of Object.keys(firmaPlan)){
-      if(_normFirma(k)===nf){plan=firmaPlan[k];break;}
+      if(_normFirma(k)===nf){
+        plan=firmaPlan[k];
+        console.log('  ✓ Normalized bulundu: '+k+' → '+plan.length+' hesap');
+        break;
+      }
     }
   }
   // 3. FIRMA_HESAP_PLANI_INIT'ten ara (yedek)
   if(!plan && FIRMA_HESAP_PLANI_INIT){
-    if(FIRMA_HESAP_PLANI_INIT[firma]) plan=FIRMA_HESAP_PLANI_INIT[firma];
+    console.log('  FIRMA_HESAP_PLANI_INIT\'den ara (yedek)...');
+    if(FIRMA_HESAP_PLANI_INIT[firma]) {
+      plan=FIRMA_HESAP_PLANI_INIT[firma];
+      console.log('  ✓ INIT doğrudan bulundu: '+firma+' → '+plan.length+' hesap');
+    }
     else {
       const nf=_normFirma(firma);
       for(const k of Object.keys(FIRMA_HESAP_PLANI_INIT)){
-        if(_normFirma(k)===nf){plan=FIRMA_HESAP_PLANI_INIT[k];break;}
+        if(_normFirma(k)===nf){
+          plan=FIRMA_HESAP_PLANI_INIT[k];
+          console.log('  ✓ INIT normalized bulundu: '+k+' → '+plan.length+' hesap');
+          break;
+        }
       }
     }
   }
@@ -391,13 +410,31 @@ function mBankaDoldur(){
   if(plan&&plan.length){
     // 1. ÖNCE alt hesapları dene (102.01, 102.02 vb.)
     kaynak=plan.filter(h=>/^10[0-8]\.\d+/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
+    console.log('  Alt hesaplar (/^10[0-8]\.\d+/): '+kaynak.length+' bulundu');
+
     // 2. Alt hesap yoksa, 102/103/108 ile başlayan TÜM hesapları göster (ana dahil)
-    if(!kaynak.length)kaynak=plan.filter(h=>/^10[2-8]/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
+    if(!kaynak.length){
+      kaynak=plan.filter(h=>/^10[0-9]$|^10[0-9]\.\d+/.test(h.kod)).map(h=>({kod:h.kod,banka:h.ad}));
+      console.log('  Ana+alt hesaplar (/^10[0-9]$|^10[0-9]\.\d+/): '+kaynak.length+' bulundu');
+    }
   }
   // 3. Hiçbiri yoksa banka listesinden
-  if(!kaynak||!kaynak.length)kaynak=bankalar.map(b=>({kod:b.kod,banka:b.banka||b.ad||''}));
-  console.log('🏦 mBankaDoldur: firma='+firma+' plan='+(plan?plan.length:0)+' hesap, banka='+kaynak.length+' bulundu');
-  s.innerHTML=kaynak.length?kaynak.map(b=>`<option value="${esc(b.kod)}">${esc(b.kod)} — ${esc(b.banka||'')}</option>`).join(''):'<option value="">(Firma hesap planı yükle veya banka hesabı ekle)</option>';
+  if(!kaynak||!kaynak.length){
+    kaynak=bankalar.map(b=>({kod:b.kod,banka:b.banka||b.ad||''}));
+    console.log('  Banka listesinden: '+kaynak.length+' bulundu');
+  }
+
+  console.log('🏦 mBankaDoldur SONUÇ: firma='+firma+', plan='+(plan?plan.length:0)+' hesap, dropdown='+kaynak.length+' item');
+
+  if(kaynak.length){
+    s.innerHTML=kaynak.map(b=>`<option value="${esc(b.kod)}">${esc(b.kod)} — ${esc(b.banka||'')}</option>`).join('');
+    console.log('✅ Banka hesapları dropdown\'a yazıldı');
+  } else {
+    s.innerHTML='<option value="">(Hesap planı yüklenemedi)</option>';
+    console.warn('⚠️ Kaynak bulunamadı!');
+  }
+
+  planDurumGoster();
 }
 
 /* ═══ FİRMA HESAP PLANLARI (.xlsx okuma) ═══ */
@@ -474,9 +511,14 @@ function firmaPlanSil(k){delete firmaPlan[k];save("battal_firma_plan",firmaPlan)
 function _normFirma(s){return String(s||'').toLocaleUpperCase('tr').replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G').replace(/Ü/g,'U').replace(/Ö/g,'O').replace(/Ç/g,'C').replace(/[^A-Z0-9]/g,'');}
 function planDurumGoster(){
   const el=$("mPlanDurum");if(!el)return;
-  const f=$("mFirma")?$("mFirma").value:'';const plan=aktifPlan();
-  if(plan&&plan.length)el.innerHTML='📗 <b style="color:#22c55e">'+esc(f)+' hesap planı bağlı</b> ('+plan.length+' hesap) — alt hesaplar kullanılacak.';
-  else el.innerHTML='⚠️ <b style="color:#ef4444">'+esc(f)+' hesap planı BAĞLI DEĞİL</b> — ana hesaplar çıkar. Bu firmanın .xlsx planını "🏦 Banka Hesap Kodları"ndan yükle, sonra 📗 işaretli firmayı seç.';
+  const f=$("mFirma")?$("mFirma").value:'';
+  const plan=aktifPlan();
+  const bankaSay=plan?plan.filter(h=>/^10[0-9]$|^10[0-9]\.\d+/.test(h.kod)).length:0;
+  if(plan&&plan.length){
+    el.innerHTML='✅ <b style="color:#22c55e">'+esc(f)+' planı yüklü</b> · '+plan.length+' hesap · 💳 '+bankaSay+' banka hesabı';
+  } else {
+    el.innerHTML='⚠️ <b style="color:#f59e0b">'+esc(f)+' planı yüklenemedi</b> — standart plan kullanılacak';
+  }
 }
 function aktifPlan(){
   const f=$("mFirma")&&$("mFirma").value; if(!f)return null;
@@ -973,20 +1015,38 @@ document.addEventListener('DOMContentLoaded',()=>{
     const mFirmaSelect = $("mFirma");
     if(mFirmaSelect) {
       console.log('DEBUG: mFirma element found');
-      let html = '';
+      let html = '<option value="">-- Firma Seç --</option>';
       for(let i=0; i<firmalar.length; i++) {
         html += '<option value="' + firmalar[i] + '">' + firmalar[i] + '</option>';
       }
       mFirmaSelect.innerHTML = html;
+      // DEFAULT SELECTION: İlk firmayı seç (otomatik hesap planı yüklemesi için)
+      if(firmalar.length > 0) {
+        mFirmaSelect.value = firmalar[0];
+        console.log('✅ Default firma seçildi: ' + firmalar[0]);
+      }
       console.log('DEBUG: Dropdown populated with ' + firmalar.length + ' options');
     } else {
       console.error('ERROR: mFirma element NOT found!');
     }
 
+    // Ekstre tabında hesapları yükle
     mBankaDoldur();
-    console.log('✅ BATTAL Ready');
+    buildPlanIndex();
+    planDurumGoster();
+
+    // Status kontrol
+    const banka=$("mBankaHesap");
+    const durumEl=$("mPlanDurum");
+    console.log('📊 SONUÇ: '+
+      'Firmalar='+(firmalar.length)+', '+
+      'Planlar='+(Object.keys(firmaPlan).length)+', '+
+      'Banka hesapları='+(banka?banka.options.length:0));
+
+    console.log('✅ BATTAL Ready - Hesap kodları yüklendi');
   } catch(e) {
-    console.error('❌ Error:', e.message, e.stack);
+    console.error('❌ HATALI: ', e.message);
+    console.error('Stack:', e.stack);
   }
 });
 function doExport(){
