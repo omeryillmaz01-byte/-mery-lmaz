@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ÖMER YILMAZ — Komut Merkezi · v1000</title>
+<!-- PWA Meta Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Komut Merkezi">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e17">
+<meta name="description" content="Ömer Yılmaz — Komut Merkezi. Genel Kültür, Muhasebe, Din, KGK Sınav Soruları ve daha fazlası.">
+<link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22:%22%C3%96mer%20Y%C4%B1lmaz%20-%20Komut%20Merkezi%22,%22short_name%22:%22Komut%20Merkezi%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22background_color%22:%22%230a0e17%22,%22theme_color%22:%22%230a0e17%22,%22scope%22:%22./%22,%22orientation%22:%22portrait-primary%22,%22icons%22:[%7B%22src%22:%22data:image/svg%2Bxml;utf8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20192%20192%27%3E%3Crect%20fill=%27%234fc3f7%27%20width=%27192%27%20height=%27192%27%20rx=%2745%27/%3E%3Ctext%20x=%2796%27%20y=%27140%27%20font-size=%27100%27%20font-weight=%27bold%27%20text-anchor=%27middle%27%20fill=%27%230a0e17%27%20font-family=%27system-ui%27%3E%C3%96Y%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg%2Bxml%22,%22purpose%22:%22any%22%7D,%7B%22src%22:%22data:image/svg%2Bxml;utf8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20192%20192%27%3E%3Crect%20fill=%27%234fc3f7%27%20width=%27192%27%20height=%27192%27%20rx=%2745%27/%3E%3Ctext%20x=%2796%27%20y=%27140%27%20font-size=%27100%27%20font-weight=%27bold%27%20text-anchor=%27middle%27%20fill=%27white%27%20font-family=%27system-ui%27%3E%C3%96Y%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg%2Bxml%22,%22purpose%22:%22maskable%22%7D,%7B%22src%22:%22data:image/svg%2Bxml;utf8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20512%20512%27%3E%3Crect%20fill=%27%234fc3f7%27%20width=%27512%27%20height=%27512%27%20rx=%27120%27/%3E%3Ctext%20x=%27256%27%20y=%27380%27%20font-size=%27280%27%20font-weight=%27bold%27%20text-anchor=%27middle%27%20fill=%27%230a0e17%27%20font-family=%27system-ui%27%3E%C3%96Y%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg%2Bxml%22,%22purpose%22:%22any%22%7D]%7D">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Crect%20fill=%27%234fc3f7%27%20width=%27100%27%20height=%27100%27%20rx=%2725%27/%3E%3Ctext%20x=%2750%27%20y=%2770%27%20font-size=%2750%27%20font-weight=%27bold%27%20text-anchor=%27middle%27%20fill=%27%230a0e17%27%20font-family=%27system-ui%27%3E%C3%96Y%3C/text%3E%3C/svg%3E">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 :root{
@@ -12492,6 +12501,64 @@ function ydGecisPlanCiz(){
 
 ydSayacGuncelle();ydModUygula();
 setInterval(ydSayacGuncelle,3600000);
+
+/* ===== PWA INSTALLATION & SERVICE WORKER ===== */
+let deferredPrompt;
+const installBtn=document.createElement('div');
+installBtn.id='pwaInstallBtn';
+installBtn.style.cssText='position:fixed;bottom:20px;right:20px;z-index:1000;';
+
+function pwaRegister(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('data:text/javascript;base64,Y29uc3QgQ0FDSEVEX1BSRUZJWCA9ICdvbWVyLXY5OTknOwpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2luc3RhbGwnLCBmb3VuY3Rpb24oZSkgewogIHNlbGYuc2tpcFdhaXRpbmcoKTsKfSk7CnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignYWN0aXZhdGUnLCBmdW5jdGlvbihlKSB7CiAgZS53YWl0VW50aWwoY2xpZW50cy5jbGFpbSgpKTsKfSk7CnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCBmdW5jdGlvbihlKSB7CiAgZS5yZXNwb25kV2l0aCgKICAgIGNhY2hlcy5tYXRjaChlLnJlcXVlc3QpLnRoZW4oZnVuY3Rpb24ocmVzcG9uc2UpIHsKICAgICAgcmV0dXJuIHJlc3BvbnNlIHx8IGZldGNoKGUucmVxdWVzdCk7CiAgICB9KQogICk7Cn0p',{type:'module'}).catch(()=>{});
+  }
+}
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  showInstallPrompt();
+});
+
+window.addEventListener('appinstalled',()=>{
+  deferredPrompt=null;
+  installBtn.style.display='none';
+  localStorage.setItem('oy_app_installed','true');
+});
+
+function showInstallPrompt(){
+  if(deferredPrompt && !localStorage.getItem('oy_app_installed')){
+    installBtn.innerHTML=`<button style="padding:12px 18px;border-radius:12px;border:none;background:linear-gradient(135deg,#7aa2ff,#5eead4);color:#0a0e17;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(122,162,255,.4);font-size:13px">📱 Masaüstüne Kur</button>`;
+    installBtn.onclick=()=>{
+      if(deferredPrompt){
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choice=>{
+          if(choice.outcome==='accepted'){
+            localStorage.setItem('oy_app_installed','true');
+            installBtn.style.display='none';
+          }
+          deferredPrompt=null;
+        });
+      }
+    };
+    document.body.appendChild(installBtn);
+  }
+}
+
+window.addEventListener('load',()=>{
+  pwaRegister();
+  showInstallPrompt();
+  // Auto-backup every hour
+  setInterval(()=>{
+    try{
+      const backup={
+        timestamp:new Date().toISOString(),
+        data:localStorage
+      };
+      localStorage.setItem('oy_auto_backup_'+Date.now(),JSON.stringify(backup));
+    }catch(e){}
+  },3600000);
+});
 </script>
 </body>
 </html>
