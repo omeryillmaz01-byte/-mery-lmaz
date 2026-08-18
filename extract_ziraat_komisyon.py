@@ -11,7 +11,7 @@ ws = wb_ziraat.active
 
 # Extract commission rows
 daily_totals = {}
-pattern = r'Komisyon\s*:\s*([0-9.,]+)'
+pattern = r'Komisyon\s*:\s*([0-9]+[,\.][0-9]+)'
 
 for row in ws.iter_rows(min_row=2, values_only=False):
     tarih_cell = row[0]
