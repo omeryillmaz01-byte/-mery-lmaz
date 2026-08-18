@@ -24,8 +24,8 @@ for row in ws.iter_rows(min_row=2, values_only=False):
         match = re.search(pattern, aciklama)
         if match:
             amount_str = match.group(1)
-            # Parse Turkish number format
-            amount_str = amount_str.replace('.', '').replace(',', '.')
+            # Parse number format (dots are decimals, commas are alternates)
+            amount_str = amount_str.replace(',', '.')
             try:
                 amount = float(amount_str)
                 # Extract day from tarih (format: dd.mm.yyyy or similar)
