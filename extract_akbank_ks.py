@@ -38,19 +38,19 @@ for row in ws.iter_rows(min_row=2, values_only=False):
 
 # Group by date ranges
 date_ranges = {
-    "01-10.08": [],
-    "11-20.08": [],
-    "21-31.08": [],
+    "01-10.07": [],
+    "11-20.07": [],
+    "21-31.07": [],
 }
 
 for day in sorted(daily_totals.keys()):
     tutar = daily_totals[day]
     if 1 <= day <= 10:
-        date_ranges["01-10.08"].append((day, tutar))
+        date_ranges["01-10.07"].append((day, tutar))
     elif 11 <= day <= 20:
-        date_ranges["11-20.08"].append((day, tutar))
+        date_ranges["11-20.07"].append((day, tutar))
     else:
-        date_ranges["21-31.08"].append((day, tutar))
+        date_ranges["21-31.07"].append((day, tutar))
 
 # Create workbook
 wb = Workbook()
@@ -106,7 +106,7 @@ row += 1
 
 # Add data for each date range
 total_sum = 0
-for range_name in ["01-10.08", "11-20.08", "21-31.08"]:
+for range_name in ["01-10.07", "11-20.07", "21-31.07"]:
     # Add range header
     ws[f'A{row}'] = range_name
     ws[f'A{row}'].font = range_font
@@ -117,7 +117,7 @@ for range_name in ["01-10.08", "11-20.08", "21-31.08"]:
     # Add daily data
     range_sum = 0
     for day, tutar in date_ranges[range_name]:
-        ws[f'A{row}'] = f"{day:02d}/08/2026"
+        ws[f'A{row}'] = f"{day:02d}/07/2026"
         ws[f'B{row}'] = tutar
         ws[f'A{row}'].border = border
         ws[f'B{row}'].border = border
@@ -154,11 +154,11 @@ ws[f'A{row}'].alignment = Alignment(horizontal='center')
 ws[f'B{row}'].alignment = Alignment(horizontal='right')
 
 # Save workbook
-wb.save('/home/user/-mery-lmaz/AKBANK-KS_Satirlari-Agustos2026.xlsx')
+wb.save('/home/user/-mery-lmaz/AKBANK-KS_Satirlari-Temmuz2026.xlsx')
 
 print("Excel file created successfully!")
 print(f"\n=== ÖZET ===")
-print(f"01-10.08: {sum([t for d,t in date_ranges['01-10.08']]):,.2f} ₺")
-print(f"11-20.08: {sum([t for d,t in date_ranges['11-20.08']]):,.2f} ₺")
-print(f"21-31.08: {sum([t for d,t in date_ranges['21-31.08']]):,.2f} ₺")
+print(f"01-10.07: {sum([t for d,t in date_ranges['01-10.07']]):,.2f} ₺")
+print(f"11-20.07: {sum([t for d,t in date_ranges['11-20.07']]):,.2f} ₺")
+print(f"21-31.07: {sum([t for d,t in date_ranges['21-31.07']]):,.2f} ₺")
 print(f"GENEL TOPLAM: {total_sum:,.2f} ₺")
