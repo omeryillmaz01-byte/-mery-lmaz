@@ -26,6 +26,10 @@ for row in ws.iter_rows(min_row=2, values_only=False):
         day = date_obj.day
         aciklama = str(aciklama_cell.value).strip()
 
+        # Only count POS SATIŞ transactions
+        if 'POS SATIŞ' not in aciklama:
+            continue
+
         # Look for Komisyon pattern
         match = re.search(pattern, aciklama)
         if match:
