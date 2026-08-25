@@ -516,7 +516,7 @@
     function initGmailAuth() {
       const clientId = $('gmailClientId').value;
       if (!clientId) {
-        alert('Lütfen önce Gmail Client ID'yi ayarlar bölümünde kaydedin.');
+        alert('Lütfen önce Gmail Client ID\'yi ayarlar bölümünde kaydedin.');
         return;
       }
 
@@ -532,7 +532,7 @@
           updateGmailStatus();
         });
       }).catch(err => {
-        alert('Gmail bağlantı hatası: Lütfen Client ID'nin doğru olduğundan emin olun.\n\n' + err);
+        alert('Gmail bağlantı hatası: Lütfen Client ID\'nin doğru olduğundan emin olun.\n\n' + err);
       });
     }
 
