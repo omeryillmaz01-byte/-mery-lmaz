@@ -74,6 +74,12 @@
     <header>
       <h1>🏦 Battal Panel Pro <span class="badge">✓ PRO</span></h1>
       <div class="subtitle">Gmail İndir + PDF→Excel + Hesap Planları Detaylı + Toplu İşlem</div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="tab-btn" onclick="proYedekAl()">💾 Yedek Al</button>
+        <button class="tab-btn" onclick="document.getElementById('proGeriInp').click()">📥 Geri Yükle</button>
+        <input type="file" id="proGeriInp" accept=".json,application/json" style="display:none" onchange="proYedekYukle(this)">
+        <span id="proYedekDurum" style="font-size:12px;color:#8fa0b8"></span>
+      </div>
     </header>
 
     <div class="tabs">
@@ -104509,6 +104515,99 @@
     let selectedFirmas = new Set();
     let uploadedFiles = [];
 
+    // ═══ DEPOLAMA: IndexedDB birincil, localStorage yedek ═══
+    const GLOBAL_CACHE={};
+    let db=null;
+    function initDB(){
+      return new Promise(resolve=>{
+        if(db){resolve(db);return;}
+        try{
+          const req=indexedDB.open('BATTAL_PRO_DB',1);
+          req.onerror=()=>resolve(null);
+          req.onsuccess=()=>{db=req.result;resolve(db);};
+          req.onupgradeneeded=e=>{
+            const r=e.target.result;
+            if(!r.objectStoreNames.contains('cache'))r.createObjectStore('cache',{keyPath:'k'});
+          };
+        }catch(e){resolve(null);}
+      });
+    }
+    function idbPut(k,v){
+      if(!db)return;
+      try{db.transaction(['cache'],'readwrite').objectStore('cache').put({k:k,v:v});}catch(e){}
+    }
+    function idbGetAll(){
+      return new Promise(resolve=>{
+        if(!db){resolve([]);return;}
+        try{
+          const req=db.transaction(['cache'],'readonly').objectStore('cache').getAll();
+          req.onsuccess=()=>resolve(req.result||[]);
+          req.onerror=()=>resolve([]);
+        }catch(e){resolve([]);}
+      });
+    }
+    function save(k,v){
+      GLOBAL_CACHE[k]=v;
+      idbPut(k,v);
+      try{ localStorage.setItem(k,JSON.stringify(v)); }
+      catch(e){ try{localStorage.removeItem(k);}catch(_){} }
+    }
+    function load(k){
+      const c=GLOBAL_CACHE[k];
+      if(c!==undefined&&c!==null)return c;
+      try{const v=localStorage.getItem(k);if(v!==null){const p=JSON.parse(v);GLOBAL_CACHE[k]=p;return p;}}catch(e){}
+      return null;
+    }
+    async function hydrate(){
+      await initDB();
+      const kayitlar=await idbGetAll();
+      const idbKeys=new Set();
+      for(const r of kayitlar){ idbKeys.add(r.k); GLOBAL_CACHE[r.k]=r.v; }
+      try{
+        for(let i=0;i<localStorage.length;i++){
+          const k=localStorage.key(i);
+          if(!k||k.indexOf('battalpro_')!==0||idbKeys.has(k))continue;
+          try{const v=JSON.parse(localStorage.getItem(k));GLOBAL_CACHE[k]=v;idbPut(k,v);}catch(_){}
+        }
+      }catch(e){}
+    }
+    // ═══ YEDEK AL / GERI YUKLE ═══
+    const PRO_ANAHTARLARI=["battalpro_secili_firmalar","battalpro_dosyalar"];
+    function proYedekAl(){
+      const veri={_surum:1,_tarih:new Date().toISOString(),kayitlar:{}};
+      for(const k of PRO_ANAHTARLARI){const v=load(k);if(v!==null&&v!==undefined)veri.kayitlar[k]=v;}
+      const blob=new Blob([JSON.stringify(veri,null,2)],{type:"application/json"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.download="battal-pro-yedek-"+new Date().toISOString().slice(0,10)+".json";
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      try{localStorage.setItem("battalpro_son_yedek",new Date().toISOString());}catch(e){}
+      proYedekDurum();
+    }
+    function proYedekYukle(inp){
+      const f=inp.files&&inp.files[0];if(!f)return;
+      const r=new FileReader();
+      r.onload=e=>{
+        try{
+          const p=JSON.parse(e.target.result);
+          const kayitlar=(p&&p.kayitlar)?p.kayitlar:p;
+          if(!confirm("Mevcut Pro verisi bu yedekle degistirilecek. Devam?"))return;
+          let n=0;
+          for(const k in kayitlar){ if(k.indexOf('battalpro_')===0){ save(k,kayitlar[k]); n++; } }
+          alert(n+" kayit geri yuklendi. Sayfa yenileniyor.");
+          location.reload();
+        }catch(err){ alert("Gecersiz yedek dosyasi."); }
+      };
+      r.readAsText(f); inp.value="";
+    }
+    function proYedekDurum(){
+      const el=document.getElementById('proYedekDurum'); if(!el)return;
+      let t=null; try{t=localStorage.getItem("battalpro_son_yedek");}catch(e){}
+      el.textContent = t ? ("Son yedek: "+new Date(t).toLocaleString("tr-TR")) : "Henuz yedek alinmadi";
+      el.style.color = t ? "#8fa0b8" : "#f87171";
+    }
+
     // ==================== UI ====================
     function switchTab(event, tab) {
       event.target.classList.add('active');
@@ -104621,6 +104720,7 @@
     }
 
     function updateFilesList() {
+      save('battalpro_dosyalar', uploadedFiles);
       const tbody = document.getElementById('filesList');
       if (uploadedFiles.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td></tr>';
@@ -104652,6 +104752,14 @@
       select.innerHTML = '<option value="">-- Firma Seçin --</option>' + firmas.map(f => `
         <option value="${f}">${f}</option>
       `).join('');
+
+      // Kayitli secimleri geri yukle
+      const kayitli = load('battalpro_secili_firmalar');
+      if (Array.isArray(kayitli) && kayitli.length) {
+        const kume = new Set(kayitli);
+        document.querySelectorAll('#firmaGrid input').forEach(cb => { if (kume.has(cb.value)) cb.checked = true; });
+      }
+      updateStats();
     }
 
     function filterFirmas(search) {
@@ -104686,6 +104794,7 @@
         }
       });
 
+      save('battalpro_secili_firmalar', Array.from(selectedFirmas));
       document.getElementById('selectedCount').textContent = checked.length;
       document.getElementById('totalAccounts').textContent = totalAccounts;
       document.getElementById('totalBanks').textContent = totalBanks;
@@ -104817,9 +104926,19 @@
     }
 
     // ==================== INIT ====================
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
+      try { await hydrate(); } catch(e) { console.warn('hydrate:', e); }
+      const kayitliDosyalar = load('battalpro_dosyalar');
+      if (Array.isArray(kayitliDosyalar)) uploadedFiles = kayitliDosyalar;
       initFirmas();
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      updateFilesList();
+      proYedekDurum();
+      // pdf.js CDN'den gelmezse burada patlayip acilisin geri kalanini olduruyordu
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      } else {
+        console.warn('pdf.js yuklenemedi - PDF donusturme devre disi.');
+      }
 
       // Enter tuşu ile validasyon
       const validateInput = document.getElementById('validateInput');
