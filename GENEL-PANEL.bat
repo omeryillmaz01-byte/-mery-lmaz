@@ -28,38 +28,35 @@ if ($Girdi -and (Test-Path -LiteralPath $Girdi)) {
     $kok = if ($it.PSIsContainer) { $it.FullName } else { $it.DirectoryName }
 }
 if (-not $kok) {
-    $aramaYerleri = @(
-        (Join-Path $masa 'BATTAL-MUHASEBE-PANEL'),
-        (Join-Path $masa 'KURTARILAN-ZIP\_acilmis'),
-        (Join-Path $masa 'PANELLER'),
-        (Join-Path $masa 'BATTAL-MUSAVIR'),
-        $masa
-    )
+    # Emoji/bosluk iceren klasor adlari -Filter ile atlanabildiginden once
+    # masaustundeki tum klasorleri adlarina gore suzuyoruz.
+    $aramaYerleri = @()
+    foreach ($d in (Get-ChildItem -LiteralPath $masa -Directory -Force)) {
+        if ($d.Name -match '(?i)PANELLER|OFIS|BATTAL|MUHASEBE') { $aramaYerleri += $d.FullName }
+    }
+    $aramaYerleri += $masa
     $adaylar = @()
     foreach ($y in $aramaYerleri) {
         if (Test-Path -LiteralPath $y) {
             $adaylar += Get-ChildItem -LiteralPath $y -Recurse -File -Filter 'BATTAL-MUHASEBE.html' -ErrorAction SilentlyContinue
         }
-        if ($adaylar.Count -gt 0) { break }
     }
     if ($adaylar.Count -eq 0) {
         Write-Host "  [HATA] BATTAL-MUHASEBE.html bulunamadi." -ForegroundColor Red
         Write-Host "  Cozum: panel klasorunu bu .bat dosyasinin uzerine surukleyip birakin."
         exit
     }
-    # kardes html sayisi en cok olani sec (eksiksiz paket)
-    $enIyi = $null; $enCok = -1
-    foreach ($a in $adaylar) {
-        $n = @(Get-ChildItem -LiteralPath $a.DirectoryName -File | Where-Object { $_.Extension -match '^\.html?$' }).Count
-        if ($n -gt $enCok) { $enCok = $n; $enIyi = $a }
-    }
+    # En BUYUK BATTAL-MUHASEBE.html en gelismis surumdur; onun klasorunu sec
+    $enIyi = $adaylar | Sort-Object Length -Descending | Select-Object -First 1
     $kok = $enIyi.DirectoryName
+    Write-Host ("  Secilen panel : " + $enIyi.Name + "  (" + [math]::Round($enIyi.Length/1KB,0) + " KB)")
 }
 Write-Host "  Panel klasoru : $kok"
 
 # --- 2) Panelleri topla ---
+$gurultu = 'chrome_profil|\\Extensions\\|WasmTtsEngine|GEREKLI_PROGRAMLAR|node_modules|_yedek_|_ESKI\\|\\Default\\'
 $tumu = Get-ChildItem -LiteralPath $kok -Recurse -Depth 2 -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Extension -match '(?i)^\.(html?|bat)$' -and $_.Name -ne 'GENEL-PANEL.html' }
+        Where-Object { $_.Extension -match '(?i)^\.(html?|bat)$' -and $_.Name -ne 'GENEL-PANEL.html' -and $_.FullName -notmatch $gurultu }
 # Ayni ada sahip kopyalardan koke en yakin olani tut
 $tumu = $tumu | Group-Object Name | ForEach-Object { $_.Group | Sort-Object { $_.FullName.Length } | Select-Object -First 1 }
 # .bat dosyalari tarayicidan CALISTIRILAMAZ; karta konmaz, dipnotta yol olarak gosterilir
