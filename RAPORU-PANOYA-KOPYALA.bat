@@ -1,0 +1,14 @@
+@echo off
+chcp 65001 >nul
+title RAPORU PANOYA KOPYALA
+setlocal
+echo.
+echo  ==================================================
+echo    RAPORU PANOYA KOPYALA
+echo    Calisinca rapor otomatik panoya alinir.
+echo    Sonra sohbete gecip Ctrl+V yapin.
+echo  ==================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='SilentlyContinue'; $masa=[Environment]::GetFolderPath('Desktop'); $sat=@(); $ac=Join-Path $masa 'KURTARILAN-ZIP\_acilmis'; $sat += '=== _acilmis ICINDEKI HTML DOSYALARI (panel referans sayisina gore) ==='; if(-not (Test-Path -LiteralPath $ac)){ $sat += '   (_acilmis klasoru yok - ZIP-KURTARMA.bat calisti mi?)' }; else {;   $htmls=@(Get-ChildItem -LiteralPath $ac -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '^\.html?$' });   $sat += ('   toplam html: ' + $htmls.Count);   $liste=@();   foreach($f in $htmls){ $ic=Get-Content -LiteralPath $f.FullName -Raw -ErrorAction SilentlyContinue; $n=0; if($ic){ $n=@([regex]::Matches($ic,'(?i)[A-Za-z0-9_.-]+\.html') | ForEach-Object { $_.Value.ToLower() } | Select-Object -Unique).Count }; $liste += [pscustomobject]@{ S=$n; B=$f.Length; Y=$f.FullName.Substring($ac.Length) } };   foreach($x in ($liste | Sort-Object S -Descending)){ $sat += ('   ' + ([string]$x.S).PadLeft(3) + ' ref  ' + ([math]::Round($x.B/1KB,0)).ToString().PadLeft(7) + ' KB  ' + $x.Y) };   $sat += '';   $sat += '=== _acilmis ICINDEKI DIGER DOSYALAR (bat/exe/json/js) ===';   foreach($f in (Get-ChildItem -LiteralPath $ac -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '(?i)^\.(bat|exe|cmd|json|js|md|txt)$' })){ $sat += ('   ' + ([math]::Round($f.Length/1KB,0)).ToString().PadLeft(7) + ' KB  ' + $f.FullName.Substring($ac.Length)) }; }; $sat += ''; $sat += '=== PANELLER klasoru ==='; $pk=Join-Path $masa 'PANELLER'; if(Test-Path -LiteralPath $pk){ foreach($f in (Get-ChildItem -LiteralPath $pk -Recurse -File -ErrorAction SilentlyContinue)){ $sat += ('   ' + ([math]::Round($f.Length/1KB,0)).ToString().PadLeft(7) + ' KB  ' + $f.FullName.Substring($pk.Length)) } } else { $sat += '   (yok)' }; $metin = ($sat -join [Environment]::NewLine); if($metin.Length -gt 24000){ $metin = $metin.Substring(0,24000) + [Environment]::NewLine + '... (kisaltildi)' }; Set-Clipboard -Value $metin; $metin | Out-File -LiteralPath (Join-Path $masa 'PANO-RAPOR.txt') -Encoding UTF8; Write-Host $metin; Write-Host ''; Write-Host '  ================================================' -ForegroundColor Green; Write-Host '   RAPOR PANOYA KOPYALANDI.' -ForegroundColor Green; Write-Host '   Sohbete gecip Ctrl+V yapmaniz yeterli.' -ForegroundColor Green; Write-Host '  ================================================' -ForegroundColor Green"
+echo.
+pause
