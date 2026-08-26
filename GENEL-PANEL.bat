@@ -58,8 +58,13 @@ if (-not $kok) {
 Write-Host "  Panel klasoru : $kok"
 
 # --- 2) Panelleri topla ---
-$dosyalar = Get-ChildItem -LiteralPath $kok -Recurse -Depth 2 -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Extension -match '(?i)^\.(html?|bat)$' -and $_.Name -ne 'GENEL-PANEL.html' }
+$tumu = Get-ChildItem -LiteralPath $kok -Recurse -Depth 2 -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Extension -match '(?i)^\.(html?|bat)$' -and $_.Name -ne 'GENEL-PANEL.html' }
+# Ayni ada sahip kopyalardan koke en yakin olani tut
+$tumu = $tumu | Group-Object Name | ForEach-Object { $_.Group | Sort-Object { $_.FullName.Length } | Select-Object -First 1 }
+# .bat dosyalari tarayicidan CALISTIRILAMAZ; karta konmaz, dipnotta yol olarak gosterilir
+$batlar   = @($tumu | Where-Object { $_.Extension -match '(?i)^\.bat$' })
+$dosyalar = @($tumu | Where-Object { $_.Extension -match '(?i)^\.html?$' })
 
 function Kategori($ad) {
     if ($ad -match '(?i)^(KOMUTA|GENEL-PANEL)' -or $ad -match '(?i)^BATTAL-MUHASEBE\.html$') { return 'MERKEZ' }
@@ -103,6 +108,12 @@ Write-Host "  Bulunan panel : $($kayitlar.Count)"
 # --- 3) HTML uret ---
 function Esc($s) { $s -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;' -replace '"','&quot;' }
 
+$batJs = ($batlar | ForEach-Object {
+    $g = $_.FullName.Substring($kok.Length).TrimStart('\')
+    "{ad:`"$(Esc ([IO.Path]::GetFileNameWithoutExtension($_.Name)))`",yol:`"$(Esc $g)`"}"
+}) -join ",`n "
+if (-not $batJs) { $batJs = '' }
+
 $js = ($kayitlar | ForEach-Object {
     "{ad:`"$(Esc $_.Ad)`",yol:`"$(Esc $_.Yol)`",kat:`"$($_.Kat)`",sim:`"$($_.Sim)`",bat:$(if($_.Bat){'true'}else{'false'}),kb:$($_.KB)}"
 }) -join ",`n "
@@ -137,6 +148,9 @@ header h1{margin:0;font-size:18px;white-space:nowrap}
 .kart.is{border-left:4px solid var(--is)}.kart.ki{border-left:4px solid var(--ki)}.kart.mz{border-left:4px solid var(--acc)}
 .geri{display:none;align-items:center;gap:8px}
 .bos{color:var(--mut);text-align:center;padding:40px}
+.not{font-size:12px;color:var(--mut);background:var(--panel2);border:1px dashed var(--line);padding:8px 11px;border-radius:9px;margin-bottom:10px}
+.yol{font-size:12px;color:var(--mut);padding:4px 0}
+.yol code{background:var(--panel2);padding:2px 6px;border-radius:5px;color:var(--txt)}
 </style>
 </head>
 <body data-theme="dark">
@@ -153,6 +167,9 @@ header h1{margin:0;font-size:18px;white-space:nowrap}
 <script>
 const PANELLER=[
  $js
+];
+const PROGRAMLAR=[
+ $batJs
 ];
 const KAT={MERKEZ:{ad:"Merkez",c:"mz"},IS:{ad:"İş · Muhasebe",c:"is"},KISISEL:{ad:"Kişisel",c:"ki"},DIGER:{ad:"Diğer",c:""}};
 const q=id=>document.getElementById(id);
@@ -173,6 +190,12 @@ function ciz(filtre){
        +'<div class="m">'+(p.bat?'Windows programı ↗':p.kb+' KB')+'</div></div>';
     }
     h+='</div></div>';
+  }
+  if(PROGRAMLAR.length){
+    h+='<div class="grp"><h2>Windows programları · '+PROGRAMLAR.length+'</h2>'
+     +'<div class="not">Bunlar tarayıcıdan çalıştırılamaz. Dosya Gezgini\'nde şu yollara gidip çift tıklayın:</div>';
+    for(const b of PROGRAMLAR){ h+='<div class="yol">'+b.ad+' — <code>'+b.yol+'</code></div>'; }
+    h+='</div>';
   }
   q("giris").innerHTML=h||'<div class="bos">Eşleşen panel yok.</div>';
   document.querySelectorAll(".kart").forEach(k=>k.onclick=()=>ac(k.dataset.yol,k.dataset.ad,k.dataset.bat==="true"));
@@ -211,6 +234,11 @@ if (Test-Path -LiteralPath $lnk) {
     Write-Host "  [HATA] Kisayol olusturulamadi." -ForegroundColor Red
 }
 Write-Host ""
+if ($batlar.Count -gt 0) {
+    Write-Host "  Windows programlari (tarayicidan calistirilamaz, Explorer'dan cift tiklayin):" -ForegroundColor Yellow
+    foreach ($b in $batlar) { Write-Host ("     " + $b.FullName) }
+    Write-Host ""
+}
 foreach ($k2 in ($kayitlar | Group-Object Kat)) {
     Write-Host ("     " + $k2.Name.PadRight(9) + $k2.Count + " panel")
 }
