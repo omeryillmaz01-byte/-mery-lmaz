@@ -14,6 +14,8 @@ pause
 exit /b
 #-PSBODY-
 # GENEL PANEL uretici - klasordeki tum panelleri tek bir hub dosyasinda toplar
+$ErrorActionPreference = 'Stop'
+try {
 $ErrorActionPreference = 'SilentlyContinue'
 $masa = [Environment]::GetFolderPath('Desktop')
 
@@ -38,11 +40,15 @@ if (-not $kok) {
     $adaylar = @()
     foreach ($y in $aramaYerleri) {
         if (Test-Path -LiteralPath $y) {
-            $adaylar += Get-ChildItem -LiteralPath $y -Recurse -File -Filter 'BATTAL-MUHASEBE.html' -ErrorAction SilentlyContinue
+            # -Filter emoji iceren klasor adlarinda bos donuyor; ad karsilastirmasi guvenli
+            $adaylar += @(Get-ChildItem -LiteralPath $y -Recurse -Depth 3 -File -Force -ErrorAction SilentlyContinue |
+                          Where-Object { $_.Name -eq 'BATTAL-MUHASEBE.html' -or $_.Name -eq 'BATTALMUHASEBE.html' })
         }
     }
     if ($adaylar.Count -eq 0) {
         Write-Host "  [HATA] BATTAL-MUHASEBE.html bulunamadi." -ForegroundColor Red
+        Write-Host "  Bakilan yerler:"
+        foreach ($y in $aramaYerleri) { Write-Host ("     " + $y) }
         Write-Host "  Cozum: panel klasorunu bu .bat dosyasinin uzerine surukleyip birakin."
         exit
     }
@@ -241,3 +247,21 @@ foreach ($k2 in ($kayitlar | Group-Object Kat)) {
 }
 Write-Host ""
 Start-Process $hedefDosya
+} catch {
+    Write-Host ""
+    Write-Host "  ================== HATA ==================" -ForegroundColor Red
+    $h = @()
+    $h += "HATA MESAJI : " + $_.Exception.Message
+    $h += "TUR         : " + $_.Exception.GetType().FullName
+    $h += "SATIR       : " + $_.InvocationInfo.ScriptLineNumber
+    $h += "KOMUT       : " + $_.InvocationInfo.Line.Trim()
+    foreach ($x in $h) { Write-Host ("  " + $x) -ForegroundColor Red }
+    try {
+        $hl = Join-Path ([Environment]::GetFolderPath('Desktop')) 'GENEL-PANEL-HATA.txt'
+        $h | Out-File -LiteralPath $hl -Encoding UTF8
+        Set-Clipboard -Value ($h -join [Environment]::NewLine)
+        Write-Host ""
+        Write-Host "  Hata panoya kopyalandi - sohbete Ctrl+V yapin." -ForegroundColor Yellow
+        Write-Host ("  Dosya: " + $hl) -ForegroundColor Yellow
+    } catch {}
+}
