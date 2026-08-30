@@ -193,11 +193,21 @@ Sunucuya **asla** gitmeyecekler: `chrome_profil\` (oturum çerezleri),
 
 **Ana iş: Ubuntu server'a production kurulum** (ayrıntı bölüm 8).
 
-Önce kullanıcıdan alınması gerekenler:
-- Sunucu IP'si, SSH erişim biçimi, Ubuntu sürümü
-- Alan adı ve DNS'in sunucuya yönlendirilip yönlendirilmediği
-- **Karar:** veri tarayıcıda mı kalsın, yoksa cihazlar arası senkron için
-  sunucuya mı taşınsın (projenin boyutunu belirleyen çatal)
+Kurulum kiti hazır ve dalda: `deploy/01..04` + `PANELLERI-SUNUCUYA-YUKLE.bat`,
+sıra `deploy/README.md` içinde.
+
+**Kullanıcıdan alınan kararlar (30 Ağu 2026):**
+- SSH: **root + parola**. Yani önce Windows'tan `ssh-keygen`/`ssh-copy-id` ile
+  anahtar kurulmalı, doğrulanmalı, ancak ondan sonra `02-ssh-kilitle.sh`.
+- DNS: **henüz yönlendirilmedi.** A kaydı eklenene kadar certbot adımı (03)
+  başarısız olur — 01 ve 02 önden çalıştırılabilir.
+- Veri: **sunucuya taşınacak** (cihazlar arası senkron isteniyor). Bu, faz 2:
+  backend + veritabanı + panellerin veri katmanının yeniden yazımı.
+  Faz 1 (statik yayın + auth) önce bitirilir, paneller o sırada hâlâ
+  tarayıcı deposuyla çalışır.
+
+**Hâlâ eksik:** sunucu IP'si, alan adı, Ubuntu sürümü. Kullanıcı bunları
+yer tutucu olarak (`<IP adresi>` vb.) bıraktığı için scriptlerde de yer tutucu.
 
 Devam edenler:
 - `PANEL-TEMIZLIK.bat` ve `WEB-PAKET.bat` gönderildi, çalıştırıldığına dair
