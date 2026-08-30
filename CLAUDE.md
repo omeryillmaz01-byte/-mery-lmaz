@@ -128,18 +128,47 @@ Panelleri `file://` **ve** gerçek HTTP sunucusu üzerinden test et.
 
 ---
 
-## 8. Hosting kararı (verildi)
+## 8. Altyapı — ARTIK UBUNTU SERVER (VPS) + DOMAIN ALINDI
 
-**Paylaşımlı hosting yeterli, VPS gereksiz.** Ölçümler: ana panellerde
-**0** `fetch`/`XHR` (saf statik), web'e gidecek boyut **8,8 MB**, `http://`
-kaynak **0** (HTTPS'te karışık içerik sorunu yok).
+**Durum değişti.** Önceki oturumda "önce sadece site" kapsamı için paylaşımlı
+hosting önerilmişti. Kullanıcı **Ubuntu server ve domain satın aldı**, hedefi
+panelleri **production** olarak düzenli ve profesyonel kullanmak.
 
-VPS'in tek olası gerekçesi ileride `server.js` (Gmail API) sunucuda çalışsın
-istenirse. Diğer otomasyonlar masaüstüne bağlı ve öyle kalmalı:
-`banka_panel.py` (yerel Excel düzenler), `beyanname-otomatik-kaydetme`
-(Chrome'u GİB oturumuyla sürer), `battal_db_eklenti` (Chrome eklentisi).
+Ölçümler (hâlâ geçerli): ana panellerde **0** `fetch`/`XHR` (saf statik),
+web'e gidecek boyut **8,8 MB**, `http://` kaynak **0**.
 
-`WEB-PAKET.bat` yayın paketini hazırlıyor (`Masaüstü\WEB-YAYIN\` + `.htaccess`).
+VPS ile artık mümkün olanlar — kullanıcıyla netleştirilmeli:
+- **Cihazlar arası gerçek veri senkronu** (ofis + ev + telefon aynı kayıtlar).
+  Bu backend + veritabanı demek; paneller bugün veriyi tarayıcıda tutuyor,
+  bu yüzden **panellerin veri katmanının yeniden yazılması** gerekir.
+- **`server.js`** (Express + Gmail API, 7 uç nokta) systemd altında sürekli
+  çalışabilir — Gmail'den banka ekstresi otomatik indirme.
+- Düzgün kimlik doğrulama, TLS, otomatik yedekleme.
+
+Masaüstüne bağlı kalması gerekenler değişmedi: `banka_panel.py` (yerel Excel
+düzenler), `beyanname-otomatik-kaydetme` (Chrome'u GİB oturumuyla sürer),
+`battal_db_eklenti` (Chrome eklentisi).
+
+`WEB-PAKET.bat` statik yayın paketini hazırlıyor (`Masaüstü\WEB-YAYIN\`);
+Ubuntu'da `.htaccess` yerine **nginx** yapılandırması gerekecek.
+
+### Ubuntu production kurulumunda yapılacaklar
+
+1. **Sunucu sertleştirme:** root olmayan kullanıcı, SSH anahtarla giriş
+   (parola kapalı), `ufw` (yalnız 22/80/443), otomatik güvenlik güncellemeleri,
+   `fail2ban`.
+2. **nginx + TLS:** alt alan adı (`panel.alanadi.com`), certbot ile
+   Let's Encrypt, HTTP→HTTPS yönlendirme, güvenlik başlıkları
+   (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`).
+3. **Kimlik doğrulama — pazarlık konusu değil.** Paneller müşteri verisi
+   içeriyor (bkz. bölüm 9). En az HTTP Basic Auth; çok kullanıcı gerekirse
+   gerçek oturum yönetimi.
+4. **Dağıtım:** git ile çekip nginx kök dizinine kopyalayan basit bir betik.
+   Masaüstündeki `WEB-PAKET.bat` filtre listesi (neyin sunucuya gitmeyeceği)
+   aynen geçerli.
+5. **Veri kararı:** tarayıcı deposunda kalsın mı, yoksa sunucu tarafına mı
+   taşınsın — bu, projenin büyüklüğünü belirleyen ana çatal.
+6. **Yedekleme:** veri sunucuya taşınırsa otomatik yedek + geri yükleme testi.
 
 ---
 
@@ -160,14 +189,26 @@ Sunucuya **asla** gitmeyecekler: `chrome_profil\` (oturum çerezleri),
 
 ---
 
-## 10. Açık işler
+## 10. Açık işler / sıradaki oturumun başlangıç noktası
 
+**Ana iş: Ubuntu server'a production kurulum** (ayrıntı bölüm 8).
+
+Önce kullanıcıdan alınması gerekenler:
+- Sunucu IP'si, SSH erişim biçimi, Ubuntu sürümü
+- Alan adı ve DNS'in sunucuya yönlendirilip yönlendirilmediği
+- **Karar:** veri tarayıcıda mı kalsın, yoksa cihazlar arası senkron için
+  sunucuya mı taşınsın (projenin boyutunu belirleyen çatal)
+
+Devam edenler:
 - `PANEL-TEMIZLIK.bat` ve `WEB-PAKET.bat` gönderildi, çalıştırıldığına dair
   geri bildirim **yok**
 - `banka_panel.py` çıkış kodu 0 ile sessizce sonlanıyor — çözülmedi
-- Alan adı henüz alınmadı
-- `battalpanel` reposu incelenemedi; gerekirse o repoyu kapsayan yeni oturum
-  açılmalı
+- `battalpanel` reposu incelenemedi; `MUSAVIR_PRO_PANEL.html`,
+  `MusavirPro_DefterBeyanAPI.html`, `BATTAL_MUHASEBE_DB_PRO.html` yalnızca
+  kullanıcının diskinde. Gerekirse o repoyu kapsayan yeni oturum açılmalı
+- Sunucuya taşınacak asıl hub: `Desktop\📂 PANELLER\BATTAL-MUHASEBE.html`
+  (104 KB) ve kardeş dosyaları — göreli yolla bağlı oldukları için
+  **klasörün tamamı** gitmeli (yasaklı yollar hariç, bkz. bölüm 9)
 
 ---
 
