@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏦 Battal Panel V6 · Backend Connected</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0b1220; color: #e8eef5; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    header { background: linear-gradient(135deg, #111a2e, #1c2740); padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #26324a; }
+    h1 { font-size: 28px; margin-bottom: 5px; color: #60a5fa; }
+    .subtitle { color: #8fa0b8; font-size: 13px; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #26324a; }
+    .tab-btn { background: transparent; border: none; color: #8fa0b8; padding: 12px 20px; cursor: pointer; font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.3s; }
+    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+    .tab-btn:hover { color: #60a5fa; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background: #131c2e; border: 1px solid #26324a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; margin-bottom: 15px; color: #60a5fa; padding-bottom: 10px; border-bottom: 1px solid #26324a; }
+    .card h3 { font-size: 14px; margin-top: 15px; margin-bottom: 10px; color: #a0afc8; }
+
+    .row { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 15px; }
+    .field { flex: 1; min-width: 200px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: #8fa0b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    select, input, textarea { width: 100%; background: #1c2740; border: 1px solid #26324a; color: #e8eef5; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; }
+    select:focus, input:focus { outline: none; border-color: #3b82f6; background: #1f2d42; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+    button { background: #3b82f6; border: none; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    button:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    button.secondary { background: #666; }
+    button.secondary:hover { background: #555; }
+    button.danger { background: #ef4444; }
+    button.danger:hover { background: #dc2626; }
+    button.success { background: #22c55e; }
+    button.success:hover { background: #16a34a; }
+
+    .status { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; }
+    .ok { color: #22c55e; font-weight: 700; }
+    .error { color: #ef4444; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #26324a; }
+    th { background: #1c2740; color: #8fa0b8; font-weight: 700; text-transform: uppercase; font-size: 11px; }
+    tr:hover { background: #1f2d42; }
+    .num { text-align: right; font-family: 'Courier New', monospace; }
+
+    .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 15px 0; }
+    .checkbox-item { display: flex; align-items: center; padding: 8px; background: #1c2740; border-radius: 6px; border: 1px solid #26324a; cursor: pointer; transition: all 0.2s; }
+    .checkbox-item:hover { border-color: #3b82f6; background: #1f2d42; }
+    .checkbox-item input { margin-right: 8px; cursor: pointer; }
+
+    .month-selector { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+    .month-btn { background: #1c2740; border: 1px solid #26324a; color: #8fa0b8; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+    .month-btn.selected { background: #3b82f6; border-color: #3b82f6; color: white; font-weight: 700; }
+    .month-btn:hover { border-color: #3b82f6; }
+
+    .search-input { width: 100%; background: #1c2740; border: 1px solid #26324a; color: #e8eef5; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+    .search-input:focus { outline: none; border-color: #3b82f6; }
+
+    .gmail-status { padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+    .gmail-status.connected { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #22c55e; }
+    .gmail-status.disconnected { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #ef4444; }
+
+    .progress-bar { width: 100%; background: #1c2740; border-radius: 8px; height: 6px; margin-top: 8px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; width: 0%; transition: width 0.3s; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 15px 0; }
+    .stat-box { background: #1c2740; border: 1px solid #26324a; border-radius: 8px; padding: 15px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #60a5fa; }
+    .stat-label { font-size: 11px; color: #8fa0b8; text-transform: uppercase; margin-top: 5px; }
+
+    .info-box { background: #1c2740; border-left: 3px solid #60a5fa; padding: 15px; border-radius: 8px; margin: 15px 0; color: #8fa0b8; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏦 Battal Panel V6 · Backend Connected</h1>
+      <div class="subtitle">Gmail API + Node.js Backend + Express Server</div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('gmail')">📧 Gmail & İndirme</button>
+      <button class="tab-btn" onclick="switchTab('toplu')">✓ Toplu Seçim</button>
+      <button class="tab-btn" onclick="switchTab('export')">📊 Export</button>
+      <button class="tab-btn" onclick="switchTab('ayarlar')">⚙️ Ayarlar</button>
+    </div>
+
+    <!-- TAB 1: Gmail -->
+    <div id="gmail" class="tab-content active">
+      <div class="card">
+        <h2>📧 Gmail Entegrasyonu</h2>
+        <div id="gmailStatus" class="gmail-status disconnected">❌ Backend bağlı değil</div>
+
+        <div class="info-box">
+          <strong>📍 Backend Adresi:</strong> <input type="text" id="backendUrl" value="http://localhost:3000" style="display: inline-block; width: 250px; padding: 5px; margin: 0 5px;">
+          <button onclick="checkBackend()" style="padding: 5px 15px;">🔗 Kontrol Et</button>
+        </div>
+
+        <div class="row">
+          <button onclick="startGmailAuth()" class="success" style="flex: 1; max-width: 200px;">📧 Gmail'e Bağlan</button>
+          <button onclick="disconnectGmail()" class="secondary" style="flex: 1; max-width: 200px;">Bağlantıyı Kes</button>
+        </div>
+
+        <h3>📅 Aylar Seçimi</h3>
+        <div class="month-selector">
+          <button class="month-btn" onclick="toggleMonth(this, 'Haziran')">Haziran</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Temmuz')">Temmuz</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Ağustos')">Ağustos</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Eylül')">Eylül</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Ekim')">Ekim</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Kasım')">Kasım</button>
+          <button class="month-btn" onclick="toggleMonth(this, 'Aralık')">Aralık</button>
+        </div>
+
+        <div class="row" style="margin-top: 15px;">
+          <button onclick="downloadFiles()" class="success" style="flex: 1;">⬇️ Seçili Ayları İndir</button>
+          <button onclick="downloadAllMonths()" class="success" style="flex: 1;">⬇️ Tümünü İndir</button>
+        </div>
+
+        <h3>📁 Manuel Dosya Yükle</h3>
+        <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" multiple style="margin: 10px 0;">
+        <button onclick="uploadFiles()" style="margin-top: 10px;">📤 Yükle</button>
+
+        <h3>📥 İndirilen Dosyalar</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dosya Adı</th>
+              <th>Tarih</th>
+              <th>Satır</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="downloadedFiles">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Toplu Seçim -->
+    <div id="toplu" class="tab-content">
+      <div class="card">
+        <h2>✓ Toplu Firma Seçimi</h2>
+        <div class="row">
+          <button onclick="selectAllFirmas()" class="success">✓ Tümünü Seç</button>
+          <button onclick="deselectAllFirmas()" class="danger">✗ Temizle</button>
+        </div>
+
+        <div style="margin: 15px 0;">
+          <input type="text" class="search-input" id="firmaSearch" placeholder="🔍 Firma ara..." onkeyup="filterFirmas()">
+        </div>
+
+        <div class="checkbox-grid" id="firmaChecklist"></div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="selectedCount">0</div>
+            <div class="stat-label">Seçili</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalAccounts">0</div>
+            <div class="stat-label">Hesap</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalBanks">0</div>
+            <div class="stat-label">Banka</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Export -->
+    <div id="export" class="tab-content">
+      <div class="card">
+        <h2>📊 Export</h2>
+
+        <div class="row">
+          <div class="field">
+            <label>Format</label>
+            <select id="exportFormat">
+              <option value="excel">📊 Excel</option>
+              <option value="csv">📋 CSV</option>
+              <option value="json">⚙️ JSON</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <button onclick="exportData()" class="success" style="flex: 1;">💾 Export Yap</button>
+        </div>
+
+        <div id="exportProgress" style="display: none; margin-top: 15px;">
+          <div style="color: #8fa0b8; margin-bottom: 8px;">Export işlemi devam ediyor...</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Ayarlar -->
+    <div id="ayarlar" class="tab-content">
+      <div class="card">
+        <h2>⚙️ Ayarlar</h2>
+
+        <h3>🔌 Backend Bağlantısı</h3>
+        <div class="info-box">
+          <strong>Status:</strong> <span id="backendStatusText">Kontrol edilmedi</span><br>
+          <strong>URL:</strong> <span id="backendUrlText">-</span><br>
+          <strong>API Version:</strong> <span id="apiVersionText">-</span>
+        </div>
+
+        <h3>📋 Panel Bilgileri</h3>
+        <table>
+          <tr>
+            <td style="color: #8fa0b8;">Versiyon</td>
+            <td><strong>V6 Backend Connected</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8;">Firmalar</td>
+            <td><strong id="totalFirmas">-</strong></td>
+          </tr>
+          <tr>
+            <td style="color: #8fa0b8;">Backend</td>
+            <td><strong id="backendTypeText">Express + Node.js</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    const HESAP_PLANLARI = {
+      "AKÇA AĞIZ": [{"kod":"102.01","ad":"GARANTİ"}, {"kod":"102.02","ad":"AKBANK"}, {"kod":"102.03","ad":"T.İŞ"}, {"kod":"102.04","ad":"VAKIF"}, {"kod":"102.05","ad":"ALBARAKA"}],
+      "2AA": [{"kod":"102.01","ad":"BANKA1"}, {"kod":"102.02","ad":"BANKA2"}, {"kod":"102.03","ad":"BANKA3"}],
+      "BESA GIDA": Array(64).fill(0).map((_, i) => ({kod: `102.${String(i+1).padStart(2,'0')}`, ad: `BANKA ${i+1}`})),
+      "BİLPARK BİLİŞİM": [{"kod":"102.01","ad":"BANKA1"}, {"kod":"102.02","ad":"BANKA2"}, {"kod":"102.03","ad":"BANKA3"}],
+      "BILPARK YAZILIM": [{"kod":"102.01","ad":"BANKA1"}, {"kod":"102.02","ad":"BANKA2"}]
+    };
+
+    let selectedFirmas = new Set();
+    let selectedMonths = new Set();
+    let loadedFiles = [];
+    let gmailConnected = false;
+    let backendConnected = false;
+
+    // ==================== UI ====================
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    // ==================== BACKEND BAĞLANTISI ====================
+    async function checkBackend() {
+      const url = $('backendUrl').value;
+      try {
+        const response = await fetch(`${url}/api/gmail/status`);
+        if (response.ok) {
+          backendConnected = true;
+          updateBackendStatus();
+          alert('✅ Backend bağlandı!');
+        } else {
+          alert('❌ Backend\'de hata var');
+        }
+      } catch (error) {
+        alert('❌ Backend\'e bağlanılamıyor. Sunucuyu başlattığından emin ol: npm start');
+      }
+    }
+
+    function updateBackendStatus() {
+      const status = $('gmailStatus');
+      if (backendConnected) {
+        status.className = 'gmail-status connected';
+        status.innerHTML = '✅ Backend bağlı · Node.js + Express çalışıyor';
+      } else {
+        status.className = 'gmail-status disconnected';
+        status.innerHTML = '❌ Backend bağlı değil';
+      }
+    }
+
+    // ==================== GMAIL ====================
+    async function startGmailAuth() {
+      if (!backendConnected) {
+        alert('Önce Backend\'e bağlan (Backend Status kontrol et)');
+        return;
+      }
+
+      const url = $('backendUrl').value;
+      try {
+        const response = await fetch(`${url}/api/auth/url`);
+        const data = await response.json();
+        window.open(data.authUrl, 'gmail_auth', 'width=500,height=600');
+        setTimeout(() => {
+          gmailConnected = true;
+          updateGmailStatus();
+        }, 2000);
+      } catch (error) {
+        alert('Hata: ' + error.message);
+      }
+    }
+
+    function disconnectGmail() {
+      gmailConnected = false;
+      updateGmailStatus();
+    }
+
+    function updateGmailStatus() {
+      if (gmailConnected) {
+        $('gmailStatus').className = 'gmail-status connected';
+        $('gmailStatus').textContent = '✅ Gmail bağlı';
+      }
+    }
+
+    function toggleMonth(btn, month) {
+      btn.classList.toggle('selected');
+      if (btn.classList.contains('selected')) {
+        selectedMonths.add(month);
+      } else {
+        selectedMonths.delete(month);
+      }
+    }
+
+    async function downloadFiles() {
+      if (!backendConnected) {
+        alert('Backend\'e bağlı değil');
+        return;
+      }
+
+      if (selectedMonths.size === 0) {
+        alert('En az bir ay seç');
+        return;
+      }
+
+      const url = $('backendUrl').value;
+      try {
+        const response = await fetch(`${url}/api/gmail/download`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ months: Array.from(selectedMonths) })
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert(`✅ ${data.count} dosya indirildi!`);
+        } else {
+          alert('❌ ' + data.error);
+        }
+      } catch (error) {
+        alert('Hata: ' + error.message);
+      }
+    }
+
+    async function downloadAllMonths() {
+      if (!backendConnected) {
+        alert('Backend\'e bağlı değil');
+        return;
+      }
+      selectedMonths = new Set(['Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']);
+      await downloadFiles();
+    }
+
+    function uploadFiles() {
+      const files = $('fileUpload').files;
+      if (files.length === 0) {
+        alert('Dosya seç');
+        return;
+      }
+
+      loadedFiles = [];
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          loadedFiles.push({
+            name: file.name,
+            date: new Date().toLocaleDateString('tr-TR'),
+            rows: 0
+          });
+          updateLoadedFilesList();
+        };
+        if (file.name.endsWith('.csv')) reader.readAsText(file);
+        else reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function updateLoadedFilesList() {
+      const tbody = $('downloadedFiles');
+      if (loadedFiles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #8fa0b8;">Henüz dosya yüklenmedi</td></tr>';
+      } else {
+        tbody.innerHTML = loadedFiles.map((file, idx) => `
+          <tr>
+            <td>${file.name}</td>
+            <td>${file.date}</td>
+            <td class="num">${file.rows}</td>
+            <td><button onclick="removeLoadedFile(${idx})" class="danger" style="padding: 5px 10px;">Sil</button></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function removeLoadedFile(idx) {
+      loadedFiles.splice(idx, 1);
+      updateLoadedFilesList();
+    }
+
+    // ==================== FIRMA SEÇİMİ ====================
+    function initFirmaChecklist() {
+      const container = $('firmaChecklist');
+      const firmas = Object.keys(HESAP_PLANLARI).sort();
+
+      container.innerHTML = firmas.map(f => `
+        <label class="checkbox-item">
+          <input type="checkbox" value="${f}" onchange="updateStats()">
+          <span>${f}</span>
+        </label>
+      `).join('');
+
+      $('totalFirmas').textContent = firmas.length;
+    }
+
+    function filterFirmas() {
+      const search = $('firmaSearch').value.toLowerCase();
+      document.querySelectorAll('.checkbox-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(search) ? 'flex' : 'none';
+      });
+    }
+
+    function selectAllFirmas() {
+      document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = true);
+      updateStats();
+    }
+
+    function deselectAllFirmas() {
+      document.querySelectorAll('.checkbox-item input').forEach(cb => cb.checked = false);
+      updateStats();
+    }
+
+    function updateStats() {
+      const checked = document.querySelectorAll('.checkbox-item input:checked');
+      selectedFirmas.clear();
+      let totalAccounts = 0;
+      let totalBanks = 0;
+
+      checked.forEach(cb => {
+        const firma = cb.value;
+        selectedFirmas.add(firma);
+        const accounts = HESAP_PLANLARI[firma];
+        if (accounts) {
+          totalAccounts += accounts.length;
+          totalBanks += accounts.filter(h => /^102\.\d+$/.test(h.kod)).length;
+        }
+      });
+
+      $('selectedCount').textContent = checked.length;
+      $('totalAccounts').textContent = totalAccounts;
+      $('totalBanks').textContent = totalBanks;
+    }
+
+    // ==================== EXPORT ====================
+    function exportData() {
+      const format = $('exportFormat').value;
+
+      if (selectedFirmas.size === 0) {
+        alert('En az bir firma seç');
+        return;
+      }
+
+      showProgress();
+
+      setTimeout(() => {
+        switch (format) {
+          case 'excel':
+            exportToExcel();
+            break;
+          case 'csv':
+            exportToCSV();
+            break;
+          case 'json':
+            exportToJSON();
+            break;
+        }
+        hideProgress();
+      }, 500);
+    }
+
+    function exportToExcel() {
+      const data = [];
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const bankas = accounts.filter(h => /^102\.\d+$/.test(h.kod));
+        data.push({
+          'Firma': firma,
+          'Hesaplar': accounts.length,
+          'Bankalar': bankas.length
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Firmalar');
+      XLSX.writeFile(wb, `export-${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    function exportToCSV() {
+      let csv = 'Firma,Hesap,Banka\n';
+      selectedFirmas.forEach(firma => {
+        const accounts = HESAP_PLANLARI[firma];
+        const bankas = accounts.filter(h => /^102\.\d+$/.test(h.kod)).length;
+        csv += `"${firma}",${accounts.length},${bankas}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function exportToJSON() {
+      const data = {};
+      selectedFirmas.forEach(firma => {
+        data[firma] = HESAP_PLANLARI[firma];
+      });
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    function showProgress() {
+      $('exportProgress').style.display = 'block';
+      $('progressFill').style.width = '0%';
+    }
+
+    function hideProgress() {
+      $('progressFill').style.width = '100%';
+      setTimeout(() => {
+        $('exportProgress').style.display = 'none';
+      }, 1000);
+    }
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      initFirmaChecklist();
+      updateStats();
+      updateBackendStatus();
+    });
+  </script>
+</body>
+</html>

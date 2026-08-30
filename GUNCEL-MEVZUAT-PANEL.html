@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📰 Güncel Mevzuat · Soru-Cevap · v1000</title>
+<style>
+:root{--bg:#0f1419;--panel:#1a2332;--panel2:#243447;--acc:#4fc3f7;--acc2:#29b6f6;--txt:#e8eef5;--mut:#8b9bb0;--line:#2d3e54;--ok:#66bb6a;--warn:#ffb74d;--err:#ef5350}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5}
+body[data-theme=light]{--bg:#f4f7fb;--panel:#fff;--panel2:#eef3fb;--txt:#1a2332;--mut:#5b6b7d;--line:#d8e2ef}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#1a2332,#243447);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-size:19px;font-weight:800}
+.spacer{flex:1}
+.gbtn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px;font-weight:600}
+.gbtn:hover{border-color:var(--acc)}
+nav{display:flex;gap:6px;padding:12px 20px;flex-wrap:wrap;border-bottom:1px solid var(--line);position:sticky;top:57px;background:var(--bg);z-index:9}
+nav a{padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--mut);border:1px solid transparent}
+nav a.active{background:var(--panel2);color:var(--acc);border-color:var(--line)}
+main{padding:20px;max-width:900px;margin:0 auto}
+.pane{display:none}.pane.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.badge{background:var(--acc);color:#04121c;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:800}
+.tag{display:inline-block;background:var(--panel2);color:var(--acc);border-radius:8px;padding:1px 8px;font-size:11px;font-weight:700;margin-bottom:4px}
+input,select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;width:100%}
+.qitem{border-bottom:1px solid var(--line);padding:12px 0}
+.qitem:last-child{border-bottom:none}
+.q{font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.q .no{flex:none;width:24px;height:24px;border-radius:6px;background:var(--panel2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.a{margin:8px 0 0 32px;color:var(--mut);font-size:13.5px;line-height:1.65;display:none}
+.qitem.open .a{display:block}
+.ozet{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.ozet h3{font-size:15px;margin-bottom:6px;color:var(--acc)}
+.ozet ul{margin:0;padding-left:18px}
+.ozet li{font-size:13px;color:var(--mut);margin-bottom:4px;line-height:1.55}
+.note{font-size:11.5px;color:var(--mut);font-style:italic;margin-top:8px}
+mark{background:#fde68a;color:#111;border-radius:3px}
+</style>
+</head>
+<body data-theme="dark">
+<header>
+  <h1>📰 Güncel Mevzuat</h1>
+  <span class="badge">v1000</span>
+  <span class="spacer"></span>
+  <button class="gbtn" id="themeBtn">🌙</button>
+</header>
+<nav>
+  <a class="active" data-p="gunun">📅 Günün 100 Sorusu</a>
+  <a data-p="test">🧪 Test Modu (KGK)</a>
+  <a data-p="ozet">📚 Konu Özetleri</a>
+  <a data-p="tum">🔍 Tüm Sorular</a>
+</nav>
+<main>
+  <div class="pane active" id="paneGunun">
+    <div class="card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:800;font-size:16px">🔥 Günün 100 Sorusu</div>
+        <div style="font-size:12.5px;color:var(--mut)" id="gununTarih"></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:22px;font-weight:800;color:var(--acc)" id="gununSayac">0/100</div><div style="font-size:11px;color:var(--mut)">açtığın soru</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="gbtn" onclick="hepsiniAc(true)">▼ Hepsini Aç</button>
+      <button class="gbtn" onclick="hepsiniAc(false)">▲ Hepsini Kapat</button>
+      <button class="gbtn" onclick="sesliOku()">🔊 Sesli Oku (ilk 10)</button>
+    </div>
+    <div class="card"><div id="gununListe"></div></div>
+    <div class="note">⚠️ İçerik, muhasebetr.com / verginet.net gibi kaynakların işlediği güncel Türk vergi-muhasebe mevzuatı konularını kısa-öz derler; sınav sorusu veya resmî sirküler değildir. Resmî işlemlerde GİB ve yürürlükteki mevzuat esastır. Bu iki site otomatik erişime kapalı olduğundan içerik onlardan birebir kopyalanmamış, aynı konu başlıkları özgün biçimde hazırlanmıştır.</div>
+  </div>
+
+  <div class="pane" id="paneTest">
+    <div id="testKurulum">
+      <div class="card">
+        <div style="font-weight:800;font-size:16px;margin-bottom:6px">🧪 Test Modu · Çoktan Seçmeli (KGK formatı)</div>
+        <p style="color:var(--mut);font-size:13px;margin-bottom:12px">Sınav gerçek formatında A-E şıklı. Şık seç → anında doğru/yanlış + açıklama. Sonunda karne çıkar. Ders seç ya da "Karışık" ile hepsinden çöz.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="testDers"><option value="">🎲 Karışık (tüm dersler)</option></select>
+          <select id="testAdet"><option value="10">10 soru</option><option value="20">20 soru</option><option value="40">40 soru</option><option value="999">Tümü</option></select>
+          <button class="gbtn" style="background:var(--acc);color:#04121c;font-weight:800" onclick="testBaslat()">🚀 Testi Başlat</button>
+        </div>
+        <div id="testIstatistik" style="margin-top:14px;font-size:12.5px;color:var(--mut)"></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">⚡ Tek tıkla ders testi (10 soru)</div>
+        <div id="testHizli" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+    <div id="testAlan"></div>
+  </div>
+
+  <div class="pane" id="paneOzet">
+    <input id="ozetAra" placeholder="🔍 Konu ara..." oninput="ozetCiz()" style="margin-bottom:14px">
+    <div id="ozetListe"></div>
+  </div>
+
+  <div class="pane" id="paneTum">
+    <input id="tumAra" placeholder="🔍 Soru/cevap içinde ara..." oninput="tumCiz()" style="margin-bottom:8px">
+    <div style="font-size:12px;color:var(--mut);margin-bottom:12px" id="tumSayac"></div>
+    <div class="card"><div id="tumListe"></div></div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function theme(t){document.body.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"🌙":"☀️";try{localStorage.setItem("gm_theme",t)}catch(e){}}
+$("themeBtn").onclick=()=>theme(document.body.dataset.theme==="dark"?"light":"dark");
+try{theme(localStorage.getItem("gm_theme")||"dark")}catch(e){theme("dark")}
+
+/* ═══ KONU ÖZETLERİ ═══ */
+const KONU_OZET=[
+  {ad:'E-Belge (e-Fatura, e-Arşiv, e-İrsaliye)',mad:['Belirli ciro/sektör şartlarını aşan mükellefler için e-Fatura ve e-Arşiv zorunludur.','e-Fatura kayıtlı kullanıcılar arasında, e-Arşiv fatura ise e-Fatura kapsamı dışındakilere düzenlenir.','e-İrsaliye malın fiili sevkinde düzenlenir; kağıt irsaliye yerine geçer.','Vergi mükellefi olmayanlara belirli tutarı aşan e-Arşiv faturaları da elektronik düzenlenir.']},
+  {ad:'E-Defter ve Berat',mad:['e-Defter, yevmiye ve büyük defterin elektronik tutulmasıdır.','Berat dosyaları GİB onayına aylık veya 3 aylık dönemlerde yüklenir.','Beratın süresinde yüklenmemesi defterin tasdiksiz sayılması riskini doğurur.','e-Defter tutanlar kağıt defter tasdik ettiremez.']},
+  {ad:'Enflasyon Düzeltmesi (VUK Mük. 298/A)',mad:['Parasal olmayan kıymetler (stok, duran varlık, öz sermaye) Yİ-ÜFE ile düzeltilir.','Parasal kıymetler (kasa, banka, alacak, borç) düzeltilmez.','Düzeltme farkları 698 üzerinden 648/658 hesaplarına aktarılır.','Amortismana tabi varlıklarda birikmiş amortisman da düzeltilir.']},
+  {ad:'KDV Genel Esaslar',mad:['Teslim ve hizmetlerde vergiyi doğuran olay genel olarak malın teslimi/hizmetin ifasıdır.','İndirilecek KDV, indirim hakkının doğduğu takvim yılını izleyen yıl sonuna kadar indirilebilir.','İhracat, KDV\'den istisnadır ve yüklenilen KDV iade edilebilir.','Kısmi/tam tevkifat uygulanan işlemlerde alıcı KDV\'nin bir kısmını sorumlu sıfatıyla öder.']},
+  {ad:'KDV İadesi',mad:['İhracat, indirimli oran, tevkifat gibi işlemlerden doğan KDV iade edilir.','İade; mahsuben veya nakden, teminatla veya YMM raporuyla alınabilir.','İade talebi için gerekli belgeler (yüklenim listesi, satış faturaları) ibraz edilir.','Özel esaslara alınan mükelleflerde iade süreci zorlaşır.']},
+  {ad:'Gelir Vergisi Beyanı',mad:['Ticari, zirai, serbest meslek, ücret, GMSİ, MSİ ve diğer kazançlar gelir vergisine tabidir.','Yıllık beyan izleyen yıl Mart ayı sonuna kadar verilir.','Tek işverenden alınan ücret belirli sınırı aşmıyorsa beyan edilmez.','Beyanname üzerinden hesaplanan vergiden yıl içi kesintiler mahsup edilir.']},
+  {ad:'Kurumlar Vergisi',mad:['Kurum kazancı üzerinden hesaplanır; oran güncel yasa ile belirlenir (bankalarda daha yüksek).','İştirak kazançları istisnası mükerrer vergilemeyi önler.','Yıllık beyan izleyen yıl Nisan sonuna kadar verilir.','Örtülü sermaye ve transfer fiyatlandırması kazanç düzeltmesi gerektirir.']},
+  {ad:'Geçici Vergi',mad:['3 aylık dönem kazançları üzerinden peşin ödenir.','Dönemi izleyen 2. ayın 17\'sine kadar beyan edilir.','Yıllık beyanda hesaplanan vergiden mahsup edilir.','Yılın son dönemi (4.) için ayrı geçici vergi verilmez (mevzuata göre değişebilir).']},
+  {ad:'Damga Vergisi',mad:['Sözleşme, taahhütname, kira kontratı gibi kağıtlardan alınır.','Nispi (bedele göre binde) veya maktu olabilir.','Kağıdı imzalayan taraflar müteselsilen sorumludur.','Bir nüsha üzerinden değil, her nüsha için ayrıca doğabilir.']},
+  {ad:'SGK / Bordro',mad:['Sigortalı çalışan için aylık APHB (muhtasar ve prim hizmet) beyanı verilir.','Prim, brüt ücret üzerinden işçi ve işveren payı olarak hesaplanır.','Asgari ücret desteği ve teşvikler prim yükünü azaltabilir.','Eksik gün bildirimi belgeyle desteklenmelidir.']},
+  {ad:'Amortisman',mad:['Duran varlıkların yıpranma payı faydalı ömre göre gider yazılır.','Normal (eşit) veya azalan bakiyeler yöntemi seçilebilir.','Azalan bakiyeler oranı normalin 2 katı, en fazla %50\'dir.','Binek otomobillerde kıst amortisman ve tutar sınırı uygulanır.']},
+  {ad:'Transfer Fiyatlandırması',mad:['İlişkili kişilerle işlemlerde emsallere uygunluk ilkesi esastır.','Emsale aykırı fiyat örtülü kazanç dağıtımı sayılır.','Yöntemler: KFY, MSMY, MMY, kâr bölüşüm, işleme dayalı net kâr marjı.','Yıllık transfer fiyatlandırması belgelendirmesi gerekebilir.']},
+  {ad:'Ba-Bs Formları',mad:['Belirli haddi aşan alış (Ba) ve satışlar (Bs) bildirilir.','İzleyen ayın son gününe kadar verilir.','e-Defter/e-Fatura kapsamındaki bazı mükellefler için kaldırılmış olabilir (güncel duyuruya bakılır).','Mükerrer/eksik bildirim özel usulsüzlük cezası doğurur.']},
+  {ad:'Değerleme (VUK)',mad:['Ölçüler: maliyet bedeli, borsa rayici, tasarruf değeri, mukayyet değer, itibari değer, rayiç ve emsal bedel.','Stoklar maliyet, alacak/borç mukayyet değerle değerlenir.','Yabancı para borç/alacak dönem sonunda değerlenir, kur farkı gelir/gider yazılır.','Menkul kıymetler türüne göre alış bedeli veya borsa rayici ile değerlenir.']},
+  {ad:'Vergi Cezaları ve Uzlaşma',mad:['Vergi ziyaı cezası kaybolan verginin 1 katı (kaçakçılıkta 3 katı).','Usulsüzlük ve özel usulsüzlük cezaları şekli yükümlülük ihlallerinde kesilir.','Uzlaşma ile ceza/vergi aslında indirim sağlanabilir.','Pişmanlıkla beyan, vergi ziyaı cezasını kaldırabilir.']},
+  {ad:'Konkordato ve Tasfiye',mad:['Konkordato, borçlunun mahkeme gözetiminde borçlarını yapılandırmasıdır.','Konkordato sürecinde alacaklara özel şüpheli alacak hükümleri uygulanabilir.','Tasfiyede varlıklar paraya çevrilir, borçlar ödenir, kalan ortaklara dağıtılır.','Tasfiye dönemi ayrı bir hesap dönemi sayılır ve beyanname verilir.']},
+  {ad:'İhracat ve Dış Ticaret',mad:['İhracat teslimleri KDV\'den istisnadır.','İhraç kayıtlı satışta imalatçı KDV tahsil etmez, tecil-terkin uygulanır.','İhracatın süresinde gerçekleşmemesi tecil edilen KDV\'yi ceza/faizle geri getirir.','Dövizli işlemlerde kur farkları ayrıca değerlenir.']},
+  {ad:'Ücret, Kira (GMSİ), Serbest Meslek',mad:['Ücrette vergi genellikle stopajla alınır; şart varsa yıllık beyan gerekir.','GMSİ\'de götürü veya gerçek gider yöntemi seçilebilir.','Konut kira istisnası her yıl güncellenen tutarda uygulanır.','Serbest meslekte tahsil esası geçerlidir, SM makbuzu düzenlenir.']},
+];
+
+/* ═══ SORU BANKASI ═══ (kısa-öz, güncel mevzuat konuları) */
+const SORULAR=[
+  {k:'E-Belge',s:'e-Fatura ile e-Arşiv fatura arasındaki temel fark nedir?',c:'e-Fatura, sistemde kayıtlı kullanıcılar arasında düzenlenir; e-Arşiv fatura ise e-Fatura kapsamında olmayan (kayıtlı olmayan mükellef veya nihai tüketici) alıcılara elektronik düzenlenen faturadır.'},
+  {k:'E-Belge',s:'e-İrsaliye ne zaman düzenlenir?',c:'Malın fiili sevki sırasında düzenlenir ve kağıt sevk irsaliyesi yerine geçer; taşıma esnasında elektronik olarak ibraz edilebilir.'},
+  {k:'E-Belge',s:'e-Arşiv fatura vergi mükellefi olmayanlara hangi durumda elektronik düzenlenir?',c:'Vergi mükellefi olmayanlara düzenlenen ve tebliğle belirlenen tutarı aşan faturalar e-Arşiv olarak elektronik ortamda düzenlenmek zorundadır.'},
+  {k:'E-Belge',s:'e-Fatura kullanan bir mükellef aynı işlem için kağıt fatura düzenleyebilir mi?',c:'Kural olarak hayır; e-Fatura kapsamındaki mükellefler birbirlerine kağıt fatura düzenleyemez, sistem üzerinden e-Fatura düzenlemeleri gerekir.'},
+  {k:'E-Belge',s:'e-Faturada "temel" ve "ticari" senaryo farkı nedir?',c:'Ticari senaryoda alıcı, faturaya kabul/ret yanıtı verebilir; temel senaryoda böyle bir yanıt mekanizması yoktur, fatura düzenlenmekle akış tamamlanır.'},
+  {k:'E-Defter',s:'e-Defter berat dosyası ne işe yarar?',c:'Berat, e-Defterin ilgili döneme ait olduğunu ve değiştirilmediğini GİB nezdinde onaylayan, elektronik imzalı/mali mühürlü özet dosyadır.'},
+  {k:'E-Defter',s:'e-Defter beratının süresinde yüklenmemesi ne riski doğurur?',c:'Defterin tasdiksiz/geçersiz sayılması ve buna bağlı özel usulsüzlük ile ispat gücü kaybı riski doğar.'},
+  {k:'E-Defter',s:'e-Defter tutan mükellef kağıt defter tasdik ettirebilir mi?',c:'Hayır; e-Deftere geçen mükellef aynı defterleri kağıt ortamda tutup tasdik ettiremez.'},
+  {k:'Enflasyon Düzeltmesi',s:'Enflasyon düzeltmesinde hangi kıymetler düzeltilir?',c:'Parasal olmayan kıymetler (stoklar, maddi/maddi olmayan duran varlıklar, öz sermaye kalemleri) düzeltilir; parasal kıymetler düzeltilmez.'},
+  {k:'Enflasyon Düzeltmesi',s:'Parasal kıymet neden düzeltilmez?',c:'Parasal kıymetler (kasa, banka, alacak, borç) zaten dönem sonu nominal değeriyle enflasyonun etkisini taşıdığından ayrıca endekslenmez; bunların etkisi net parasal pozisyon kâr/zararıyla ölçülür.'},
+  {k:'Enflasyon Düzeltmesi',s:'Düzeltme farkları hangi hesaplarda izlenir?',c:'Düzeltme farkları 698 Enflasyon Düzeltmesi hesabında toplanır; sonuç 648 Enflasyon Düzeltmesi Kârı veya 658 Zararı hesabına aktarılır.'},
+  {k:'Enflasyon Düzeltmesi',s:'Tamamen amorti olmuş varlıkta enflasyon düzeltmesi tuzağı nedir?',c:'Geçmişte kıst/eksik amortisman uygulanmışsa, varlık ile birikmiş amortisman düzeltme artışları birbirini tutmaz ve nakit girişi olmayan hayali enflasyon kârı doğarak fazladan vergi ödenmesine yol açar.'},
+  {k:'KDV',s:'İndirilecek KDV en geç ne zamana kadar indirilebilir?',c:'İndirim hakkı, vergiyi doğuran olayın gerçekleştiği takvim yılını izleyen takvim yılı sonuna kadar kullanılabilir.'},
+  {k:'KDV',s:'KDV tevkifatında amaç nedir?',c:'Verginin bir kısmının alıcı (sorumlu) tarafından kaynağında kesilip doğrudan vergi dairesine ödenmesiyle kayıt dışılığı azaltmak ve tahsilatı güvence altına almaktır.'},
+  {k:'KDV',s:'İhraç kayıtlı teslimde KDV nasıl işler?',c:'İmalatçı, ihracatçıya KDV tahsil etmeden mal teslim eder; hesaplanan KDV tecil edilir, ihracat gerçekleşince terkin edilir (tecil-terkin).'},
+  {k:'KDV',s:'İhraç kayıtlı satışta 3 aylık süre kaçırılırsa ne olur?',c:'Malın teslim ayını izleyen aydan itibaren 3 ay içinde ihraç edilmezse tecil edilen KDV, vergi ziyaı cezası ve gecikme faiziyle birlikte imalatçıdan geri istenir.'},
+  {k:'KDV',s:'Kur farkı KDV\'ye tabi midir?',c:'Bedeli döviz cinsinden belirlenen vadeli işlemlerde, ödeme tarihinde lehe oluşan kur farkı için fatura düzenlenip KDV hesaplanması gerekir.'},
+  {k:'KDV İadesi',s:'KDV iadesi hangi yollarla alınabilir?',c:'Mahsuben veya nakden; tutara göre teminat karşılığı, YMM tasdik raporu veya inceleme raporu ile alınabilir.'},
+  {k:'KDV İadesi',s:'İhracattan doğan KDV iadesinde yüklenim listesi neyi gösterir?',c:'İhraç edilen mal/hizmet için yüklenilen ve iadeye konu edilen KDV\'nin hangi alış belgelerinden kaynaklandığını gösteren listedir.'},
+  {k:'KDV İadesi',s:'Özel esaslara alınmak ne anlama gelir?',c:'Sahte/muhteviyatı itibarıyla yanıltıcı belge riski nedeniyle mükellefin iade süreçlerinin daha sıkı incelemeye ve teminat şartına tabi tutulmasıdır.'},
+  {k:'Gelir Vergisi',s:'Tek işverenden alınan ücret ne zaman beyan edilir?',c:'Tek işverenden alınan ve yıllık belirlenen sınırı aşan ücretler beyan edilir; sınırı aşmayan tek işveren ücreti genelde beyan edilmez.'},
+  {k:'Gelir Vergisi',s:'Birden fazla işverenden ücret alan ne yapar?',c:'Birinci işveren dışındaki işverenlerden alınan ücretler toplamı ilgili beyan sınırını aşıyorsa, ücretlerin tamamı yıllık beyanla bildirilir.'},
+  {k:'Gelir Vergisi',s:'GMSİ\'de gerçek gider ve götürü gider farkı nedir?',c:'Götürü giderde hasılatın belirli bir yüzdesi gider kabul edilir; gerçek giderde ise belgelenen fiili giderler indirilir. Götürüyü seçen 2 yıl gerçek gidere dönemez.'},
+  {k:'Gelir Vergisi',s:'Konut kira geliri istisnası nasıl uygulanır?',c:'Mesken kira gelirinin her yıl güncellenen istisna tutarı, beyan edilen kira gelirinden düşülür; ancak ticari/zirai/mesleki kazanç sahipleri ve istisnayı aşan bazı durumlarda istisnadan yararlanılamaz.'},
+  {k:'Kurumlar Vergisi',s:'İştirak kazançları istisnası neyi önler?',c:'Bir tam mükellef kurumun başka tam mükellef kurumdan aldığı kâr payının tekrar vergilenmesini (mükerrer vergilemeyi) önler.'},
+  {k:'Kurumlar Vergisi',s:'Örtülü sermaye nasıl oluşur?',c:'Ortak veya ilişkili kişiden alınan borcun, hesap dönemi içinde öz sermayenin 3 katını aşan kısmı örtülü sermaye sayılır; bu kısma ait faiz/kur farkı gideri KKEG olur.'},
+  {k:'Kurumlar Vergisi',s:'Kurumlar vergisi beyannamesi ne zaman verilir?',c:'Hesap dönemini izleyen yılın Nisan ayı sonuna kadar verilir ve tahakkuk eden vergi aynı ay içinde ödenir.'},
+  {k:'Geçici Vergi',s:'Geçici vergi hangi dönemlerde beyan edilir?',c:'3 aylık dönemler halinde, dönemi izleyen 2. ayın 17\'sine kadar beyan edilip ödenir.'},
+  {k:'Geçici Vergi',s:'Geçici vergi yıllık vergiyle ilişkisi nedir?',c:'Yıl içinde ödenen geçici vergi, yıllık beyannamede hesaplanan gelir/kurumlar vergisinden mahsup edilir; fazlası iade veya mahsup edilir.'},
+  {k:'Damga Vergisi',s:'Damga vergisinde müteselsil sorumluluk kimdedir?',c:'Bir kağıdı imzalayan taraflar, damga vergisinin ödenmesinden müteselsilen sorumludur.'},
+  {k:'Damga Vergisi',s:'Nispi ve maktu damga vergisi farkı nedir?',c:'Nispi damga vergisi kağıdın içerdiği bedele göre binde oranla; maktu damga vergisi ise kağıt türüne göre sabit tutarla hesaplanır.'},
+  {k:'SGK',s:'APHB (Muhtasar ve Prim Hizmet Beyannamesi) neyi birleştirir?',c:'Gelir vergisi stopajı (muhtasar) ile SGK prim ve hizmet bildirimini tek beyannamede birleştirir.'},
+  {k:'SGK',s:'Eksik gün bildirimi neden belgelenmelidir?',c:'Sigortalının ay içinde eksik çalışmasının nedeni (istirahat, ücretsiz izin vb.) belgelenmezse SGK eksik günleri kabul etmeyip prim tahakkuk ettirebilir.'},
+  {k:'Amortisman',s:'Azalan bakiyeler yönteminde oran sınırı nedir?',c:'Uygulanacak oran normal amortisman oranının 2 katıdır ve her halükarda %50\'yi geçemez.'},
+  {k:'Amortisman',s:'Azalan bakiyelerden normale geçilebilir mi?',c:'Evet, azalan bakiyeler yönteminden normal yönteme geçilebilir; ancak normalden azalana geçiş yapılamaz.'},
+  {k:'Amortisman',s:'Binek otomobilde kıst amortisman ne demektir?',c:'Binek otomobil için, satın alındığı yıl kalan aylara isabet eden kısmi amortisman ayrılır; ilk yıl ayrılamayan kısım son yıl gider yazılır.'},
+  {k:'Amortisman',s:'Binek araç satışında mükerrer vergi tuzağı nedir?',c:'Satışta birikmiş amortismanın tamamı kâr hesabına katılırsa, geçmişte KKEG yapılan (indirilemeyen) kısım bir kez daha vergilenir; sadece kanunen kabul edilen amortisman kısmı dikkate alınmalıdır.'},
+  {k:'Transfer Fiyatlandırması',s:'Emsallere uygunluk ilkesi nedir?',c:'İlişkili kişilerle yapılan mal/hizmet alım-satımında uygulanan fiyatın, ilişkisiz kişilerle yapılıyormuş gibi belirlenmesidir.'},
+  {k:'Transfer Fiyatlandırması',s:'Emsale aykırı fiyatın sonucu nedir?',c:'Emsale aykırı fiyatlandırma, örtülü kazanç dağıtımı sayılır ve dağıtılan kâr payı gibi düzeltmeye/vergilemeye tabi tutulur.'},
+  {k:'Ba-Bs',s:'Ba ve Bs formları neyi bildirir?',c:'Belirli haddi aşan mal/hizmet alışları Form Ba ile, satışları Form Bs ile bildirilir.'},
+  {k:'Ba-Bs',s:'Ba-Bs ne zaman verilir?',c:'Bildirimler, ilgili dönemi izleyen ayın son gününe kadar verilir (kapsamdaki bazı mükellefler için güncel düzenlemelere bakılmalıdır).'},
+  {k:'Değerleme',s:'Yabancı para cinsi borç/alacak dönem sonunda nasıl değerlenir?',c:'Dönem sonu kuruyla değerlenir; oluşan olumlu fark kambiyo kârı (gelir), olumsuz fark kambiyo zararı (gider) olarak kaydedilir.'},
+  {k:'Değerleme',s:'Mukayyet değer nedir?',c:'Bir kıymetin muhasebe kayıtlarında (defterde) yazılı olan değeridir; alacak ve borçlar genellikle mukayyet değerle değerlenir.'},
+  {k:'Vergi Cezaları',s:'Vergi ziyaı cezası ne kadardır?',c:'Ziyaa uğratılan verginin 1 katıdır; fiil kaçakçılık suçu oluşturuyorsa 3 kat olarak uygulanır.'},
+  {k:'Vergi Cezaları',s:'Pişmanlık ve ıslah ne sağlar?',c:'Vergi ziyaı doğuran fiilin kendiliğinden idareye bildirilip şartların yerine getirilmesi halinde vergi ziyaı cezası kesilmez, sadece pişmanlık zammı ödenir.'},
+  {k:'Vergi Cezaları',s:'Uzlaşma neyi kapsar?',c:'Tarhiyat öncesi/sonrası uzlaşma ile vergi aslı ve/veya cezada indirim sağlanarak ihtilafın idari aşamada çözülmesidir.'},
+  {k:'Konkordato',s:'Konkordato nedir?',c:'Borçlunun, alacaklılarıyla mahkeme gözetiminde anlaşarak borçlarını belirli bir plan dahilinde ödemesini/indirmesini sağlayan hukuki süreçtir.'},
+  {k:'Tasfiye',s:'Tasfiye dönemi vergisel olarak nasıl değerlendirilir?',c:'Tasfiyeye giriş ile birlikte tasfiye dönemi başlar; bu dönem ayrı bir hesap dönemi sayılır ve her tasfiye dönemi için beyanname verilir.'},
+  {k:'İhracat',s:'İhracat teslimlerinde KDV durumu nedir?',c:'İhracat teslimleri KDV\'den istisnadır ve bu teslimlere ilişkin yüklenilen KDV iade konusu yapılabilir.'},
+  {k:'Serbest Meslek',s:'Serbest meslek kazancında tahsil esası ne demektir?',c:'Gelir, tahakkuk ettiği anda değil fiilen tahsil edildiği dönemde; gider ise fiilen ödendiği dönemde dikkate alınır.'},
+  {k:'TMS/TFRS',s:'TMS 12 ertelenmiş vergi neden doğar?',c:'Muhasebe kârı ile vergi matrahı arasındaki geçici farklardan doğar; indirilebilir farklar ertelenmiş vergi varlığı, vergilendirilebilir farklar ertelenmiş vergi yükümlülüğü yaratır.'},
+  {k:'TMS/TFRS',s:'TMS 2 Stoklarda maliyete girmeyen giderler nelerdir?',c:'Anormal fire/israf, üretim gerektirmeyen depolama giderleri, genel yönetim giderleri ve satış giderleri stok maliyetine dahil edilmez.'},
+  {k:'TMS/TFRS',s:'TFRS 16 kiracıyı nasıl etkiler?',c:'Kiracı, kısa süreli ve düşük değerli istisnalar dışında kiralamaları bilançoya "kullanım hakkı varlığı" ve "kira yükümlülüğü" olarak alır.'},
+  {k:'TMS/TFRS',s:'TMS 36 geri kazanılabilir tutar nedir?',c:'Bir varlığın gerçeğe uygun değerinden satış maliyetleri düşülmüş tutarı ile kullanım değerinden yüksek olanıdır; defter değeri bunu aşarsa değer düşüklüğü ayrılır.'},
+  {k:'TMS/TFRS',s:'TMS 37\'ye göre karşılık ne zaman ayrılır?',c:'Geçmiş olaydan doğan mevcut bir yükümlülük, kaynak çıkışı muhtemel ve tutar güvenilir tahmin edilebiliyorsa karşılık ayrılır.'},
+  {k:'Muhasebe',s:'Reeskont ne işe yarar?',c:'Vadeli senetli alacak ve borçların dönem sonunda bugünkü değere indirgenerek dönem sonucunun daha doğru ölçülmesini sağlar.'},
+  {k:'Muhasebe',s:'Şüpheli alacak karşılığı hangi şartlarda ayrılır?',c:'Dava veya icra safhasında olan ya da protesto edilmiş/yazıyla birden fazla istenmiş küçük alacaklar için karşılık ayrılır; teminatlı kısma ayrılamaz.'},
+  {k:'Muhasebe',s:'Değersiz alacak ile şüpheli alacak farkı nedir?',c:'Şüpheli alacakta tahsil imkânı zayıflamıştır (karşılık ayrılır); değersiz alacakta kazai hüküm/kanaat verici vesikayla tahsil imkânı tamamen bitmiştir (doğrudan zarar yazılır).'},
+  {k:'Muhasebe',s:'KKEG nedir?',c:'Kanunen Kabul Edilmeyen Gider; ticari kârdan düşülmüş olsa bile vergi matrahına geri eklenen, vergisel olarak indirimi kabul edilmeyen giderdir.'},
+  {k:'Muhasebe',s:'Dönemsellik ilkesi nedir?',c:'Faaliyet sonuçlarının belirli dönemlere bölünerek her döneme ait gelir ve giderin o dönemde muhasebeleştirilmesidir.'},
+  {k:'Muhasebe',s:'Tahakkuk esası nedir?',c:'Gelir ve giderin, nakit tahsilat/ödemeye bakılmaksızın hukuken doğduğu (tahakkuk ettiği) dönemde kaydedilmesidir.'},
+  {k:'Muhasebe',s:'İhtiyatlılık (muhafazakarlık) ilkesi nedir?',c:'Belirsizlik durumunda; gelir ve varlıkları olduğundan fazla, gider ve borçları olduğundan az göstermekten kaçınma ilkesidir.'},
+  {k:'Denetim',s:'Mesleki şüphecilik ne demektir?',c:'Denetçinin kanıtları sorgulayıcı bir zihinle değerlendirmesi ve hata/hile ihtimalini sürekli göz önünde bulundurmasıdır.'},
+  {k:'Denetim',s:'Şartlı görüş ne zaman verilir?',c:'Tespit edilen yanlışlık ya da kanıt yetersizliği önemli ancak yaygın değilse şartlı (sınırlı olumlu) görüş verilir.'},
+  {k:'Denetim',s:'Görevler ayrılığı neden önemlidir?',c:'İşlemi onaylama, kaydetme ve varlığa erişimin farklı kişilere verilmesi hata ve hile riskini azaltan temel bir iç kontroldür.'},
+  {k:'Vergi Usul',s:'İhtirazi kayıt nedir?',c:'Mükellefin beyannameyi verirken, ödediği vergiye karşı dava açma hakkını saklı tutmak için koyduğu çekincedir.'},
+  {k:'Vergi Usul',s:'Özel usulsüzlük cezası hangi hallerde kesilir?',c:'Belge düzenine aykırılık (fatura vermeme/almama), elektronik belge zorunluluğuna uymama, bildirim yükümlülüklerini ihlal gibi şekli kurallara aykırılıklarda kesilir.'},
+  {k:'Finans',s:'Cari oran neyi ölçer?',c:'Dönen varlıkların kısa vadeli yabancı kaynaklara oranıdır; işletmenin kısa vadeli borç ödeme gücünü gösterir (ideal ≈ 2).'},
+  {k:'Finans',s:'Asit-test oranı cari orandan nasıl ayrılır?',c:'Asit-test oranında stoklar dönen varlıklardan çıkarılır; böylece stok satılmadan borç ödeme gücü ölçülür (ideal ≥ 1).'},
+  {k:'Finans',s:'ROE neyi gösterir?',c:'Net kârın özkaynaklara oranıdır; ortakların koyduğu sermayenin ne kadar verimli kâra dönüştüğünü gösterir.'},
+  {k:'Finans',s:'Sürdürülebilir büyüme oranı nasıl hesaplanır?',c:'ROE × (1 − Temettü Dağıtım Oranı) ile hesaplanır; dış finansmana başvurmadan iç kaynaklarla büyünebilecek maksimum oranı gösterir.'},
+  {k:'Maliyet',s:'Sipariş maliyeti ile safha maliyeti farkı nedir?',c:'Sipariş maliyetinde maliyet her sipariş/parti için ayrı toplanır (matbaa, inşaat); safha maliyetinde ise sürekli üretimde her üretim aşamasına (safhaya) toplanıp birim maliyet ortalamayla bulunur (çimento, şeker).'},
+  {k:'Maliyet',s:'Direkt ilk madde ve malzeme gideri nedir?',c:'Üretilen mamulün bünyesine doğrudan giren ve miktarı ekonomik olarak izlenebilen hammadde giderleridir (711/710 hesaplar).'},
+  {k:'Maliyet',s:'Genel üretim giderleri nasıl dağıtılır?',c:'Endirekt işçilik, amortisman, enerji gibi giderler; makine saati, işçilik saati veya direkt işçilik maliyeti gibi bir dağıtım anahtarıyla mamullere yüklenir.'},
+  {k:'Maliyet',s:'Birleşik (ortak) ürün maliyeti nasıl dağıtılır?',c:'Ayrım noktasına kadarki ortak maliyet; satış değeri, fiziki ölçü veya net gerçekleşebilir değer yöntemiyle ürünlere dağıtılır.'},
+  {k:'Maliyet',s:'Fire ve zaiyat maliyete nasıl yansır?',c:'Normal fire mamul maliyetine dahil edilir; anormal fire ise dönem gideri/zararı olarak ayrı gösterilir, maliyete yüklenmez.'},
+  {k:'Maliyet',s:'Standart maliyet ne işe yarar?',c:'Önceden belirlenen hedef maliyetle fiili maliyetin karşılaştırılıp sapmaların (fiyat/miktar) analiz edilerek maliyet kontrolü sağlanmasıdır.'},
+  {k:'Maliyet-Hacim-Kar',s:'Başabaş noktası nedir?',c:'Toplam gelirin toplam maliyete eşit olduğu, kâr ve zararın sıfır olduğu satış düzeyidir. Adet = Sabit Maliyet / (Birim Satış Fiyatı − Birim Değişken Maliyet).'},
+  {k:'Maliyet-Hacim-Kar',s:'Katkı payı (contribution margin) nedir?',c:'Birim satış fiyatından birim değişken maliyetin düşülmesiyle bulunur; sabit maliyetleri karşılamaya ve kâra katkı sağlayan tutardır.'},
+  {k:'Maliyet-Hacim-Kar',s:'Faaliyet kaldıracı neyi ölçer?',c:'Satışlardaki yüzde değişimin faaliyet kârındaki (FVÖK) yüzde değişime oranıdır; sabit maliyet ağırlığı arttıkça kaldıraç ve risk yükselir.'},
+  {k:'Maliyet-Hacim-Kar',s:'Güvenlik marjı nedir?',c:'Fiili/bütçelenen satışların başabaş satışını aşan kısmıdır; işletmenin zarara geçmeden ne kadar satış düşüşüne dayanabileceğini gösterir.'},
+  {k:'Bütçeleme',s:'Statik ve esnek bütçe farkı nedir?',c:'Statik bütçe tek bir faaliyet düzeyi için sabittir; esnek bütçe ise fiili faaliyet hacmine göre yeniden hesaplanarak daha anlamlı sapma analizi sağlar.'},
+  {k:'Bütçeleme',s:'Sıfır tabanlı bütçeleme nedir?',c:'Her bütçe kaleminin geçmiş dönemi baz almadan sıfırdan gerekçelendirildiği, her harcamanın yeniden haklı çıkarılması gereken bütçeleme yaklaşımıdır.'},
+  {k:'Bütçeleme',s:'Nakit bütçesi neyi gösterir?',c:'Belirli dönemlerde beklenen nakit giriş ve çıkışlarını göstererek olası nakit açığı/fazlasını önceden planlamayı sağlar.'},
+  {k:'Nakit Akış',s:'TMS 7\'ye göre nakit akışları hangi 3 başlıkta sunulur?',c:'İşletme faaliyetleri, yatırım faaliyetleri ve finansman faaliyetleri.'},
+  {k:'Nakit Akış',s:'Dolaylı yöntemde amortisman neden net kâra eklenir?',c:'Amortisman nakit çıkışı olmayan bir giderdir; net kârı azalttığı için işletme faaliyet nakit akışına ulaşmak üzere geri eklenir.'},
+  {k:'Nakit Akış',s:'Kredi geri ödemesi hangi faaliyette gösterilir?',c:'Anapara geri ödemesi finansman faaliyetlerinde; ödenen faiz ise seçime göre işletme veya finansman faaliyetinde gösterilir.'},
+  {k:'İş Hukuku',s:'Kıdem tazminatına hak kazanma şartı nedir?',c:'En az 1 yıl çalışmış olmak ve iş sözleşmesinin kanunda sayılan (işveren haklı feshi dışında) bir nedenle sona ermesi gerekir.'},
+  {k:'İş Hukuku',s:'İhbar tazminatı ne zaman doğar?',c:'Belirsiz süreli iş sözleşmesini bildirim sürelerine uymadan fesheden taraf, karşı tarafa bu sürelere ait ücret tutarında ihbar tazminatı öder.'},
+  {k:'İş Hukuku',s:'Kıdem tazminatında tavan uygulaması nedir?',c:'Her tam yıl için 30 günlük brüt ücret ödenir; ancak yıllık ödenecek tutar, en yüksek devlet memuruna ödenen kıdem tazminatı tavanını aşamaz.'},
+  {k:'İş Hukuku',s:'Fazla çalışma ücreti nasıl hesaplanır?',c:'Haftalık 45 saati aşan çalışmalarda her saat, normal saat ücretinin %50 fazlasıyla (1,5 katı) ödenir.'},
+  {k:'İş Hukuku',s:'Yıllık izin süresi hizmet süresine göre nasıl değişir?',c:'1-5 yıl arası en az 14 gün, 5-15 yıl arası en az 20 gün, 15 yıl ve üzeri en az 26 gün yıllık ücretli izin verilir.'},
+  {k:'Ticaret Hukuku',s:'Anonim şirket asgari sermayesi ne kadardır?',c:'Anonim şirkette esas sermaye sistemine göre asgari sermaye tutarı kanunla belirlenir (kayıtlı sermaye sistemi için daha yüksek başlangıç sermayesi aranır).'},
+  {k:'Ticaret Hukuku',s:'Limited ve anonim şirket ortak sorumluluğu farkı nedir?',c:'Her ikisinde de ortak, kural olarak koyduğu sermaye ile sınırlı sorumludur; ancak limited şirkette ortak, şirketten tahsil edilemeyen kamu borçlarından payı oranında sorumlu tutulabilir.'},
+  {k:'Ticaret Hukuku',s:'Ultra vires ilkesinin kalkması ne anlama gelir?',c:'Şirketin işletme konusu dışındaki işlemlerinin geçersiz sayılması ilkesi kaldırılmıştır; artık şirket, amaç dışı işlemlerle de üçüncü kişilere karşı bağlanabilir.'},
+  {k:'Ticaret Hukuku',s:'Tür değiştirmede tüzel kişilik ne olur?',c:'Şirketin hukuki şekli değişir (örn. Ltd → A.Ş.) ancak tüzel kişilik sona ermeden aynen devam eder; malvarlığı yeni türde sürer.'},
+  {k:'Ticaret Hukuku',s:'Birleşmede devrolan şirket ne olur?',c:'Devrolan şirket tasfiyesiz sona erer, tüm aktif ve pasifi külli halefiyetle devralan şirkete geçer.'},
+  {k:'İcra-İflas',s:'Kambiyo senetlerine mahsus takip yolu neden özeldir?',c:'Bono, poliçe ve çeke dayalı takipte ödeme emrine itiraz süresi kısadır (5 gün) ve itiraz icra mahkemesinde incelenir; takibi kendiliğinden durdurmaz.'},
+  {k:'İcra-İflas',s:'İhtiyati haciz nedir?',c:'Vadesi gelmiş (veya kanuni şartlarda gelmemiş) para alacağının güvence altına alınması için, dava/takipten önce borçlunun mallarına mahkeme kararıyla geçici el konulmasıdır.'},
+  {k:'İcra-İflas',s:'İflas ile haciz yoluyla takip farkı nedir?',c:'Haciz yolunda sadece takip eden alacaklının alacağı için belirli mallar paraya çevrilir; iflasta ise borçlunun tüm malvarlığı tasfiye edilip tüm alacaklılara garameten paylaştırılır.'},
+  {k:'İcra-İflas',s:'Aciz vesikası ne işe yarar?',c:'Alacağın haciz yoluyla tahsil edilemeyen kısmı için verilir; alacaklıya faizsiz yeni takip kolaylıkları sağlar ve alacağın zamanaşımını uzatır.'},
+  {k:'ÖTV',s:'Özel tüketim vergisi kaç listeden oluşur?',c:'4 listeden oluşur: (I) petrol/akaryakıt, (II) motorlu taşıtlar, (III) alkollü içecek-tütün-kolalı gazoz, (IV) dayanıklı tüketim ve lüks ürünler.'},
+  {k:'ÖTV',s:'ÖTV kaç kez uygulanır?',c:'Kural olarak tek aşamalıdır; malın ilk iktisabı/ithali/imalatçı teslimi gibi bir aşamada bir kez alınır, her el değiştirmede tekrar alınmaz.'},
+  {k:'MTV',s:'Motorlu taşıtlar vergisini doğuran olay nedir?',c:'Taşıtın ilgili sicile (trafik, liman, sivil hava) kayıt ve tescili ile mükellefiyet doğar; vergi her yıl Ocak ve Temmuz\'da iki taksitte ödenir.'},
+  {k:'Emlak Vergisi',s:'Emlak vergisi mükellefi kimdir?',c:'Bina veya arazinin maliki, varsa intifa hakkı sahibi, her ikisi de yoksa malik gibi tasarruf edendir; vergi taşınmazın bulunduğu belediyeye ödenir.'},
+  {k:'Veraset ve İntikal',s:'Veraset ve intikal vergisi ne zaman doğar?',c:'Ölüm (veraset) veya karşılıksız intikal (hibe/bağış) yoluyla mal edinilmesinde doğar; artan oranlı tarifeyle ve belirli istisna tutarları düşülerek hesaplanır.'},
+  {k:'Teşvikler',s:'Ar-Ge indirimi nasıl uygulanır?',c:'Ar-Ge ve tasarım merkezlerinde yapılan nitelikli harcamaların tamamı, ayrıca kurum/gelir vergisi matrahından indirilebilir; ilave olarak gider de yazılır.'},
+  {k:'Teşvikler',s:'Yatırım teşvik belgesi hangi destekleri içerebilir?',c:'KDV istisnası, gümrük vergisi muafiyeti, vergi indirimi, sigorta primi işveren desteği ve faiz/kar payı desteği gibi unsurları kapsayabilir.'},
+  {k:'Teşvikler',s:'İndirimli kurumlar vergisi neye bağlıdır?',c:'Teşvik belgeli yatırımlarda, yatırıma katkı tutarına ulaşılana kadar kurum kazancına indirimli oran uygulanmasıdır.'},
+  {k:'KDV',s:'İndirimli orana tabi işlemlerde yıllık iade nasıl doğar?',c:'İndirimli oranlı (%1/%10) teslimlerde yüklenilen KDV, hesaplanandan fazlaysa ve yıl içinde indirimle giderilemiyorsa, aşan kısım izleyen yıl iade edilebilir.'},
+  {k:'KDV',s:'Kısmi tevkifatta beyan nasıl yapılır?',c:'Alıcı, tevkif ettiği KDV\'yi 2 No.lu KDV beyannamesiyle sorumlu sıfatıyla beyan eder; satıcı ise kalan kısmı 1 No.lu beyannamesinde gösterir.'},
+  {k:'Gelir Vergisi',s:'Menkul sermaye iradı (MSİ) nedir?',c:'Faiz, kâr payı (temettü), repo geliri gibi sahip olunan sermayenin (nakdi/hisse) getirisinden doğan kazançlardır.'},
+  {k:'Gelir Vergisi',s:'Değer artışı kazancı nasıl vergilenir?',c:'Gayrimenkul, hisse gibi varlıkların elden çıkarılmasından doğan kazanç, istisna tutarı düşülerek ve (gayrimenkulde 5 yıl elde tutma gibi) sürelere bağlı olarak vergilenir.'},
+  {k:'Gelir Vergisi',s:'Asgari geçim indirimi yerine gelen düzenleme nedir?',c:'Ücretlerde asgari ücrete isabet eden gelir ve damga vergisi istisnası uygulanarak asgari ücret üzerindeki vergi yükü kaldırılmıştır.'},
+  {k:'Vergi Usul',s:'Vergi tarhı ne demektir?',c:'Vergi alacağının, matrah ve oran üzerinden idarece hesaplanarak miktar olarak tespit edilmesi işlemidir.'},
+  {k:'Vergi Usul',s:'Tebliğ, tahakkuk ve tahsil sırası nedir?',c:'Önce verginin tarhı, ardından mükellefe tebliği, sonra ödenecek aşamaya gelmesi (tahakkuk) ve en son ödenmesi (tahsil) gerçekleşir.'},
+  {k:'Vergi Usul',s:'Re\'sen vergi tarhı ne zaman yapılır?',c:'Defter/belge ibraz edilmemesi, kayıtların güvenilir olmaması gibi matrahın defterlerden tespit edilemediği hallerde idarece takdir/inceleme yoluyla matrah belirlenip tarh yapılır.'},
+  {k:'Vergi Usul',s:'Zamanaşımı süresi ne kadardır?',c:'Vergi alacağında tarh zamanaşımı, vergiyi doğuran olayı izleyen yılın başından itibaren 5 yıldır; bu süre içinde tarh/tebliğ edilmeyen vergi zamanaşımına uğrar.'},
+  {k:'Vergi Usul',s:'Mücbir sebep ne sağlar?',c:'Ağır hastalık, doğal afet gibi hallerde vergi ödevlerinin yerine getirilme süreleri işlemez; süreler mücbir sebep kalkınca işlemeye devam eder.'},
+  {k:'Kurumlar Vergisi',s:'Taşınmaz ve iştirak hissesi satış kazancı istisnası nasıldır?',c:'Kurumların en az 2 tam yıl aktifte tuttuğu iştirak hisselerinin satış kazancının bir kısmı, belirli şartlarla (kazancın fonda tutulması vb.) istisnaya tabidir.'},
+  {k:'Kurumlar Vergisi',s:'Zarar mahsubu süresi nedir?',c:'Geçmiş yıl zararları, izleyen 5 yıl içindeki kurum kazancından mahsup edilebilir; süresinde mahsup edilmeyen zarar hakkı yanar.'},
+  {k:'Kurumlar Vergisi',s:'Bağış ve yardımların indirimi nasıldır?',
+  c:'Kanunda sayılan bağışlar; bir kısmı kurum kazancının belirli yüzdesiyle sınırlı, bazıları (okul, sağlık tesisi, afet yardımı vb.) tamamen indirilebilir.'},
+  {k:'Denetim',s:'Olumsuz görüş ne zaman verilir?',c:'Tespit edilen yanlışlıklar hem önemli hem yaygın (pervasive) ise, finansal tabloların gerçeği yansıtmadığı sonucuna varılarak olumsuz görüş verilir.'},
+  {k:'Denetim',s:'Görüş bildirmekten kaçınma ne zaman olur?',c:'Yeterli ve uygun denetim kanıtı elde edilemeyen ve olası etkilerin hem önemli hem yaygın olduğu durumlarda denetçi görüş bildirmekten kaçınır.'},
+  {k:'Denetim',s:'Kilit denetim konuları (KAM) nedir?',c:'Denetçinin mesleki muhakemesine göre cari dönem denetiminde en çok önem taşıyan konulardır; bağımsız denetim raporunda ayrı bölümde açıklanır.'},
+  {k:'Denetim',s:'Denetimde örnekleme neden kullanılır?',c:'Tüm kitleyi incelemek çoğu zaman mümkün/ekonomik olmadığından, kitleden seçilen bir örneklem üzerinden kitlenin geneli hakkında sonuç çıkarılır.'},
+  {k:'Denetim',s:'Analitik prosedür nedir?',c:'Finansal ve finansal olmayan verilerin makul ilişkilerinin/oranlarının incelenmesiyle olağandışı dalgalanma ve tutarsızlıkların tespit edilmesidir.'},
+  {k:'Denetim',s:'Rotasyon (denetçi değişimi) neyi amaçlar?',c:'Kilit denetim ortağının belirli süre sonra değişmesiyle, denetçi-müşteri yakınlığından doğan bağımsızlık ve öz-menfaat riskini azaltmayı amaçlar.'},
+  {k:'Kurumsal Yönetim',s:'Kurumsal yönetimin dört temel ilkesi nedir?',c:'Şeffaflık, hesap verebilirlik, adillik (eşitlik) ve sorumluluk.'},
+  {k:'Kurumsal Yönetim',s:'Bağımsız yönetim kurulu üyesi neden gereklidir?',c:'Azınlık pay sahiplerinin ve tüm paydaşların çıkarını gözeterek, yönetim üzerinde tarafsız denetim ve dengeyi sağlamak için gereklidir.'},
+  {k:'Kurumsal Yönetim',s:'Denetim komitesi ne iş yapar?',c:'Finansal raporlamanın doğruluğunu, iç kontrol ve iç denetim sistemlerinin işleyişini ve bağımsız denetçinin bağımsızlığını gözetir.'},
+  {k:'TMS/TFRS',s:'TFRS 15 hasılatın 5 aşamalı modeli nedir?',c:'(1) Sözleşmeyi belirle, (2) edim yükümlülüklerini ayır, (3) işlem bedelini belirle, (4) bedeli edimlere dağıt, (5) edim yerine getirildikçe hasılatı muhasebeleştir.'},
+  {k:'TMS/TFRS',s:'TMS 16 yeniden değerleme artışı nereye yazılır?',c:'Maddi duran varlıkta yeniden değerleme artışı, kâr/zarara değil özkaynak içinde "yeniden değerleme değer artış fonu"na (diğer kapsamlı gelir) kaydedilir.'},
+  {k:'TMS/TFRS',s:'TMS 8 muhasebe politikası değişikliği nasıl uygulanır?',c:'Kural olarak geriye dönük (retrospektif) uygulanır; önceki dönemler sanki yeni politika hep uygulanmış gibi düzeltilir.'},
+  {k:'TMS/TFRS',s:'Tahmin değişikliği ile politika değişikliği farkı nedir?',c:'Muhasebe tahmini değişikliği ileriye dönük (o dönem ve sonrası) uygulanır; muhasebe politikası değişikliği ise geriye dönük uygulanır.'},
+  {k:'TMS/TFRS',s:'TMS 10 bilanço sonrası olaylar nasıl ayrılır?',c:'Düzeltme gerektiren olaylar (bilanço tarihindeki durumu teyit eden) finansal tablolara yansıtılır; düzeltme gerektirmeyen olaylar ise sadece dipnotta açıklanır.'},
+  {k:'TMS/TFRS',s:'TFRS 9 beklenen kredi zararı (ECL) modeli nedir?',c:'Zararın gerçekleşmesini beklemeden, finansal varlığın ömrü boyunca beklenen kredi zararlarının erkenden karşılık olarak ayrılmasını öngören modeldir.'},
+  {k:'Muhasebe',s:'Dönem sonu envanter işlemleri neyi kapsar?',c:'Sayım, değerleme, reeskont, amortisman, karşılık ayırma, kur değerlemesi ve tahakkuk kayıtları gibi mizanı gerçek duruma getiren işlemleri kapsar.'},
+  {k:'Muhasebe',s:'Kıdem tazminatı karşılığı neden ayrılır?',c:'Çalışanların gelecekte hak kazanacağı kıdem tazminatı yükümlülüğünün, dönemsellik gereği ilgili dönemlere gider olarak yansıtılması için karşılık ayrılır (472 hesap).'},
+  {k:'Muhasebe',s:'Alınan ve verilen avanslar nasıl izlenir?',c:'Verilen sipariş avansları (159/259), alınan sipariş avansları (340/440) hesaplarında; henüz mal/hizmet teslimi olmadığından gelir/gider değil, avans olarak izlenir.'},
+  {k:'Muhasebe',s:'Gelir tahakkuku ve gider tahakkuku nedir?',c:'Döneme ait olduğu halde henüz tahsil/ödeme yapılmamış gelir ve giderlerin, dönemsellik gereği ilgili döneme kaydedilmesidir (181/381 gibi hesaplar).'},
+  {k:'Muhasebe',s:'Nazım hesaplar ne için kullanılır?',c:'Teminat, kefalet, emanet, alınan/verilen çek-senet gibi işletmenin bilanço büyüklüğünü etkilemeyen ama takip edilmesi gereken hususların izlenmesi için kullanılır (9\'lu hesaplar).'},
+  {k:'Muhasebe',s:'Maliyet hesapları (7\'li) yansıtma hesabı neden kullanılır?',c:'7/A seçeneğinde fonksiyon esaslı maliyet hesaplarının, dönem sonunda gelir tablosu (6\'lı) hesaplarına aktarılması yansıtma hesaplarıyla yapılır.'},
+  {k:'Finans',s:'Net işletme sermayesi nedir?',c:'Dönen varlıklar ile kısa vadeli yabancı kaynaklar arasındaki farktır; işletmenin günlük faaliyetlerini finanse edecek likidite tamponunu gösterir.'},
+  {k:'Finans',s:'Ağırlıklı ortalama sermaye maliyeti (WACC) nedir?',c:'Öz kaynak ve borç maliyetlerinin, sermaye yapısındaki ağırlıklarına göre ortalamasıdır; yatırım projelerinin iskonto oranı olarak kullanılır.'},
+  {k:'Finans',s:'Finansal kaldıraç neyi ölçer?',c:'İşletmenin varlıklarını finanse etmede borç kullanma derecesini gösterir; borç arttıkça özkaynak getirisi ve risk birlikte yükselir.'},
+  {k:'Finans',s:'Nakit dönüşüm süresi nedir?',c:'Stok devir süresi + alacak tahsil süresi − borç ödeme süresidir; işletmenin nakdini stok ve alacakta bağladığı net gün sayısını gösterir.'},
+  {k:'Finans',s:'Faktoring nedir?',c:'İşletmenin vadeli alacaklarını, bir faktoring şirketine iskontolu olarak devrederek erken nakde çevirmesidir; alacak riski ve tahsilatı devredilebilir.'},
+  {k:'SGK',s:'5 puanlık prim indirimi neyi kapsar?',c:'Şartları sağlayan işverenlere, malullük-yaşlılık-ölüm sigortası işveren priminde 5 puanlık Hazine desteğidir; primlerin düzenli ödenmesi şarttır.'},
+  {k:'SGK',s:'İşe giriş ve çıkış bildirimi süresi nedir?',c:'İşe giriş bildirgesi kural olarak çalışma başlamadan önce; işten çıkış bildirimi ise çıkışı izleyen 10 gün içinde SGK\'ya yapılır.'},
+  {k:'E-Belge',s:'e-SMM (serbest meslek makbuzu) nedir?',c:'Serbest meslek erbabının elektronik ortamda düzenlediği serbest meslek makbuzudur; kağıt makbuz yerine geçer.'},
+  {k:'E-Belge',s:'e-Müstahsil makbuzu ne zaman kullanılır?',c:'Gerçek usulde vergiye tabi olmayan çiftçilerden (müstahsil) yapılan zirai ürün alımlarında, alıcı tarafından elektronik olarak düzenlenir.'},
+  {k:'İhracat',s:'Hizmet ihracında KDV istisnası şartı nedir?',c:'Hizmetin yurt dışındaki bir müşteri için yapılması ve hizmetten yurt dışında faydalanılması halinde KDV istisnası uygulanır.'},
+  {k:'İhracat',s:'Dahilde işleme rejimi ne sağlar?',c:'İhraç edilecek ürünün üretiminde kullanılan girdilerin, vergi ve gümrük yükü olmadan (şartlı muafiyetle) ithal/temin edilmesine imkan tanır.'},
+  {k:'Damga Vergisi',s:'Damga vergisinde istisna örneği nedir?',c:'Resmî dairelerle kişiler arasındaki bazı kağıtlar, ihracata ilişkin belirli belgeler gibi kanunda sayılan kağıtlar damga vergisinden istisnadır.'},
+  {k:'Değerleme',s:'İtibari (nominal) değer nedir?',c:'Senet, tahvil, hisse gibi kıymetlerin üzerinde yazılı olan değeridir; ihraç/işlem değerinden farklı olabilir.'},
+  {k:'Değerleme',s:'Tasarruf değeri nedir?',c:'Bir kıymetin, değerleme günündeki normal alım-satım değerinden farklı olarak, sahibi için taşıdığı gerçek (peşin) değeridir; genelde alacak/borç senetlerinin reeskontunda esas alınır.'},
+  {k:'Değerleme',s:'Maliyet bedeli neleri içerir?',c:'Bir iktisadi kıymetin edinilmesi/değerinin artırılması için yapılan ödemeler ile bunlarla doğrudan ilgili giderlerin (nakliye, montaj, gümrük vb.) toplamıdır.'},
+  {k:'Vergi Cezaları',s:'Usulsüzlük ile özel usulsüzlük farkı nedir?',c:'Usulsüzlük, vergi kanunlarının şekli hükümlerine (defter tasdiki, beyan süresi vb.) aykırılıktır; özel usulsüzlük ise belge düzeni, e-belge, bildirim gibi özel yükümlülüklerin ihlalinde daha ağır kesilir.'},
+  {k:'Vergi Cezaları',s:'Ceza indiriminden (VUK 376) nasıl yararlanılır?',c:'Vuku bulan cezaya dava açmayıp süresinde ödeme kabul edilirse, kesilen vergi ziyaı/usulsüzlük cezalarında kanunda öngörülen oranda indirim uygulanır.'},
+  {k:'Vergi Usul',s:'Yoklama neyi tespit eder?',c:'Mükellefiyetle ilgili maddi olayların, kayıtların ve mevzuların (işe başlama, adres, cihaz vb.) fiilen var olup olmadığını yerinde tespit etmeye yarar.'},
+  {k:'Vergi Usul',s:'Vergi incelemesinin amacı nedir?',c:'Ödenmesi gereken verginin doğruluğunun araştırılıp tespit edilmesi ve sağlanmasıdır; defter, belge ve kayıtlar üzerinden yürütülür.'},
+  {k:'Konkordato',s:'Geçici mühlet ne işe yarar?',c:'Konkordato talebiyle birlikte verilen geçici mühlette borçluya karşı takipler durur ve borçlunun malvarlığı komiser gözetiminde korunur.'},
+  {k:'Kurumlar Vergisi',s:'Kontrol edilen yabancı kurum kazancı nedir?',c:'Türkiye\'de tam mükelleflerin belirli oranda kontrol ettiği, düşük vergi yüküne tabi yurt dışı iştiraklerin pasif nitelikli kazancının, dağıtılmasa bile Türkiye\'de vergilendirilmesidir.'},
+  {k:'Kurumlar Vergisi',s:'Finansman gider kısıtlaması nedir?',c:'Yabancı kaynakları öz kaynağını aşan işletmelerde, aşan kısma ilişkin finansman giderlerinin kanunla belirlenen oranı (örn. %10) KKEG olarak matraha eklenir.'},
+  {k:'Gelir Vergisi',s:'Basit usul nedir?',c:'Şartları taşıyan küçük esnafın kazancının, gerçek gider-hasılat farkı üzerinden defter tutmadan tespit edildiği usuldür; belirli faaliyetlerde kazanç istisnası uygulanabilir.'},
+  {k:'Gelir Vergisi',s:'Diğer indirimler (eğitim-sağlık, bağış) beyanda nasıl düşülür?',c:'Beyan edilen gelirin belirli yüzdesini aşmayan eğitim-sağlık harcamaları, bireysel emeklilik ve kanunda sayılan bağışlar, beyanname üzerinde gelirden indirilebilir.'},
+  {k:'Muhasebe',s:'120 Alıcılar ile 121 Alacak Senetleri farkı nedir?',c:'120 Alıcılar, senede bağlanmamış ticari mal/hizmet alacaklarını; 121 Alacak Senetleri ise senede (bono/poliçe) bağlanmış vadeli ticari alacakları izler.'},
+  {k:'Muhasebe',s:'320 Satıcılar hesabı ne izler?',c:'İşletmenin mal ve hizmet alımından doğan, senede bağlanmamış ticari borçlarını izleyen pasif karakterli hesaptır.'},
+  {k:'Muhasebe',s:'102 Bankalar hesabı hangi durumda alacak çalışır?',c:'Bankadan para çekildiğinde, EFT/havale çıkışı veya banka masrafı olduğunda alacak; para yatırıldığında borç çalışır.'},
+  {k:'Muhasebe',s:'153 Ticari Mallar hesabı hangi envanter yönteminde kullanılır?',c:'Aralıklı (dönemsel) envanterde alışlar 153\'e kaydedilip dönem sonunda SMM hesaplanır; sürekli envanterde her satışta maliyet 621\'e aktarılır.'},
+  {k:'Muhasebe',s:'Satılan Malın Maliyeti (SMM) nasıl bulunur?',c:'Dönembaşı stok + dönemiçi alışlar − dönemsonu stok = SMM.'},
+  {k:'Muhasebe',s:'İşletmede 191 ve 391 KDV hesapları ne izler?',c:'191 İndirilecek KDV alışlardaki KDV\'yi (aktif), 391 Hesaplanan KDV satışlardaki KDV\'yi (pasif) izler; ay sonu mahsuplaşır.'},
+  {k:'Muhasebe',s:'360 Ödenecek Vergi ve Fonlar ne izler?',c:'Stopaj, damga vergisi gibi işletmenin sorumlu sıfatıyla kesip vergi dairesine ödeyeceği vergileri izler.'},
+  {k:'Muhasebe',s:'Amortismanın muhasebe kaydı nasıldır?',c:'Genel yönetim amortismanı örneğinde: 770/632 borç, 257/268 Birikmiş Amortismanlar alacak çalışır; birikmiş amortisman aktifi düzenleyici (pasif karakterli) hesaptır.'},
+  {k:'Muhasebe',s:'Bağlı ortaklık ile iştirak farkı nedir?',c:'İştirakte %10-50 arası pay ve önemli etki; bağlı ortaklıkta ise %50\'nin üzerinde pay ve kontrol vardır (242 İştirakler, 245 Bağlı Ortaklıklar).'},
+  {k:'Muhasebe',s:'580 Geçmiş Yıllar Zararları hesabı nasıl kapanır?',c:'Sonraki dönem kârından veya sermaye/özkaynak kalemlerinden mahsup edilerek kapatılır; özkaynağı azaltıcı (aktif karakterli) bir hesaptır.'},
+  {k:'Muhasebe',s:'Kar dağıtımında yasal yedek akçe nasıl ayrılır?',c:'I. tertip yedek, ödenmiş sermayenin %20\'sine ulaşana kadar dağıtılabilir kârın %5\'i; II. tertip yedek ise kâr payı dağıtımının belirli kısmı üzerinden ayrılır.'},
+  {k:'Muhasebe',s:'Şüpheli alacak karşılığının kaydı nasıldır?',c:'128 Şüpheli Ticari Alacaklar borç / 120 alacak; karşılık için 654 Karşılık Giderleri borç / 129 Şüpheli Ticari Alacaklar Karşılığı alacak çalışır.'},
+  {k:'Maliyet',s:'7/A ve 7/B seçeneği farkı nedir?',c:'7/A fonksiyon esaslıdır (belirli ciroyu aşanlar zorunlu, giderler 710-799 fonksiyon hesaplarında); 7/B çeşit esaslıdır (giderler 790-799 gider çeşidi hesaplarında toplanır).'},
+  {k:'Maliyet',s:'Endirekt işçilik nedir?',c:'Üretimle ilgili olmakla birlikte belirli bir mamule doğrudan yüklenemeyen işçilik giderleridir (ustabaşı, bakım-onarım işçiliği); genel üretim gideri sayılır.'},
+  {k:'Maliyet',s:'Dönüştürme (çevirme) maliyeti nedir?',c:'Direkt işçilik + genel üretim giderleri toplamıdır; ilk maddeyi mamule dönüştürmek için katlanılan maliyeti ifade eder.'},
+  {k:'Maliyet',s:'Eşdeğer ürün (equivalent units) kavramı nedir?',c:'Safha maliyetinde, dönem sonu yarı mamullerin tamamlanma derecesine göre tam mamule çevrilmiş adet karşılığıdır; birim maliyet bu miktara bölünerek bulunur.'},
+  {k:'Maliyet',s:'Ilk madde miktar sapması nasıl yorumlanır?',c:'(Standart miktar − fiili miktar) × standart fiyat ile bulunur; fiili tüketim standarttan fazlaysa olumsuz (adverse) sapma oluşur.'},
+  {k:'Maliyet-Hacim-Kar',s:'Hedef kâra ulaşmak için gereken satış adedi nasıl bulunur?',c:'(Sabit Maliyet + Hedef Kâr) / Birim Katkı Payı formülüyle bulunur.'},
+  {k:'Maliyet-Hacim-Kar',s:'Katkı payı oranı nedir?',c:'Birim katkı payının birim satış fiyatına oranıdır; TL bazında başabaş = Sabit Maliyet / Katkı Payı Oranı ile hesaplanır.'},
+  {k:'Finans',s:'Bugünkü değer (PV) nedir?',c:'Gelecekteki bir nakit akışının, belirli iskonto oranıyla bugüne indirgenmiş değeridir: PV = GD / (1+r)^n.'},
+  {k:'Finans',s:'Gelecek değer (FV) nasıl hesaplanır?',c:'FV = BD × (1+r)^n; bugünkü bir tutarın, bileşik faizle n dönem sonra ulaşacağı değerdir.'},
+  {k:'Finans',s:'Anüite (annuity) nedir?',c:'Eşit dönemlerde ödenen/alınan eşit tutarlı nakit akışları serisidir (kira, kredi taksiti); bugünkü/gelecek değeri anüite formülleriyle bulunur.'},
+  {k:'Finans',s:'Karlılık endeksi (PI) nedir?',c:'Gelecek nakit akışlarının bugünkü değerinin ilk yatırıma oranıdır; PI > 1 ise proje kabul edilir (NPV > 0 ile aynı sonucu verir).'},
+  {k:'Finans',s:'Riskten kaçınan yatırımcı ne bekler?',c:'Aynı getiride düşük riskli; aynı riskte yüksek getirili yatırımı tercih eder, ilave risk için ilave getiri (risk primi) talep eder.'},
+  {k:'Finans',s:'Sistematik ve sistematik olmayan risk farkı nedir?',c:'Sistematik risk (piyasa riski) çeşitlendirmeyle yok edilemez; sistematik olmayan (firmaya özgü) risk portföy çeşitlendirmesiyle azaltılabilir.'},
+  {k:'Finans',s:'Beta katsayısı neyi ölçer?',c:'Bir varlığın getirisinin piyasa getirisine duyarlılığını ölçer; beta>1 piyasadan daha oynak, beta<1 daha az oynak demektir.'},
+  {k:'KDV',s:'KDV\'de matraha dahil olan unsurlar nelerdir?',c:'Teslim bedeli yanında vade farkı, fiyat farkı, faiz, prim, ambalaj, taşıma-yükleme gibi her türlü menfaat ve hizmet karşılıkları matraha dahildir.'},
+  {k:'KDV',s:'KDV\'de matraha dahil olmayan nedir?',c:'Fatura üzerinde ayrıca gösterilen ticari teamüle uygun iskontolar ve hesaplanan KDV\'nin kendisi matraha dahil edilmez.'},
+  {k:'KDV',s:'İthalatta KDV matrahı nasıl belirlenir?',c:'İthal edilen malın gümrük vergisi tarhına esas kıymeti + gümrük vergisi ve diğer vergiler + gümrüğe kadarki masraflar toplamı KDV matrahını oluşturur.'},
+  {k:'KDV',s:'Kısmi istisna ile tam istisna farkı nedir?',c:'Tam istisnada (ihracat gibi) yüklenilen KDV indirilir/iade edilir; kısmi istisnada ise yüklenilen KDV indirilemez, maliyet/gider yazılır.'},
+  {k:'Gelir Vergisi',s:'Gelir vergisinde artan oranlı tarife ne demektir?',c:'Matrah arttıkça uygulanan vergi oranının da dilimler halinde yükselmesidir; her dilim kendi oranıyla vergilendirilir.'},
+  {k:'Gelir Vergisi',s:'Ücrette gerçek ve güvenceli (asgari geçim) ayrımı nasıldır?',c:'Ücret, safi tutar üzerinden (SGK primi, işsizlik primi düşülerek) vergilenir; asgari ücrete isabet eden kısım gelir ve damga vergisinden istisnadır.'},
+  {k:'Gelir Vergisi',s:'Zirai kazançta stopaj nasıldır?',c:'Gerçek usulde vergilenmeyen çiftçilerin ürün satışlarından, alıcı tarafından tevkifat (stopaj) yapılır; bu, çiftçinin nihai vergisi sayılabilir.'},
+  {k:'Kurumlar Vergisi',s:'Tam ve dar mükellef kurum farkı nedir?',c:'Kanuni veya iş merkezi Türkiye\'de olan kurumlar tam mükelleftir ve dünya kazancı üzerinden; olmayanlar dar mükelleftir ve sadece Türkiye\'de elde ettikleri kazançtan vergilendirilir.'},
+  {k:'Kurumlar Vergisi',s:'Emisyon primi istisnası nedir?',c:'Anonim şirketlerin pay senedini itibari değerinin üzerinde ihraç etmesinden doğan kazanç (emisyon primi) kurumlar vergisinden istisnadır.'},
+  {k:'Kurumlar Vergisi',s:'Yurt dışı iştirak kazancı istisnası şartı nedir?',c:'Belirli oranda pay, asgari elde tutma süresi ve yurt dışında belli bir vergi yükü taşıması gibi şartların sağlanması halinde yurt dışı iştirak kazancı istisna olabilir.'},
+  {k:'Denetim',s:'Tespit (bulgu) riski nedir?',c:'Var olan önemli bir yanlışlığın denetim prosedürleriyle tespit edilememesi riskidir; denetçi bunu prosedür tür/zaman/kapsamıyla yönetir.'},
+  {k:'Denetim',s:'Denetim riski bileşenleri nelerdir?',c:'Yapısal (doğal) risk × kontrol riski × tespit riski. İlk ikisi işletmeye ait, sonuncusu denetçinin kontrolündedir.'},
+  {k:'Denetim',s:'Önemlilik (materiality) ile denetim riski ilişkisi nedir?',c:'Önemlilik düzeyi düştükçe (daha küçük yanlışlıklar önemli sayıldıkça) denetçi daha fazla kanıt toplayarak tespit riskini düşürmelidir.'},
+  {k:'Denetim',s:'İç kontrolün beş bileşeni nedir? (COSO)',c:'Kontrol ortamı, risk değerlendirme, kontrol faaliyetleri, bilgi-iletişim ve izleme.'},
+  {k:'Denetim',s:'Teyit (confirmation) prosedürü nedir?',c:'Bakiye/işlemlerin doğruluğunun, üçüncü taraflardan (banka, müşteri, satıcı) doğrudan yazılı olarak teyit alınmasıyla test edilmesidir.'},
+  {k:'Denetim',s:'Yeniden hesaplama (recalculation) nedir?',c:'Belge ve kayıtlardaki matematiksel doğruluğun denetçi tarafından bağımsızca yeniden hesaplanarak kontrol edilmesidir.'},
+  {k:'TMS/TFRS',s:'Gerçeğe uygun değer (fair value) nedir?',c:'Piyasa katılımcıları arasında, ölçüm tarihinde olağan bir işlemde bir varlığın satışından elde edilecek veya borcun devrinde ödenecek fiyattır (TFRS 13).'},
+  {k:'TMS/TFRS',s:'TMS 40 yatırım amaçlı gayrimenkul nedir?',c:'Kira geliri veya değer artışı ya da her ikisi için elde tutulan, işletmede kullanılmayan veya satış için üretilmeyen gayrimenkuldür; maliyet veya gerçeğe uygun değer modeliyle ölçülür.'},
+  {k:'TMS/TFRS',s:'TMS 38 maddi olmayan duran varlık şartı nedir?',c:'Tanımlanabilir, kontrol edilebilir ve gelecekte ekonomik fayda sağlaması beklenen fiziki olmayan varlıktır (lisans, patent, yazılım); içsel oluşturulan şerefiye aktifleştirilemez.'},
+  {k:'TMS/TFRS',s:'TFRS 5 satış amaçlı elde tutulan varlık nedir?',c:'Defter değeri sürdürülen kullanım yerine öncelikli olarak satışla geri kazanılacak varlık/duran varlık grubudur; amortismanı durur, düşük değerle ölçülür.'},
+  {k:'TMS/TFRS',s:'Kapsamlı gelir (comprehensive income) nedir?',c:'Dönem kâr/zararı ile diğer kapsamlı gelir (yeniden değerleme fonu, bazı türev/yabancı para farkları) toplamıdır.'},
+  {k:'İş Hukuku',s:'İşe iade davası şartları nelerdir?',c:'İş güvencesi kapsamında (belirli çalışan sayısı, en az 6 ay kıdem, belirsiz süreli sözleşme) geçerli sebep gösterilmeden yapılan fesihte, işçi işe iade davası açabilir.'},
+  {k:'İş Hukuku',s:'Haklı nedenle derhal fesih nedir?',c:'Sağlık, ahlak ve iyiniyet kurallarına aykırılık veya zorlayıcı sebeplerle, bildirim süresi beklenmeden sözleşmenin derhal feshedilmesidir (İş K. 24-25).'},
+  {k:'İş Hukuku',s:'Deneme süresi ne kadardır?',c:'Kural olarak en çok 2 ay (toplu iş sözleşmesiyle 4 aya kadar); bu sürede taraflar bildirimsiz ve tazminatsız fesih yapabilir.'},
+  {k:'Ticaret Hukuku',s:'Tacir olmanın hükümleri nelerdir?',c:'Basiretli iş adamı gibi davranma, ticari defter tutma, iflasa tabi olma, ticari örf-adete tabi olma ve ticaret unvanı kullanma gibi sonuçlar doğar.'},
+  {k:'Ticaret Hukuku',s:'Ticari işletme rehni nedir?',c:'Ticari işletmenin, teslim şartı olmadan (sicile tescille) menkul rehni olarak kredi teminatı gösterilebilmesidir.'},
+  {k:'Ticaret Hukuku',s:'Haksız rekabet nedir?',c:'Aldatıcı veya dürüstlük kuralına aykırı davranışlarla rakipler ve müşteriler arasındaki ilişkileri etkileyen ekonomik davranışlardır; TTK\'da düzenlenir.'},
+  {k:'Ticaret Hukuku',s:'Cari hesap sözleşmesi nedir?',c:'İki kişinin, karşılıklı alacaklarını ayrı ayrı istemekten vazgeçip tek bir hesaba kaydetmeyi ve bakiyeyi talep etmeyi kararlaştırdıkları sözleşmedir.'},
+  {k:'İcra-İflas',s:'İtirazın iptali ile itirazın kaldırılması farkı nedir?',c:'İtirazın kaldırılması icra mahkemesinde (belge güçlü delil ise) hızlı yoldur; itirazın iptali ise genel mahkemede açılan, daha kapsamlı yargılama gerektiren davadır.'},
+  {k:'İcra-İflas',s:'Sıra cetveli nedir?',c:'İcra/iflasta satıştan elde edilen paranın, alacaklılar arasında rehin ve imtiyaz durumuna göre hangi sırayla dağıtılacağını gösteren cetveldir.'},
+  {k:'İcra-İflas',s:'Tasarrufun iptali davası ne amaçlar?',c:'Borçlunun, alacaklılardan mal kaçırmak için yaptığı (bağış, düşük bedelli satış gibi) tasarrufların, alacaklı yönünden hükümsüz sayılmasını amaçlar.'},
+  {k:'Vergi Usul',s:'Takdir komisyonunun görevi nedir?',c:'Matrahın idarece belirlenmesi gereken hallerde (re\'sen tarh) matrah/kıymet takdir eden; ayrıca emsal bedel ve bazı değer tespitlerini yapan komisyondur.'},
+  {k:'Vergi Usul',s:'Vergi hatası ve düzeltme nedir?',c:'Hesap hataları veya vergilendirme hataları gibi açık hataların, dava yoluna gitmeden idarece düzeltme talebiyle giderilmesidir.'},
+  {k:'Vergi Usul',s:'Fatura düzenleme süresi nedir?',c:'Fatura, malın teslimi veya hizmetin yapıldığı tarihten itibaren azami 7 gün içinde düzenlenir; bu süre geçerse hiç düzenlenmemiş sayılır.'},
+  {k:'Vergi Usul',s:'Fatura yerine geçen belgeler nelerdir?',c:'Perakende satış vesikaları (fiş), gider pusulası, müstahsil makbuzu, serbest meslek makbuzu ve ücret bordrosu gibi belgeler duruma göre fatura yerine geçer.'},
+  {k:'Vergi Usul',s:'Gider pusulası ne zaman düzenlenir?',c:'Vergiden muaf esnaftan veya vergi mükellefi olmayan kişilerden yapılan mal/hizmet alımlarında, alıcı tarafından düzenlenir ve stopaj gerektirebilir.'},
+  {k:'ÖTV',s:'ÖTV matrahı KDV\'den önce mi sonra mı?',c:'ÖTV, KDV matrahına dahildir; yani önce ÖTV hesaplanır, ÖTV dahil bedel üzerinden KDV hesaplanır.'},
+  {k:'MTV',s:'MTV gider olarak indirilebilir mi?',c:'Binek otomobillere ait MTV, kural olarak gelir/kurumlar vergisi matrahından gider olarak indirilemez (ticari amaçlı taşıtlarda istisnalar olabilir).'},
+  {k:'Teşvikler',s:'Teknokent (teknoloji geliştirme bölgesi) istisnası nedir?',c:'Bölgede yürütülen yazılım, Ar-Ge ve tasarım faaliyetlerinden doğan kazançlar, süreli olarak gelir/kurumlar vergisinden istisnadır; personel ücretlerinde de destek uygulanır.'},
+  {k:'Teşvikler',s:'Genç girişimci kazanç istisnası nedir?',c:'Belirli yaş altındaki ilk kez işe başlayan mükelleflere, kazancın belirli tutarına kadar gelir vergisi istisnası tanınmasıdır.'},
+  {k:'SGK',s:'İsteğe bağlı sigorta nedir?',c:'Zorunlu sigortalı olmayan kişilerin, primlerini kendileri ödeyerek uzun vadeli sigorta kolları (emeklilik) açısından sigortalı sayılmasıdır.'},
+  {k:'SGK',s:'4a, 4b, 4c ayrımı nedir?',c:'4/a hizmet akdiyle çalışanlar (eski SSK), 4/b kendi nam-hesabına çalışanlar (eski Bağ-Kur), 4/c kamu görevlileridir (eski Emekli Sandığı).'},
+  {k:'E-Belge',s:'e-Fatura iptali ve itirazı nasıl yapılır?',c:'Düzenlenen e-Faturaya, belirli süre içinde harici yöntemlerle (noter, KEP, taahhütlü mektup) veya GİB sistemi üzerinden itiraz/iptal talebi iletilebilir.'},
+  {k:'E-Belge',s:'e-Defter saklama süresi nedir?',c:'e-Defter ve berat dosyaları, ilgili yılı izleyen ve VUK\'taki zamanaşımı/saklama sürelerine uygun şekilde (genelde 5 yıl ve TTK yönünden 10 yıl) muhafaza edilir.'},
+  {k:'İhracat',s:'Mikro ihracat (ETGB) nedir?',c:'Belirli değer/ağırlık altındaki gönderilerin, gümrük beyannamesi yerine Elektronik Ticaret Gümrük Beyannamesi ile hızlı ihraç edilmesidir.'},
+  {k:'İhracat',s:'Serbest bölgelerde vergi avantajı nedir?',c:'Serbest bölgelerde üretim yapan ve şartları taşıyan firmalara, imalat kazancında gelir/kurumlar vergisi ve belirli işlemlerde KDV istisnaları uygulanabilir.'},
+  {k:'Konkordato',s:'Konkordato komiseri ne yapar?',c:'Borçlunun faaliyetlerini gözetir, alacaklıları ve malvarlığını inceler, konkordato projesinin uygulanabilirliği hakkında mahkemeye rapor sunar.'},
+  {k:'Tasfiye',s:'Tasfiyeden dönülebilir mi?',c:'Malvarlığının dağıtımına başlanmamış olması şartıyla, genel kurul kararıyla tasfiyeden dönülüp şirketin faaliyetine devam etmesine karar verilebilir.'},
+  {k:'Kurumsal Yönetim',s:'Vekâlet (temsil) sorunu nedir?',c:'Yöneticiler (vekil) ile pay sahipleri (asil) arasındaki çıkar farklılığından doğan, yöneticinin kendi çıkarını gözetme riskidir; kurumsal yönetim bunu azaltmayı amaçlar.'},
+  {k:'Kurumsal Yönetim',s:'Kamuyu aydınlatma ilkesi nedir?',c:'Şirketle ilgili finansal ve önemli bilgilerin, tüm pay sahiplerine eşit, zamanında ve doğru şekilde açıklanmasıdır (KAP üzerinden).'},
+  {k:'Değerleme',s:'Borsa rayici nedir?',c:'Değerlemeden önceki son işlem gününde, borsada oluşan ortalama fiyattır; borsada işlem gören kıymetlerin değerlemesinde kullanılır.'},
+  {k:'Değerleme',s:'Rayiç bedel nedir?',c:'Bir iktisadi kıymetin, değerleme günündeki normal alım-satım (piyasa) değeridir.'},
+  {k:'Muhasebe',s:'Kasa sayım fazlası nasıl kaydedilir?',c:'Fiili kasa, kayıttan fazlaysa 100 Kasa borç / 397 Sayım ve Tesellüm Fazlaları alacak çalışır; neden bulununca ilgili hesaba aktarılır.'},
+  {k:'Muhasebe',s:'Verilen çekler ve ödeme emirleri (103) hesabı nasıl çalışır?',c:'İşletme çek düzenlediğinde 103 alacak (pasif düzenleyici); çek bankadan ödendiğinde 103 borç / 102 Bankalar alacak çalışır.'},
+  {k:'Nakit Akış',s:'Serbest nakit akışı (FCF) nedir?',c:'Faaliyet nakit akışından, işletmenin faaliyetini sürdürmek için gereken yatırım harcamalarının (CapEx) düşülmesiyle bulunan, dağıtılabilir nakittir.'},
+  {k:'Finans',s:'Temettü verimi (dividend yield) nedir?',c:'Hisse başına ödenen temettünün, hisse fiyatına oranıdır; yatırımcıya nakit getiri oranını gösterir.'},
+  {k:'Finans',s:'F/K (fiyat/kazanç) oranı nedir?',c:'Hisse fiyatının hisse başına kâra oranıdır; yatırımcıların 1 TL kâr için ödemeye razı olduğu tutarı ve göreli değerlemeyi gösterir.'},
+  {k:'Finans',s:'PD/DD (piyasa değeri/defter değeri) nedir?',c:'Şirketin piyasa değerinin özkaynak (defter) değerine oranıdır; 1\'in üzeri piyasanın şirkete defter değerinden fazla değer biçtiğini gösterir.'},
+  {k:'Vergi Cezaları',s:'İzaha davet nedir?',c:'Vergi ziyaına işaret eden ön tespitlerde, mükellefe inceleme öncesi açıklama (izah) fırsatı verilmesi; uygun izah veya düzeltmeyle daha düşük ceza uygulanmasıdır.'},
+  {k:'Vergi Usul',s:'Pişmanlık zammı nasıl hesaplanır?',c:'Pişmanlıkla beyanda, verginin normal vade tarihinden ödeme tarihine kadar gecikme zammı oranında pişmanlık zammı hesaplanır; vergi ziyaı cezası kesilmez.'},
+  {k:'KDV',s:'Devreden KDV nedir?',c:'Bir dönemde indirilecek KDV\'nin hesaplanan KDV\'den fazla olması halinde, aradaki fark sonraki döneme "devreden KDV" olarak aktarılır (iade hakkı doğuran işlem yoksa nakden alınmaz).'},
+  {k:'KDV',s:'Sorumlu sıfatıyla KDV (2 No.lu beyanname) ne zaman verilir?',c:'Yurt dışından alınan hizmetler ve tam/kısmi tevkifata tabi işlemlerde, KDV\'yi alıcı sorumlu sıfatıyla 2 No.lu KDV beyannamesiyle beyan edip öder.'},
+  {k:'Gelir Vergisi',s:'Gayrimenkul değer artışı kazancında endeksleme nedir?',c:'Elden çıkarılan gayrimenkulün maliyet bedeli, iktisap ve satış ayları arasındaki Yİ-ÜFE artışıyla (belirli oranı aşması şartıyla) endekslenerek gerçek kazanç bulunur.'},
+  {k:'Maliyet',s:'Faaliyet tabanlı maliyetleme (ABC) nedir?',c:'Genel giderlerin, geleneksel tek anahtar yerine faaliyetlere ve maliyet etkenlerine (cost driver) göre dağıtılarak daha doğru birim maliyet bulunmasıdır.'},
+  {k:'Maliyet',s:'Batık maliyet (sunk cost) nedir?',c:'Geçmişte katlanılmış ve artık geri alınamayan; bu nedenle geleceğe yönelik kararlarda dikkate alınmaması gereken maliyettir.'},
+  {k:'Maliyet',s:'Fırsat maliyeti nedir?',c:'Bir seçenek tercih edildiğinde, vazgeçilen en iyi alternatifin sağlayacağı net faydadır.'},
+  {k:'TMS/TFRS',s:'TMS 23 borçlanma maliyetleri ne zaman aktifleştirilir?',c:'Özellikli bir varlığın (kullanıma/satışa hazır hale gelmesi uzun süren) elde edilmesiyle doğrudan ilişkili borçlanma maliyetleri, o varlığın maliyetine eklenir.'},
+  {k:'TMS/TFRS',s:'TMS 19 çalışanlara sağlanan faydalar neyi kapsar?',c:'Kısa vadeli faydalar, işten çıkarma tazminatları ve kıdem tazminatı gibi işten ayrılma sonrası faydaların muhasebeleştirilmesini düzenler.'},
+  {k:'TMS/TFRS',s:'TMS 21 kur değişim etkileri nasıl ele alınır?',c:'Parasal kalemler kapanış kuruyla değerlenir, kur farkları kâr/zarara yansır; parasal olmayan kalemler işlem tarihi kuruyla taşınır.'},
+  {k:'Denetim',s:'Bağımsızlığı tehdit eden unsurlar nelerdir?',c:'Öz-çıkar, öz-denetim, taraf tutma, yakınlık (samimiyet) ve yıldırma (korkutma) tehditleridir; her biri için önlem alınmalıdır.'},
+  {k:'Denetim',s:'Kalite kontrol sistemi neyi kapsar?',c:'Etik/bağımsızlık, müşteri kabulü, insan kaynakları, denetimin yürütülmesi ve izleme unsurlarını kapsayan, denetim şirketi düzeyinde bir sistemdir.'},
+  {k:'İş Hukuku',s:'Ulusal bayram ve genel tatil ücreti nasıldır?',c:'Bu günlerde çalışılmazsa ücret tam ödenir; çalışılırsa, çalışılan her gün için bir günlük ücret ayrıca (ilave) ödenir.'},
+  {k:'İş Hukuku',s:'Analık (doğum) izni ne kadardır?',c:'Kadın işçiye doğumdan önce 8, doğumdan sonra 8 hafta olmak üzere toplam 16 hafta ücretli izin verilir (çoğul gebelikte önceki süre artar).'},
+  {k:'Muhasebe',s:'Ciro primi (satış primi) nasıl belgelenir?',c:'Alıcının belirli ciroyu aşması nedeniyle satıcının verdiği prim, ayrı bir hizmet sayılır ve alıcı tarafından fatura düzenlenip KDV hesaplanması gerekir.'},
+  {k:'Muhasebe',s:'Sabit kıymet yenileme fonu nedir?',c:'Satılan amortismana tabi kıymetin kârının, yenisinin alımında kullanılmak üzere 3 yıl pasifte (özel fon) bekletilip vergilendirmenin ertelenmesidir.'},
+  {k:'Vergi Usul',s:'Elektronik tebligat (e-tebligat) nedir?',c:'Vergi dairesi işlemlerine ilişkin tebliğlerin, mükellefin elektronik tebligat adresine yapılması ve belirli süre sonunda tebliğ edilmiş sayılmasıdır.'},
+  {k:'Kurumlar Vergisi',s:'Kurum geçici vergi oranı yıllıktan farklı mı?',c:'Hayır; geçici vergi, cari dönem kurum kazancına yıllık kurumlar vergisi oranı uygulanarak hesaplanır ve yıllık vergiden mahsup edilir.'},
+  {k:'Konsolidasyon',s:'TFRS 10\'da kontrol nasıl tanımlanır?',c:'Yatırımcının; yatırım yaptığı işletmenin getirilerine maruz kalması, bu getirileri etkileme gücü ve gücünü getirileri etkilemek için kullanabilmesi halinde kontrol vardır.'},
+  {k:'Konsolidasyon',s:'Kontrol gücü olmayan pay (azınlık payı) nedir?',c:'Bağlı ortaklığın, ana ortaklığa ait olmayan özkaynak payıdır; konsolide bilançoda özkaynak içinde ayrı gösterilir.'},
+  {k:'Konsolidasyon',s:'Grup içi işlemler neden elimine edilir?',c:'Grubu tek bir işletme gibi sunmak için; grup içi satış, alacak-borç ve gerçekleşmemiş kârlar konsolidasyonda karşılıklı olarak elimine edilir.'},
+  {k:'Konsolidasyon',s:'İştiraklerde özkaynak yöntemi nedir?',c:'Önemli etkinin olduğu iştirak, ilk maliyetle kaydedilip sonradan iştirakin kâr/zararından işletmenin payı kadar defter değeri artırılıp azaltılır (TMS 28).'},
+  {k:'Konsolidasyon',s:'Şerefiye konsolidasyonda nasıl doğar?',c:'Bağlı ortaklık için ödenen bedelin, edinilen tanımlanabilir net varlıkların gerçeğe uygun değerindeki paya göre fazlası şerefiye olarak konsolide bilançoda yer alır.'},
+  {k:'Konsolidasyon',s:'İş birleşmeleri hangi yöntemle muhasebeleştirilir?',c:'TFRS 3\'e göre satın alma (edinim) yöntemiyle; edinilen varlık ve yükümlülükler gerçeğe uygun değerle ölçülür.'},
+  {k:'Türev Araçlar',s:'Forward sözleşme nedir?',c:'İki tarafın, belirli bir varlığı gelecekte önceden anlaşılan fiyat ve tarihte alıp satmayı taahhüt ettiği, tezgahüstü (standart olmayan) vadeli işlem sözleşmesidir.'},
+  {k:'Türev Araçlar',s:'Futures ile forward farkı nedir?',c:'Futures borsada işlem gören, standart ve teminatlı (günlük uzlaşmalı) sözleşmedir; forward ise tezgahüstü, esnek ve karşı taraf riski taşıyan sözleşmedir.'},
+  {k:'Türev Araçlar',s:'Opsiyon sözleşmesinde alıcının hakkı nedir?',c:'Opsiyon alıcısı, bir varlığı belirli fiyattan alma (call) veya satma (put) hakkına sahiptir ama yükümlülüğü yoktur; bunun için prim öder.'},
+  {k:'Türev Araçlar',s:'Swap nedir?',c:'İki tarafın, belirli bir süre boyunca nakit akışlarını (örn. sabit faizi değişken faizle veya bir para birimini diğeriyle) değiştirdiği türev sözleşmedir.'},
+  {k:'Türev Araçlar',s:'Riskten korunma (hedging) muhasebesi neyi sağlar?',c:'Korunma aracı ile korunan kalemin kâr/zarar etkilerinin aynı dönemde eşleştirilerek, dalgalanmanın finansal tablolarda yapay kâr/zarar yaratmasını önler (TFRS 9).'},
+  {k:'Türev Araçlar',s:'Gerçeğe uygun değer riskinden korunma nedir?',c:'Bilançodaki bir varlık/borcun gerçeğe uygun değerindeki değişim riskine karşı türevle korunma; hem korunan kalem hem araç değer değişimi kâr/zarara yansır.'},
+  {k:'Dış Ticaret',s:'Akreditif (L/C) nedir?',c:'İthalatçının bankasının, belirlenen belgelerin ibrazı karşılığında ihracatçıya ödeme yapmayı taahhüt ettiği, güvenli bir uluslararası ödeme yöntemidir.'},
+  {k:'Dış Ticaret',s:'Vesaik mukabili ödeme nedir?',c:'İhracatçının sevk belgelerinin, banka aracılığıyla ithalatçıya ödeme (veya poliçe kabulü) karşılığında teslim edildiği ödeme şeklidir.'},
+  {k:'Dış Ticaret',s:'FOB ve CIF farkı nedir? (Incoterms)',c:'FOB\'da satıcının sorumluluğu malı gemiye yüklemekle biter (navlun-sigorta alıcıya ait); CIF\'te satıcı ayrıca navlun ve sigortayı da üstlenir.'},
+  {k:'Dış Ticaret',s:'EXW (ex works) ne anlama gelir?',c:'Satıcının, malı kendi işyerinde alıcının emrine hazır etmesiyle sorumluluğunun bittiği, en az satıcı yükümlülüğü içeren teslim şeklidir.'},
+  {k:'Dış Ticaret',s:'Gümrük kıymeti nasıl belirlenir?',c:'Öncelikle satış bedeli (fiilen ödenen/ödenecek fiyat) yöntemiyle; bu uygulanamıyorsa aynı/benzer eşya kıymeti, indirgeme veya hesaplanmış kıymet yöntemleri sırayla kullanılır.'},
+  {k:'Dış Ticaret',s:'Antrepo rejimi nedir?',
+  c:'İthal eşyasının, vergileri ödenmeden ve serbest dolaşıma girmeden gümrük antreposunda depolanmasına imkan veren rejimdir.'},
+  {k:'Dış Ticaret',s:'Geçici ithalat rejimi nedir?',c:'Eşyanın belirli süreyle, kısmen veya tamamen vergi muafiyetiyle ithal edilip sonra yeniden ihraç edilmesini sağlayan rejimdir (fuar eşyası, kiralık makine vb.).'},
+  {k:'Kooperatif',s:'Kooperatiflerde risturn nedir?',c:'Ortaklarla yapılan işlemlerden doğan olumlu gelir-gider farkının, ortaklara işlem hacmiyle orantılı geri ödenmesidir; şartları sağlıyorsa kurumlar vergisi dışıdır.'},
+  {k:'Kooperatif',s:'Kooperatiflerde kurumlar vergisi muafiyeti şartı nedir?',c:'Ana sözleşmede; sermaye üzerinden kazanç dağıtılmaması, yönetim kuruluna kazanç payı verilmemesi, yedeklerin ortaklara dağıtılmaması ve sadece ortakla işlem yapılması şartları aranır.'},
+  {k:'Dernek-Vakıf',s:'Dernek ve vakıfların iktisadi işletmesi nasıl vergilenir?',c:'Dernek/vakfın kendisi kurumlar vergisi mükellefi değildir; ancak devamlı ticari faaliyet yürüten iktisadi işletmesi kurumlar vergisine tabidir.'},
+  {k:'Dernek-Vakıf',s:'Kamuya yararlı dernek / vergi muafiyetli vakıf ne sağlar?',c:'Bu statüdeki dernek/vakıflara yapılan bağışların indirilebilmesi ve bazı vergi-harç istisnaları gibi avantajlar sağlanır; statü Cumhurbaşkanı kararıyla verilir.'},
+  {k:'Adli Muhasebe',s:'Adli muhasebe (forensic accounting) nedir?',c:'Hukuki uyuşmazlık, hile ve yolsuzluk incelemelerinde muhasebe-denetim tekniklerinin kullanılarak delil üretilmesi ve bilirkişilik yapılmasıdır.'},
+  {k:'Adli Muhasebe',s:'Hile denetimi ile bağımsız denetim farkı nedir?',c:'Bağımsız denetim finansal tabloların doğruluğuna makul güvence verir; hile denetimi ise belirli bir hile şüphesini derinlemesine araştırıp ispatlamaya odaklanır.'},
+  {k:'Adli Muhasebe',s:'Kırmızı bayrak (red flag) nedir?',c:'Hile olasılığına işaret eden uyarı belirtileridir (açıklanamayan düzeltmeler, lüks yaşam, belge eksikliği, sürekli acele ödemeler gibi).'},
+  {k:'Adli Muhasebe',s:'Benford Yasası denetimde ne işe yarar?',c:'Doğal veri kümelerinde baştaki rakamların beklenen dağılımından sapmaları tespit ederek, uydurma/manipüle edilmiş sayıların bulunmasına yardımcı olur.'},
+  {k:'İleri Denetim',s:'Bilgi teknolojileri (BT) denetimi neyi kapsar?',c:'Genel BT kontrolleri (erişim, değişiklik yönetimi, yedekleme) ile uygulama kontrollerinin, finansal verinin güvenilirliğini sağlayacak şekilde test edilmesidir.'},
+  {k:'İleri Denetim',s:'Sürekli denetim (continuous auditing) nedir?',c:'Otomatik araçlarla işlemlerin gerçek zamanlı/sık aralıklarla izlenip anomalilerin anında tespit edilmesidir.'},
+  {k:'İleri Denetim',s:'Analitik inceleme oran analizinde neye bakılır?',c:'Brüt kâr marjı, stok devir hızı, alacak devri gibi oranların dönemler/emsaller arası beklenmedik değişimleri incelenerek olası yanlışlık/hile aranır.'},
+  {k:'İleri Denetim',s:'Örnekleme riski nedir?',c:'Örneklemden çıkarılan sonucun, tüm kitle incelenseydi ulaşılacak sonuçtan farklı olması ihtimalidir; örneklem büyüklüğü artırılarak azaltılır.'},
+  {k:'Kamu Maliyesi',s:'Vergilendirmede mali güce göre alma ilkesi nedir?',c:'Herkesin, ödeme gücü (gelir, servet, harcama) ile orantılı olarak vergilendirilmesidir; artan oranlı tarife bu ilkenin bir yansımasıdır.'},
+  {k:'Kamu Maliyesi',s:'Dolaysız ve dolaylı vergi farkı nedir?',c:'Dolaysız vergi doğrudan gelir/servet üzerinden alınır ve yansıtılması zordur (gelir, kurumlar vergisi); dolaylı vergi harcama üzerinden alınır ve fiyata yansıtılır (KDV, ÖTV).'},
+  {k:'Kamu Maliyesi',s:'Verginin yansıması (incidence) nedir?',c:'Yasal mükellefin ödediği verginin, fiyat mekanizmasıyla başkasına (tüketiciye) devredilmesi sürecidir; ileriye veya geriye yansıma olabilir.'},
+  {k:'Kamu Maliyesi',s:'Laffer eğrisi neyi anlatır?',c:'Vergi oranı ile toplam vergi geliri arasındaki ilişkiyi; belirli bir orandan sonra oran artışının, faaliyeti/beyanı azaltarak toplam geliri düşürebileceğini gösterir.'},
+  {k:'Enflasyon Düzeltmesi',s:'Reel olmayan finansman maliyeti (RÖFM) nedir?',c:'Enflasyon düzeltmesinde, borçlanmayla finanse edilen stok ve maddi duran varlığın maliyetinden ayrıştırılan, enflasyondan kaynaklı finansman gideri kısmıdır; maliyetten düşülür.'},
+  {k:'Enflasyon Düzeltmesi',s:'Düzeltmede taşıma katsayısı nasıl bulunur?',c:'Düzeltmeye esas tarihteki Yİ-ÜFE\'nin, kıymetin düzeltmeye esas alındığı (edinim) tarihteki Yİ-ÜFE\'ye bölünmesiyle bulunur; kıymet bu katsayıyla çarpılır.'},
+  {k:'Muhasebe',s:'Maddi duran varlık alımında yüklenilen KDV nasıl işlenir?',c:'İndirim hakkı olan mükellefte 191 İndirilecek KDV\'ye alınır; indirim hakkı yoksa (kısmi istisna faaliyeti vb.) maliyete eklenir.'},
+  {k:'Muhasebe',s:'Bağış ve yardımların muhasebe kaydı nasıldır?',c:'770/632 gibi gider hesabına yazılır; ancak vergisel sınırı aşan kısım beyannamede KKEG olarak matraha eklenir.'},
+  {k:'Muhasebe',s:'Kâr yedekleri ile sermaye yedekleri farkı nedir?',c:'Kâr yedekleri dönem kârından ayrılır (yasal, statü, olağanüstü yedek); sermaye yedekleri ise sermaye işlemlerinden doğar (hisse senedi ihraç primleri, iptal kârları).'},
+  {k:'Muhasebe',s:'Ödenmemiş sermaye hesabı nasıl çalışır?',c:'501 Ödenmemiş Sermaye, taahhüt edilip henüz getirilmemiş sermayeyi gösteren, 500 Sermaye\'yi düzenleyici (aktif karakterli) bir hesaptır; ödeme yapıldıkça azalır.'},
+  {k:'Muhasebe',s:'Menkul kıymet alım-satım kârı nasıl kaydedilir?',c:'Alış 110/118/240 gibi hesaba; satışta oluşan kâr 645 Menkul Kıymet Satış Kârları, zarar 655 Menkul Kıymet Satış Zararları hesabına yazılır.'},
+  {k:'KDV',s:'İade edilecek KDV ile devreden KDV farkı nedir?',c:'Devreden KDV sadece sonraki döneme indirilmek üzere aktarılır; iade edilecek KDV ise ihracat/tevkifat gibi iade hakkı doğuran işlemden kaynaklanır ve nakden/mahsuben alınabilir.'},
+  {k:'Gelir Vergisi',s:'Yıllara sari inşaatta gelir ne zaman beyan edilir?',c:'Kâr/zarar işin bittiği yıl kesin olarak tespit edilip o yılın geliri sayılarak beyan edilir; yıl içi hakedişlerden yapılan %5 stopaj bu vergiden mahsup edilir.'},
+  {k:'Vergi Usul',s:'Değerleme günü nedir?',c:'İktisadi kıymetlerin değerlemesinde esas alınan gündür; genellikle hesap döneminin son günüdür (bilanço günü).'},
+  {k:'Vergi Usul',s:'Özel hesap dönemi nedir?',c:'Takvim yılı yerine, faaliyetin niteliği gereği (mevsimsellik vb.) idarece izin verilen 12 aylık farklı bir hesap dönemidir.'},
+  {k:'Denetim',s:'Denetçi görüşünü etkilemeyen "dikkat çekme paragrafı" nedir?',c:'Görüşü değiştirmeden, finansal tablolarda yeterince açıklanmış ama kullanıcı için önemli bir hususa dikkat çekmek için rapora eklenen paragraftır.'},
+  {k:'Denetim',s:'Yönetimin beyanları (assertions) nelerdir?',c:'Gerçekleşme, tamlık, doğruluk, dönemsellik, sınıflandırma (işlemler için) ile var olma, hak-yükümlülük, tamlık ve değerleme (bakiyeler için) beyanlarıdır.'},
+  {k:'İş Hukuku',s:'Çalışma belgesi ve ibraname nedir?',c:'İşten ayrılan işçiye işin türü ve süresini gösteren çalışma belgesi verilir; ibraname ise işçinin alacaklarını aldığına dair belgedir, geçerliliği sıkı şekil şartlarına bağlıdır.'},
+  {k:'Ticaret Hukuku',s:'Ticari defterlerin delil niteliği nedir?',c:'Usulüne uygun tutulan ve saklanan ticari defterler, tacir lehine ve aleyhine delil olabilir; ancak sahibi lehine delil olması için karşı tarafça çürütülmemesi gerekir.'},
+  {k:'Finans',s:'Çalışma sermayesi yönetimi neyi hedefler?',c:'Dönen varlıklar ve kısa vadeli borçların; likidite (borç ödeyebilme) ile kârlılık (atıl kaynak tutmama) arasında denge kurularak yönetilmesini hedefler.'},
+  {k:'Finans',s:'Agresif ve ihtiyatlı finansman politikası farkı nedir?',c:'Agresif politikada kısa vadeli kaynak ağırlıklıdır (düşük maliyet-yüksek risk); ihtiyatlı politikada uzun vadeli kaynak ağırlıklıdır (yüksek maliyet-düşük risk).'},
+  {k:'Maliyet',s:'Karar almada ilgili (relevant) maliyet nedir?',c:'Alınacak karara göre değişen, geleceğe yönelik nakit maliyetlerdir; batık maliyetler ve değişmeyen ortak maliyetler karar analizinde dikkate alınmaz.'},
+  {k:'Maliyet',s:'Üret ya da satın al (make or buy) kararında neye bakılır?',c:'Kendi üretim maliyetiyle satın alma fiyatı; ancak kararda sadece değişken ve ortadan kalkacak (kaçınılabilir) sabit maliyetler dikkate alınır.'},
+  {k:'TMS/TFRS',s:'TMS 41 tarımsal faaliyet nasıl ölçülür?',c:'Canlı varlıklar ve hasat anındaki tarımsal ürünler, gerçeğe uygun değerinden satış maliyetleri düşülerek ölçülür; değişimler kâr/zarara yansır.'},
+  {k:'TMS/TFRS',s:'TFRS 8 faaliyet bölümleri neyi gerektirir?',c:'İşletmenin, yönetimin kaynak dağıtımı için izlediği bölümler bazında (coğrafi/ürün) gelir, kâr ve varlık bilgilerini raporlamasını gerektirir.'},
+  {k:'Kurumlar Vergisi',s:'Nakdi sermaye artırımı indirimi nedir?',c:'Sermaye şirketlerinin nakit olarak artırdığı sermaye üzerinden hesaplanan faize kadarki tutarın belirli oranının, kurum kazancından indirilebilmesidir.'},
+  {k:'Kurumlar Vergisi',s:'Örtülü sermaye faizinin karşı tarafta durumu nedir?',c:'Örtülü sermaye üzerinden hesaplanan faiz, borç veren nezdinde dağıtılmış kâr payı sayılır; koşulları varsa iştirak kazancı istisnasından yararlanabilir (düzeltme gerekir).'},
+  {k:'Ertelenmiş Vergi',s:'İndirilebilir geçici fark nasıl oluşur?',c:'Muhasebe kârı bugün, vergi matrahından fazla gösterilip gelecekte vergi avantajı doğuran durumlarda oluşur (örn. kıdem tazminatı karşılığı); ertelenmiş vergi VARLIĞI yaratır.'},
+  {k:'Ertelenmiş Vergi',s:'Vergilendirilebilir geçici fark nasıl oluşur?',c:'Gelirin muhasebede önce, vergide sonra dikkate alınması gibi durumlarda oluşur; gelecekte daha fazla vergi doğuracağı için ertelenmiş vergi YÜKÜMLÜLÜĞÜ yaratır.'},
+  {k:'Ertelenmiş Vergi',s:'Kıdem tazminatı karşılığı hangi ertelenmiş vergiyi doğurur?',c:'Karşılık ayrıldığında gider muhasebede kabul, vergide (ödenince kabul) reddedildiğinden indirilebilir geçici fark ve ertelenmiş vergi varlığı doğar.'},
+  {k:'Ertelenmiş Vergi',s:'Ertelenmiş vergi varlığı hangi şartla kaydedilir?',c:'Gelecekte, indirilebilir farkın mahsup edilebileceği yeterli vergilendirilebilir kâr elde edilmesinin muhtemel olması şartıyla kaydedilir.'},
+  {k:'Ertelenmiş Vergi',s:'Ertelenmiş vergide hangi oran kullanılır?',c:'Farkın kapanacağı (ters döneceği) dönemde geçerli olması beklenen vergi oranı kullanılır; oran değişikliği ertelenmiş vergiyi etkiler.'},
+  {k:'Ertelenmiş Vergi',s:'Geçmiş yıl zararı ertelenmiş vergi doğurur mu?',c:'Evet; ileride mahsup edilerek vergi avantajı sağlaması muhtemelse, kullanılmamış mali zararlar için ertelenmiş vergi varlığı kaydedilir.'},
+  {k:'Banka Muhasebesi',s:'Bankalarda kredi karşılıkları nasıl ayrılır?',c:'Krediler risk grubuna göre sınıflandırılır; canlı ve donuk (takipteki) krediler için beklenen kredi zararı esasına göre özel ve genel karşılık ayrılır.'},
+  {k:'Banka Muhasebesi',s:'Bankalarda menkul değerler nasıl sınıflanır?',c:'İtfa edilmiş maliyetle ölçülenler, gerçeğe uygun değer farkı diğer kapsamlı gelire (FVOCI) ve kâr/zarara (FVTPL) yansıtılanlar olarak sınıflandırılır (TFRS 9).'},
+  {k:'Banka Muhasebesi',s:'Sermaye yeterlilik rasyosu (SYR) nedir?',c:'Bankanın özkaynaklarının, risk ağırlıklı varlıklarına oranıdır; asgari yasal oranın (Basel çerçevesinde) üzerinde tutulması gerekir.'},
+  {k:'Sigorta Muhasebesi',s:'Muallak hasar karşılığı nedir?',c:'Gerçekleşmiş ancak henüz ödenmemiş (dosyası açık) hasarlar için sigorta şirketince ayrılan karşılıktır.'},
+  {k:'Sigorta Muhasebesi',s:'Kazanılmamış primler karşılığı nedir?',c:'Tahsil edilen primin, gelecek döneme sarkan (henüz hak edilmemiş) kısmı için ayrılan ve gelecek döneme aktarılan karşılıktır.'},
+  {k:'Sigorta Muhasebesi',s:'Reasürans nedir?',c:'Sigorta şirketinin, üstlendiği riskin bir kısmını başka bir sigorta/reasürans şirketine devrederek kendi riskini paylaşmasıdır.'},
+  {k:'Kamu İhale',s:'Kamu ihalesinde temel usuller nelerdir?',c:'Açık ihale, belli istekliler arasında ihale ve pazarlık usulü temel usullerdir; asıl olan açık ihale usulüdür.'},
+  {k:'Kamu İhale',s:'Yaklaşık maliyet nedir?',c:'İdarenin, ihale konusu iş için ihaleden önce belirlediği tahmini bedeldir; ilan edilmez, tekliflerin değerlendirilmesinde ölçüt olur.'},
+  {k:'Kamu İhale',s:'Geçici ve kesin teminat farkı nedir?',c:'Geçici teminat teklif geçerlilik süresini güvenceye alır (teklif bedelinin belli oranı); kesin teminat ise sözleşme imzalayan yükleniciden sözleşme bedeli üzerinden alınır.'},
+  {k:'İnşaat',s:'Hakediş nedir?',c:'Yüklenicinin, sözleşmeye göre yaptığı iş kısmı karşılığında düzenlenen ve idarece onaylanan ödeme belgesidir; yıllara sari işlerde stopaj bu tutar üzerinden yapılır.'},
+  {k:'İnşaat',s:'Özel inşaat (yap-sat) vergilemesi nasıldır?',c:'Kendi arsası üzerine satmak için inşaat yapan, ticari kazanç elde eder; bağımsız bölümlerin satışı ticari faaliyet olarak gelir/kurumlar vergisine tabidir.'},
+  {k:'İnşaat',s:'Kat karşılığı inşaat işleminde arsa sahibi nasıl vergilenir?',c:'Arsa sahibi mülk sahibi sıfatıyla; devrin ticari organizasyon ve süreklilik taşıyıp taşımadığına göre değer artış kazancı veya ticari kazanç doğabilir.'},
+  {k:'Sürdürülebilirlik',s:'Sürdürülebilirlik raporlaması (ESG) nedir?',c:'İşletmenin çevresel (Environmental), sosyal (Social) ve yönetişim (Governance) performansını finansal olmayan biçimde raporlamasıdır.'},
+  {k:'Sürdürülebilirlik',s:'TSRS / IFRS S1-S2 neyi getirir?',c:'Sürdürülebilirlikle ilgili finansal açıklamalar (S1) ve iklimle ilgili açıklamalar (S2) için, finansal tablolarla tutarlı zorunlu raporlama çerçevesi getirir.'},
+  {k:'Sürdürülebilirlik',s:'Karbon ayak izi muhasebesi neyi ölçer?',c:'İşletmenin doğrudan (Kapsam 1), enerji kaynaklı (Kapsam 2) ve değer zinciri kaynaklı (Kapsam 3) sera gazı emisyonlarını ölçüp raporlamasını sağlar.'},
+  {k:'Dijital Vergi',s:'Dijital hizmet vergisi (DHV) nedir?',c:'Belirli hasılat eşiklerini aşan dijital hizmet sağlayıcılarının (çevrimiçi reklam, içerik, aracılık) Türkiye kaynaklı hasılatı üzerinden alınan vergidir.'},
+  {k:'Dijital Vergi',s:'Elektronik ticarette KDV sorumluluğu nedir?',c:'Yurt dışından elektronik hizmet sunanlar, Türkiye\'deki KDV mükellefi olmayan alıcılara yaptıkları hizmet için özel KDV kaydı (3074) ile beyan/ödeme yapar.'},
+  {k:'Dijital Vergi',s:'Kripto varlıkların muhasebe/vergi durumu nasıldır?',c:'Kripto varlıklar mevcut düzenlemede genelde para/menkul kıymet sayılmaz; işletmelerde stok veya maddi olmayan varlık gibi değerlendirilebilir, ticari kazanç doğurabilir (mevzuat gelişmektedir).'},
+  {k:'Meslek Etiği',s:'Muhasebe meslek etiğinin temel ilkeleri nelerdir?',c:'Dürüstlük, tarafsızlık, mesleki yeterlilik ve özen, gizlilik (sır saklama) ve mesleğe uygun davranıştır.'},
+  {k:'Meslek Etiği',s:'Bağımsızlık etik açıdan neden önemlidir?',c:'Denetçinin, görüşünü etkileyebilecek çıkar ilişkilerinden uzak durması; hem öz (gerçek) bağımsızlık hem de dışa karşı (görünürde) bağımsızlık gerekir.'},
+  {k:'Meslek Etiği',s:'Sır saklama yükümlülüğünün istisnası var mı?',c:'Kural olarak vardır; ancak kanunen açıklama zorunluluğu, yargı organının talebi veya mesleki denetim gibi hallerde bilgi paylaşımı gerekebilir.'},
+  {k:'Maliyet',s:'Direkt işçilik süre (zaman) sapması nasıl bulunur?',c:'(Standart süre − fiili süre) × standart saat ücreti ile bulunur; fiili süre standarttan uzunsa olumsuz sapma oluşur.'},
+  {k:'Maliyet',s:'Genel üretim gideri bütçe sapması nedir?',c:'Fiili GÜG ile esnek bütçeye göre olması gereken GÜG arasındaki farktır; harcama kontrolünü ölçer.'},
+  {k:'Maliyet',s:'Kapasite kullanım sapması nedir?',c:'Sabit GÜG\'ün, fiili üretim hacmiyle planlanan (normal) kapasite arasındaki farktan doğan, atıl/aşırı kapasite etkisini gösteren sapmadır.'},
+  {k:'Finans',s:'Optimal sermaye yapısı nedir?',c:'Firmanın ağırlıklı ortalama sermaye maliyetini (WACC) en aza indiren, dolayısıyla firma değerini en yükseğe çıkaran borç-özkaynak bileşimidir.'},
+  {k:'Finans',s:'Modigliani-Miller teoremi (vergisiz) ne der?',c:'Vergisiz ve mükemmel piyasada firma değerinin sermaye yapısından bağımsız olduğunu; değeri, varlıkların yarattığı nakit akışının belirlediğini savunur.'},
+  {k:'Finans',s:'Temettü politikasında sinyal etkisi nedir?',c:'Temettü artışı, yönetimin geleceğe güveninin işareti olarak algılanıp hisse fiyatını olumlu etkileyebilir; azaltma tersi sinyal verir.'},
+  {k:'TMS/TFRS',s:'TMS 33 hisse başına kazanç (HBK) nasıl bulunur?',c:'Adi pay sahiplerine ait net kârın, dönem ağırlıklı ortalama adi pay sayısına bölünmesiyle bulunur; sulandırılmış HBK potansiyel payları da hesaba katar.'},
+  {k:'TMS/TFRS',s:'TMS 24 ilişkili taraf açıklamaları neyi gerektirir?',c:'İşletmenin ana ortak, iştirak, üst yönetim gibi ilişkili taraflarıyla yaptığı işlemlerin ve bakiyelerin dipnotlarda açıklanmasını gerektirir.'},
+  {k:'TMS/TFRS',s:'TFRS 11 müşterek anlaşmalar nasıl ayrılır?',c:'Müşterek faaliyet (taraflar varlık/borçta doğrudan hak-yükümlülük sahibi) ve iş ortaklığı/joint venture (net varlıkta hak sahibi, özkaynak yöntemiyle) olarak ayrılır.'},
+  {k:'Vergi Usul',s:'Kanuni ve idari süre farkı nedir?',c:'Kanuni süre doğrudan kanunla belirlenir ve uzatılamaz (kural olarak); idari süre ise idarece belirlenir ve şartlar varsa uzatılabilir.'},
+  {k:'Vergi Usul',s:'Ölüm halinde vergisel ödevler ne olur?',c:'Mükellefin ödevleri mirasçılara geçer; beyanname verme süreleri 3 ay uzar ve mirasçılar miras paylarına göre borçtan sorumlu olur.'},
+  {k:'KDV',s:'Grup KDV / KDV birleştirme nedir?',c:'Belirli koşullardaki gruplarda, indirilemeyen KDV\'nin grup içi kârlı şirketlerle mahsubuna imkan verebilecek düzenlemelerdir (uygulama mevzuata göre değişir).'},
+  {k:'Gelir Vergisi',s:'Telif kazançları istisnası nedir?',c:'Müellif, mütercim, bestekar gibi kişilerin eserlerinden elde ettiği ve şartları taşıyan telif kazançları, belirli tutara/koşula göre gelir vergisinden istisna olabilir (stopaj yoluyla).'},
+  {k:'Muhasebe',s:'Konsinye (emanet) mal satışı nasıl kaydedilir?',c:'Konsinye gönderilen mal, satılana kadar gönderenin stoğunda kalır; nazım hesaplarda izlenir, ancak fiili satış gerçekleşince hasılat ve maliyet kaydedilir.'},
+  {k:'Muhasebe',s:'Vadeli çekte reeskont uygulanır mı?',c:'İleri tarihli (vadeli) çekler, uygulamada senet gibi kabul edilerek dönem sonunda reeskonta tabi tutulabilmektedir (idari düzenleme ve içtihatlara göre).'},
+  {k:'Denetim',s:'Denetimde önemlilik (performans önemliliği) nedir?',c:'Toplam önemlilik düzeyinin altında belirlenen, tek tek önemsiz yanlışlıkların toplamının önemliliği aşma riskini azaltmak için kullanılan daha düşük eşiktir.'},
+  {k:'Denetim',s:'Sonraki dönem olaylarının denetimi neyi kapsar?',c:'Bilanço tarihi ile denetim raporu tarihi arasındaki, finansal tabloları etkileyebilecek olayların araştırılıp uygun şekilde yansıtılıp açıklandığının kontrolünü kapsar.'},
+  {k:'İş Hukuku',s:'Kısmi süreli (part-time) çalışanın hakları nasıldır?',c:'Tam süreli çalışana göre çalışma süresiyle orantılı olarak; ayrımcılık yasağı gereği aynı işi yapan tam süreliyle eşit haklardan orantılı yararlanır.'},
+  {k:'Ticaret Hukuku',s:'Şirketler topluluğu (holding) nedir?',c:'Bir hakim şirketin, bir veya birden çok bağlı şirketi doğrudan/dolaylı kontrol ettiği yapıdır; TTK topluluk içi ilişkiler için özel sorumluluk kuralları öngörür.'},
+  {k:'Transfer Fiyatlandırması',s:'Karşılaştırılabilir fiyat yöntemi (KFY) nedir?',c:'İlişkili işlemdeki fiyatın, ilişkisiz taraflar arasındaki benzer işlemin fiyatıyla karşılaştırılmasıdır; en doğrudan yöntemdir, güvenilir emsal varsa tercih edilir.'},
+  {k:'Transfer Fiyatlandırması',s:'Maliyet artı yöntemi (MAY) nasıl işler?',c:'Mal/hizmetin maliyetine, emsallere uygun brüt kâr marjı eklenerek emsal fiyat bulunur; genellikle imalat ve hizmet işlemlerinde kullanılır.'},
+  {k:'Transfer Fiyatlandırması',s:'Yeniden satış fiyatı yöntemi (YSFY) nedir?',c:'İlişkili kişiden alınıp ilişkisiz kişiye satılan malın satış fiyatından, emsal brüt satış kârı düşülerek alış (emsal) fiyatı bulunur; dağıtım/pazarlama işlemlerinde uygundur.'},
+  {k:'Transfer Fiyatlandırması',s:'Peşin fiyatlandırma anlaşması (APA) nedir?',c:'Mükellefin, ilişkili işlemlerinde uygulayacağı transfer fiyatı yöntemini idareyle önceden anlaşarak belirlemesidir; ileride tarhiyat riskini ortadan kaldırır.'},
+  {k:'Transfer Fiyatlandırması',s:'Ülke bazlı raporlama (CbCR) nedir?',c:'Çok uluslu grupların, faaliyet gösterdikleri her ülkedeki gelir, kâr, vergi ve çalışan bilgilerini ayrı ayrı raporlamasıdır; belirli ciro eşiğini aşan gruplar için zorunludur.'},
+  {k:'Uluslararası Vergi',s:'Çifte vergilendirmeyi önleme anlaşması (ÇVÖ) ne sağlar?',c:'Aynı gelirin iki ülkede birden vergilenmesini önlemek için vergilendirme yetkisini ülkeler arasında paylaştırır; istisna veya mahsup yöntemiyle çifte vergiyi giderir.'},
+  {k:'Uluslararası Vergi',s:'Mahsup ve istisna yöntemi farkı nedir?',c:'İstisna yönteminde yurt dışı gelir hiç vergilenmez; mahsup yönteminde gelir vergilenir ama yurt dışında ödenen vergi, hesaplanan vergiden düşülür.'},
+  {k:'Uluslararası Vergi',s:'İşyeri (permanent establishment) kavramı nedir?',c:'Bir teşebbüsün işinin tamamen/kısmen yürütüldüğü sabit yerdir (şube, büro, fabrika); ÇVÖ anlaşmalarında ticari kazancın hangi ülkede vergileneceğini belirler.'},
+  {k:'Uluslararası Vergi',s:'Stopaj (kaynakta vergileme) ÇVÖ\'de nasıldır?',c:'Temettü, faiz, gayrimaddi hak bedeli gibi ödemelerde kaynak ülkenin uygulayacağı stopaj oranı, anlaşmayla indirimli üst sınıra bağlanır.'},
+  {k:'İç Denetim',s:'İç denetim ile bağımsız denetim farkı nedir?',c:'İç denetim, işletmeye bağlı olarak iç kontrol ve risk yönetiminin etkinliğini sürekli değerlendirir; bağımsız denetim ise dışarıdan, finansal tablolara güvence verir.'},
+  {k:'İç Denetim',s:'İç denetimin üç savunma hattındaki yeri nedir?',c:'Birinci hat operasyonel yönetim, ikinci hat risk/uyum fonksiyonları, üçüncü hat ise bağımsız güvence sağlayan iç denetimdir.'},
+  {k:'İç Denetim',s:'İç denetimde risk esaslı planlama nedir?',c:'Denetim kaynaklarının, en yüksek risk taşıyan süreç ve birimlere öncelik verilerek dağıtıldığı planlama yaklaşımıdır.'},
+  {k:'Risk Yönetimi',s:'Kurumsal risk yönetimi (ERM) nedir?',c:'İşletmenin hedeflerini etkileyebilecek riskleri bütünsel olarak tanımlama, ölçme, önceliklendirme ve yönetme sürecidir (COSO ERM çerçevesi).'},
+  {k:'Risk Yönetimi',s:'Riske karşı temel stratejiler nelerdir?',c:'Riskten kaçınma, azaltma (kontrol), transfer etme (sigorta/hedge) ve kabullenme (üstlenme).'},
+  {k:'Risk Yönetimi',s:'Risk iştahı (risk appetite) nedir?',c:'İşletmenin hedeflerine ulaşmak için kabul etmeye istekli olduğu risk düzeyidir; risk yönetimi kararlarının sınırını belirler.'},
+  {k:'Kooperatif',s:'Tarım kredi ve tarım satış kooperatifleri farkı nedir?',c:'Tarım kredi kooperatifleri ortaklara girdi/kredi temin eder; tarım satış kooperatifleri ise ortakların ürünlerini toplu pazarlayıp değerlendirir.'},
+  {k:'Kooperatif',s:'Yapı kooperatiflerinde KDV/kurumlar durumu nedir?',c:'Ortaklarına konut/işyeri teslim eden yapı kooperatifleri, şartları sağladığında kurumlar vergisinden muaf olabilir; teslimlerde KDV uygulaması projeye göre değişir.'},
+  {k:'Maliyet',s:'Hedef maliyetleme (target costing) nedir?',c:'Pazarın kabul edeceği satış fiyatından hedef kâr düşülerek izin verilen maliyetin belirlenmesi ve ürünün bu maliyete göre tasarlanmasıdır.'},
+  {k:'Maliyet',s:'Kaizen maliyetleme nedir?',c:'Üretim aşamasında sürekli küçük iyileştirmelerle maliyetlerin kademeli olarak düşürülmesini hedefleyen Japon kökenli yaklaşımdır.'},
+  {k:'Maliyet',s:'Kalite maliyetleri nasıl sınıflandırılır?',c:'Önleme, değerleme (ölçme), iç başarısızlık (fire/yeniden işleme) ve dış başarısızlık (iade/garanti) maliyetleri olarak dörde ayrılır.'},
+  {k:'Maliyet',s:'Tam maliyet ve değişken maliyet yöntemi farkı nedir?',c:'Tam maliyette sabit GÜG de mamul maliyetine girer; değişken (direkt) maliyette sabit GÜG dönem gideri yazılır, sadece değişken maliyetler mamule yüklenir.'},
+  {k:'Problem',s:'Başabaş: SM 60.000, birim fiyat 50, birim değişken 30 ise başabaş adet kaçtır?',c:'Katkı payı = 50 − 30 = 20. Başabaş adet = 60.000 / 20 = 3.000 adet.'},
+  {k:'Problem',s:'KDV hariç 8.000 TL mala %20 KDV eklenirse toplam ne olur?',c:'KDV = 8.000 × 0,20 = 1.600. Genel toplam = 8.000 + 1.600 = 9.600 TL.'},
+  {k:'Problem',s:'KDV dahil 12.000 TL tutarın (%20) matrahı nedir?',c:'Matrah = 12.000 / 1,20 = 10.000 TL. KDV = 12.000 − 10.000 = 2.000 TL.'},
+  {k:'Problem',s:'Maliyet 40.000, %20 kâr marjıyla (maliyet üzerine) satış fiyatı nedir?',c:'Satış = 40.000 × 1,20 = 48.000 TL. Brüt kâr = 8.000 TL.'},
+  {k:'Problem',s:'Dönembaşı stok 20.000, alış 100.000, dönemsonu stok 30.000 ise SMM nedir?',c:'SMM = 20.000 + 100.000 − 30.000 = 90.000 TL.'},
+  {k:'Problem',s:'Cari oran 2, dönen varlık 200.000 ise KVYK ne kadardır?',c:'Cari oran = Dönen Varlık / KVYK → 2 = 200.000 / KVYK → KVYK = 100.000 TL.'},
+  {k:'Problem',s:'Net kâr 150.000, özkaynak 1.000.000 ise ROE nedir?',c:'ROE = 150.000 / 1.000.000 = %15.'},
+  {k:'Problem',s:'100.000 TL, yıllık %10 bileşik faizle 2 yıl sonra ne olur?',c:'FV = 100.000 × (1,10)² = 100.000 × 1,21 = 121.000 TL.'},
+  {k:'Problem',s:'5 yıl faydalı ömürlü, 50.000 TL maddi duran varlığın normal amortismanı yıllık kaçtır?',c:'Oran = 1/5 = %20. Yıllık amortisman = 50.000 × 0,20 = 10.000 TL.'},
+  {k:'Problem',s:'Aynı varlıkta azalan bakiyeler ilk yıl amortismanı nedir?',c:'Oran = %20 × 2 = %40. İlk yıl = 50.000 × 0,40 = 20.000 TL.'},
+  {k:'Problem',s:'Katkı payı oranı %40, sabit maliyet 80.000 ise TL bazında başabaş ciro nedir?',c:'Başabaş ciro = 80.000 / 0,40 = 200.000 TL.'},
+  {k:'Problem',s:'Vergi aslı 10.000 TL, aylık %4 gecikme, 3 ay ise gecikme zammı nedir?',c:'Zam = 10.000 × 0,04 × 3 = 1.200 TL. Toplam = 11.200 TL.'},
+  {k:'Problem',s:'Brüt 30.000 TL ücretten %15 kesinti sonrası tahmini net nedir?',c:'Net = 30.000 × (1 − 0,15) = 25.500 TL. Kesinti = 4.500 TL.'},
+  {k:'Problem',s:'Stok devir hızı: SMM 600.000, ortalama stok 100.000 ise kaçtır?',c:'Stok devir hızı = 600.000 / 100.000 = 6 kez.'},
+  {k:'Problem',s:'Alacak devir hızı 8 ise ortalama tahsil süresi kaç gündür?',c:'Ortalama tahsil süresi = 365 / 8 ≈ 46 gün.'},
+  {k:'Problem',s:'Sürdürülebilir büyüme: ROE %20, temettü dağıtım %40 ise SGO nedir?',c:'SGO = %20 × (1 − 0,40) = %20 × 0,60 = %12.'},
+  {k:'Problem',s:'Emisyon: nominal 10 TL hisse, 14 TL\'ye ihraç edilirse birim emisyon primi nedir?',c:'Emisyon primi = 14 − 10 = 4 TL (bu tutar sermaye yedeğidir ve KV\'den istisnadır).'},
+  {k:'Muhasebe',s:'Kredi faizinin dönemsel tahakkuku nasıl kaydedilir?',c:'Döneme isabet eden ama ödenmemiş faiz için 780/660 Finansman Giderleri borç / 381 Gider Tahakkukları alacak çalışır.'},
+  {k:'Muhasebe',s:'Peşin ödenen giderler (180) nasıl işler?',c:'Gelecek döneme ait peşin ödenen gider (kira, sigorta) 180 Gelecek Aylara Ait Giderler\'e alınır; ilgili dönem geldikçe gider hesabına aktarılır.'},
+  {k:'Muhasebe',s:'Gelecek aylara ait gelirler (380) nedir?',c:'Peşin tahsil edilen ama gelecek döneme ait gelirlerin izlendiği pasif hesaptır; hak edildikçe gelir hesabına aktarılır.'},
+  {k:'Denetim',s:'Denetim kanıtının yeterliliği ve uygunluğu nedir?',c:'Yeterlilik kanıtın miktarını (risk arttıkça artar); uygunluk ise kanıtın kalitesini (ilgililik ve güvenilirlik) ifade eder.'},
+  {k:'Denetim',s:'Bağımsız kaynaktan kanıt neden daha güvenilirdir?',c:'İşletme dışı, bağımsız kaynaktan (banka teyidi gibi) elde edilen kanıt, işletme içi üretilen kanıta göre manipülasyona daha kapalı olduğundan daha güvenilirdir.'},
+  {k:'Vergi Usul',s:'Beyana dayanan tarh nedir?',c:'Verginin, mükellefin kendi beyan ettiği matrah üzerinden tarh edilmesidir; Türk vergi sisteminde asıl olan usuldür.'},
+  {k:'Vergi Usul',s:'İkmalen vergi tarhı nedir?',c:'Daha önce tarh edilen vergiye ilaveten, defter-belge veya kanuni ölçülere dayanılarak tespit edilen matrah farkı üzerinden yapılan ek tarhtır.'},
+  {k:'İş Hukuku',s:'Asıl işveren-alt işveren (taşeron) ilişkisinde sorumluluk nedir?',c:'Asıl işveren, alt işverenin işçilerine karşı, o işyeriyle ilgili işçilik alacaklarından alt işverenle birlikte müteselsilen sorumludur.'},
+  {k:'Ticaret Hukuku',s:'Rekabet yasağı (işçi/ortak) ne kadar sürebilir?',c:'Sözleşme sonrası rekabet yasağı; yer, süre ve konu bakımından sınırlı olmalı ve kural olarak 2 yılı aşmamalıdır.'},
+];
+
+/* ═══ TEST MODU · ÇOKTAN SEÇMELİ (KGK formatı) ═══
+   d = doğru şıkkın index'i (0=A,1=B,2=C,3=D,4=E) */
+const TEST_SORULARI=[
+  // ─── TMS / TFRS ───
+  {k:'TMS/TFRS',s:'TMS 2 Stoklar standardına göre stoklar hangi değerle ölçülür?',sec:['Maliyet bedeliyle','Net gerçekleşebilir değerle','Maliyet ile net gerçekleşebilir değerden düşük olanıyla','Rayiç bedelle','Yeniden değerlenmiş tutarla'],d:2,a:'Stoklar, maliyet ve net gerçekleşebilir değerden düşük olanıyla değerlenir.'},
+  {k:'TMS/TFRS',s:'Şerefiye (goodwill) ile ilgili aşağıdakilerden hangisi doğrudur?',sec:['Her yıl eşit tutarda itfa edilir','Faydalı ömrü 5 yıldır','İtfa edilmez, değer düşüklüğü testine tabidir','Özkaynaktan indirilir','Hiçbir zaman muhasebeleştirilmez'],d:2,a:'Şerefiye itfa edilmez; her raporlama döneminde değer düşüklüğü testine tabi tutulur.'},
+  {k:'TMS/TFRS',s:'Muhasebe politikası değişikliği TMS 8\'e göre nasıl uygulanır?',sec:['İleriye dönük','Geriye dönük (retrospektif)','Sadece cari dönemde','Uygulanmaz','Dipnotta belirtilip uygulanmaz'],d:1,a:'Muhasebe politikası değişikliği kural olarak geriye dönük (retrospektif) uygulanır; tahmin değişikliği ise ileriye dönüktür.'},
+  {k:'TMS/TFRS',s:'Ertelenmiş vergi hangi farktan doğar?',sec:['Kalıcı farklar','Geçici farklar','Kur farkları','Enflasyon farkları','Fiyat farkları'],d:1,a:'Ertelenmiş vergi, muhasebe değeri ile vergi matrahı arasındaki geçici farklardan doğar (TMS 12). Kalıcı farklar ertelenmiş vergi yaratmaz.'},
+  {k:'TMS/TFRS',s:'TMS 23\'e göre "özellikli varlık" nedir?',sec:['Değeri yüksek her varlık','Kullanıma/satışa hazır hale gelmesi uzun süre gerektiren varlık','Sadece gayrimenkuller','İthal edilen varlıklar','Amortismana tabi tüm varlıklar'],d:1,a:'Özellikli varlık, amaçlanan kullanıma veya satışa hazır hale gelmesi zorunlu olarak uzun bir süre gerektiren varlıktır; borçlanma maliyetleri aktifleştirilebilir.'},
+  {k:'TMS/TFRS',s:'TFRS 16\'ya göre kiracı, işletme kiralamalarını (kısa süreli/düşük değerli istisnalar dışında) nasıl gösterir?',sec:['Sadece dipnotta açıklar','Gider olarak kaydeder, bilançoya almaz','Kullanım hakkı varlığı ve kira yükümlülüğü olarak bilançoya alır','Özkaynakta gösterir','Nazım hesapta izler'],d:2,a:'TFRS 16 ile kiracı, neredeyse tüm kiralamaları "kullanım hakkı varlığı" ve "kira yükümlülüğü" olarak bilançoya alır.'},
+  {k:'TMS/TFRS',s:'TMS 36\'da "kullanım değeri" nasıl bulunur?',sec:['Satış fiyatı eksi maliyet','Gelecekteki nakit akışlarının bugünkü değeri','Defter değeri','Yeniden değerleme tutarı','Maliyet bedeli'],d:1,a:'Kullanım değeri, varlıktan beklenen gelecekteki nakit akışlarının bugünkü (iskonto edilmiş) değeridir.'},
+  {k:'TMS/TFRS',s:'TMS 37\'ye göre karşılık ayrılabilmesi için aşağıdakilerden hangisi GEREKLİ DEĞİLDİR?',sec:['Geçmiş olaydan doğan mevcut yükümlülük','Kaynak çıkışının muhtemel olması','Tutarın güvenilir tahmin edilebilmesi','Yükümlülüğün kesinlikle mahkemeye taşınmış olması','—'],d:3,a:'Mahkemeye taşınmış olma şartı yoktur. Üç şart: mevcut yükümlülük, muhtemel kaynak çıkışı ve güvenilir tahmin.'},
+  {k:'TMS/TFRS',s:'TFRS 15 hasılat modelinin ilk adımı nedir?',sec:['İşlem bedelini belirlemek','Edim yükümlülüklerini ayırmak','Müşteriyle sözleşmeyi tanımlamak','Hasılatı muhasebeleştirmek','Bedeli dağıtmak'],d:2,a:'5 adımlı modelin ilki müşteriyle yapılan sözleşmenin tanımlanmasıdır.'},
+  {k:'TMS/TFRS',s:'TMS 16\'ya göre yeniden değerleme artışı nereye kaydedilir?',sec:['Dönem kâr/zararına','Özkaynakta değer artış fonuna (diğer kapsamlı gelir)','Doğrudan sermayeye','Geçmiş yıl kârlarına','Hasılata'],d:1,a:'Yeniden değerleme artışı kâr/zarara değil, özkaynak içinde "yeniden değerleme değer artış fonu"na (DKG) yazılır.'},
+  {k:'TMS/TFRS',s:'TMS 40 kapsamındaki "yatırım amaçlı gayrimenkul" hangi amaçla tutulur?',sec:['Üretimde kullanmak','İdari amaçla kullanmak','Kira geliri veya değer artışı elde etmek','Satmak üzere üretmek','Personele tahsis etmek'],d:2,a:'Yatırım amaçlı gayrimenkul, kira geliri ve/veya değer artışı kazancı için elde tutulur; işletmede kullanılmaz.'},
+  // ─── DENETİM ───
+  {k:'Denetim',s:'Bağımsız denetçinin finansal tablolara verdiği güvence düzeyi nedir?',sec:['Mutlak (tam) güvence','Makul güvence','Sınırlı güvence','Hiçbir güvence','Koşulsuz güvence'],d:1,a:'Bağımsız denetim, finansal tabloların önemli yanlışlık içermediğine dair MAKUL güvence sağlar; mutlak güvence mümkün değildir.'},
+  {k:'Denetim',s:'Maddi yanlışlık riski hangi iki riskin bileşimidir?',sec:['Doğal risk + saptanamama riski','Doğal (yapısal) risk + kontrol riski','Kontrol riski + saptanamama riski','İşletme riski + piyasa riski','Denetim riski + iş riski'],d:1,a:'Maddi yanlışlık riski = doğal (yapısal) risk × kontrol riski. Saptanamama riski denetçinin kontrolündedir.'},
+  {k:'Denetim',s:'Tespit edilen yanlışlık önemli ancak yaygın DEĞİLSE denetçi hangi görüşü verir?',sec:['Olumlu görüş','Sınırlı olumlu (şartlı) görüş','Olumsuz görüş','Görüş bildirmekten kaçınma','Vurgu paragrafı'],d:1,a:'Önemli ama yaygın olmayan yanlışlık/kanıt yetersizliğinde şartlı (sınırlı olumlu) görüş verilir. Önemli VE yaygın ise olumsuz görüş / görüş bildirmekten kaçınma.'},
+  {k:'Denetim',s:'İç kontrolün beş bileşeni arasında aşağıdakilerden hangisi YOKTUR?',sec:['Kontrol ortamı','Risk değerlendirme','Kâr maksimizasyonu','Kontrol faaliyetleri','İzleme'],d:2,a:'COSO iç kontrol bileşenleri: kontrol ortamı, risk değerlendirme, kontrol faaliyetleri, bilgi-iletişim ve izleme. Kâr maksimizasyonu bir iç kontrol bileşeni değildir.'},
+  {k:'Denetim',s:'Denetçi yeterli ve uygun kanıt toplayamaz, olası etki hem önemli hem yaygınsa görüş ne olur?',sec:['Olumlu görüş','Şartlı görüş','Görüş bildirmekten kaçınma','Olumsuz görüş','Vurgu paragrafı'],d:2,a:'Kanıt yetersizliği + etki önemli ve yaygın → görüş bildirmekten kaçınma. (Yanlışlık önemli ve yaygın olsaydı → olumsuz görüş.)'},
+  {k:'Denetim',s:'"Kilit denetim konuları" (KAM) denetçi raporunda neyi amaçlar?',sec:['Ücreti açıklamak','Denetçinin mesleki muhakemesine göre en önemli konuları paylaşmak','Yönetimi eleştirmek','Vergi tutarını göstermek','Gelecek tahmini yapmak'],d:1,a:'KAM, cari dönem denetiminde denetçinin muhakemesine göre en çok önem taşıyan konuları kullanıcıya açıklar.'},
+  {k:'Denetim',s:'Alacak ve banka bakiyeleri için en güçlü denetim kanıtı hangisidir?',sec:['Yeniden hesaplama','İç belgeler','Dış teyit (doğrulama)','Yönetim beyanı','Analitik inceleme'],d:2,a:'Bağımsız üçüncü taraftan alınan dış teyit (banka/müşteri doğrulaması) en güvenilir kanıtlardandır.'},
+  {k:'Denetim',s:'Hile üçgeni hangi üç unsurdan oluşur?',sec:['Baskı, fırsat, haklı gösterme','Risk, kontrol, kanıt','Gelir, gider, kâr','Planlama, test, rapor','Doğal, kontrol, tespit'],d:0,a:'Hile üçgeni: baskı (motivasyon), fırsat ve haklı gösterme (rasyonalizasyon).'},
+  {k:'Denetim',s:'İşletmenin sürekliliği konusunda önemli belirsizlik varsa ve YÖNETİM UYGUN AÇIKLAMA YAPMIŞSA denetçi ne yapar?',sec:['Olumsuz görüş verir','Olumlu görüş verip belirsizliği vurgulayan ayrı paragraf ekler','Görüş vermekten kaçınır','Denetimden çekilir','Şartlı görüş zorunludur'],d:1,a:'Yeterli açıklama yapılmışsa denetçi olumlu görüş verip "süreklilikle ilgili önemli belirsizlik" paragrafıyla dikkat çeker. Açıklama yetersizse şartlı/olumsuz görüş gerekebilir.'},
+  {k:'Denetim',s:'Çalışma kâğıtları (denetim dosyası) kime aittir?',sec:['Müşteri işletmeye','Denetim firmasına/denetçiye','KGK\'ya','Vergi dairesine','Ortaklara'],d:1,a:'Çalışma kâğıtları denetçinin/denetim firmasının mülkiyetindedir.'},
+  // ─── TİCARET & BORÇLAR HUKUKU ───
+  {k:'Ticaret/Borçlar Hukuku',s:'Anonim şirketin temel yönetim organı hangisidir?',sec:['Genel kurul','Yönetim kurulu','Denetim kurulu','Müdürler kurulu','Tasfiye kurulu'],d:1,a:'Anonim şirkette yönetim ve temsil organı Yönetim Kurulu\'dur; genel kurul ise karar organıdır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Ticari defterlerin saklanma süresi kaç yıldır?',sec:['5 yıl','8 yıl','10 yıl','15 yıl','Süresiz'],d:2,a:'TTK\'ya göre ticari defter ve belgeler 10 yıl saklanır (vergi yönünden zamanaşımı 5 yıldır).'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Müteselsil borçluluk" ne anlama gelir?',sec:['Her borçlu payı kadar sorumludur','Borçlulardan her biri borcun tamamından sorumludur','Sadece asıl borçlu sorumludur','Borç kefile geçer','Borç ortadan kalkar'],d:1,a:'Müteselsil sorumlulukta alacaklı, borcun tamamını borçlulardan herhangi birinden isteyebilir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Limited ve anonim şirket arasındaki temel fark aşağıdakilerden hangisidir?',sec:['Limitedde ortak sınırsız sorumludur','A.Ş. paylarına hisse senedi çıkarılabilir, limitedde esas sermaye payı vardır','Limited şirket tacir sayılmaz','A.Ş. defter tutmaz','İkisi de aynıdır'],d:1,a:'A.Ş.\'de paylar kıymetli evrağa (hisse senedi) bağlanabilir; limitedde "esas sermaye payı" vardır, kural olarak hisse senedi çıkarılmaz.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"İbra" kararı neyi ifade eder?',sec:['Şirketin tasfiyesini','Yönetim kurulunun sorumluluktan aklanmasını','Sermaye artırımını','Kâr dağıtımını','Birleşmeyi'],d:1,a:'İbra, genel kurulun yönetim kurulu üyelerini dönem işlemleri bakımından sorumluluktan kurtarmasıdır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Halka açık olmayan A.Ş.\'lerde azınlık hakları en az hangi sermaye oranıyla kullanılır?',sec:['%1','%5','%10','%20','%25'],d:2,a:'Halka açık olmayan anonim şirketlerde azınlık, sermayenin en az %10\'unu temsil eden paylardır (halka açıkta %5).'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Zamanaşımını kesen sebeplerden biri DEĞİLDİR?',sec:['Dava açılması','İcra takibi','Borçlunun borcu ikrarı','Alacaklının içinden geçirmesi','—'],d:3,a:'Zamanaşımını dava, icra takibi ve borcun ikrarı keser; alacaklının niyeti/düşüncesi kesmez.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Sebepsiz zenginleşme" nedir?',sec:['Sözleşmeyle kazanç','Haklı bir sebep olmaksızın başkasının malvarlığından zenginleşme','Miras yoluyla kazanç','Faiz geliri','Kâr payı'],d:1,a:'Sebepsiz zenginleşme, geçerli/haklı bir sebep olmadan başkasının malvarlığı aleyhine zenginleşmedir; iade yükümlülüğü doğurur.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Yönetim kurulu üyelerinin şirkete karşı temel yükümlülüğü nedir?',sec:['Kâr garantisi','Özen ve bağlılık (basiretli yönetici) yükümlülüğü','Sermaye koyma','Kişisel kefalet','Vergi ödeme'],d:1,a:'Yönetim kurulu üyeleri, tedbirli/basiretli bir yönetici gibi özen ve şirkete bağlılık yükümlülüğü taşır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Tüzel kişilik perdesinin aralanması" ne demektir?',sec:['Şirketin tasfiyesi','Şirket perdesi arkasına saklanan haksızlığın ortağa/yöneticiye yansıtılması','Sermaye azaltımı','Halka arz','Birleşme'],d:1,a:'Belirli hallerde şirketin ayrı tüzel kişiliği göz ardı edilip sorumluluk doğrudan arkasındaki kişiye yansıtılır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Ticari defterler bir uyuşmazlıkta sahibi LEHİNE delil olabilmesi için ne gerekir?',sec:['Sadece açık olması','Usulüne uygun tutulması ve karşı tarafça çürütülmemesi','Notere onaylatılması','Mahkemeye sunulması','Hiçbir şart yok'],d:1,a:'Usulüne uygun tutulup saklanan defterler sahibi lehine de delil olabilir; ancak karşı taraf aksini ispatlayabilir.'},
+  // ─── VERGİ MEVZUATI ───
+  {k:'Vergi Mevzuatı',s:'Kurumlar vergisi beyannamesi hangi ayda verilir?',sec:['Mart','Nisan','Şubat','Mayıs','Haziran'],d:1,a:'Kurumlar vergisi beyannamesi, hesap döneminin kapandığı ayı izleyen 4. ayda (takvim yılında Nisan) verilir. Gelir vergisi ise Mart.'},
+  {k:'Vergi Mevzuatı',s:'Vergi ziyaı cezası kural olarak ne kadardır?',sec:['Verginin yarısı','Ziyaa uğratılan verginin 1 katı','Verginin 2 katı','Sabit tutar','Verginin %10\'u'],d:1,a:'Vergi ziyaı cezası, ziyaa uğratılan verginin 1 katıdır; kaçakçılık suçuyla sebebiyet verilirse 3 katı uygulanır.'},
+  {k:'Vergi Mevzuatı',s:'Örtülü sermaye üzerinden hesaplanan faizin vergisel durumu nedir?',sec:['Doğrudan gider yazılır','KKEG olarak matraha eklenir','İstisna kazançtır','Amortismana tabidir','Reeskonta tabidir'],d:1,a:'Örtülü sermaye faizi ve kur farkı KKEG\'dir; borç veren tarafta ise dağıtılmış kâr payı sayılır.'},
+  {k:'Vergi Mevzuatı',s:'Geçici vergi hangi dönemler halinde beyan edilir?',sec:['Aylık','İki aylık','Üçer aylık','Altı aylık','Yıllık'],d:2,a:'Geçici vergi 3\'er aylık dönemler halinde beyan edilip ödenir; yıllık vergiden mahsup edilir.'},
+  {k:'Vergi Mevzuatı',s:'Binek otomobillerde akaryakıt-bakım gibi giderlerin en fazla ne kadarı indirilebilir?',sec:['%30','%50','%70','%100','İndirilemez'],d:2,a:'Binek otomobil giderlerinin en çok %70\'i indirilebilir; kalan %30 KKEG olur. (Amortisman ve kiralama için ayrıca tutar sınırları vardır.)'},
+  {k:'Vergi Mevzuatı',s:'Reeskont işlemi neyi ifade eder?',sec:['Stokların sayımını','Senetli alacak/borçların dönem sonunda bugünkü değere indirgenmesini','Amortisman ayrılmasını','Kur değerlemesini','Karşılık ayrılmasını'],d:1,a:'Reeskont, vadeli senetli alacak ve borçların dönem sonu itibarıyla peşin (bugünkü) değerine getirilmesidir.'},
+  {k:'Vergi Mevzuatı',s:'Gayrimenkul ve iştirak hissesi satış kazancı istisnasında asgari elde tutma süresi nedir?',sec:['1 tam yıl','2 tam yıl','3 tam yıl','5 tam yıl','Süre yok'],d:1,a:'Kurumların en az 2 tam yıl aktifte tuttuğu taşınmaz/iştirak hissesi satış kazancının bir kısmı, şartlarla istisnadır.'},
+  {k:'Vergi Mevzuatı',s:'İndirilecek KDV en geç ne zamana kadar indirilebilir?',sec:['Aynı ay','Vergiyi doğuran olayı izleyen takvim yılı sonuna kadar','3 ay içinde','Süresiz','Beyan tarihine kadar'],d:1,a:'İndirim hakkı, vergiyi doğuran olayın gerçekleştiği takvim yılını izleyen takvim yılı sonuna kadar kullanılabilir.'},
+  {k:'Vergi Mevzuatı',s:'Vergi Usul Kanunu\'na göre değerleme günü ne zamandır?',sec:['Ayın son günü','Hesap döneminin kapandığı gün','Beyanname günü','İşlem günü','Yılın ilk günü'],d:1,a:'Değerleme, iktisadi kıymetlerin hesap döneminin kapandığı gün (bilanço günü) itibarıyla yapılır.'},
+  {k:'Vergi Mevzuatı',s:'Serbest meslek erbabı hangi defteri tutar?',sec:['Yevmiye defteri','İşletme hesabı defteri','Serbest meslek kazanç defteri','Envanter defteri','Büyük defter'],d:2,a:'Serbest meslek erbabı, Serbest Meslek Kazanç Defteri tutar ve tahsil esasına göre kazancını belirler.'},
+  {k:'Vergi Mevzuatı',s:'Stopaj (tevkifat) yapmaktan kim sorumludur?',sec:['Geliri elde eden','Ödemeyi yapan','Vergi dairesi','Banka','Noter'],d:1,a:'Tevkifatı, ödemeyi yapan (vergi sorumlusu) keser ve muhtasar beyanname ile vergi dairesine yatırır.'},
+  {k:'Vergi Mevzuatı',s:'Vergi Usul Kanunu\'na göre tarh zamanaşımı süresi ne kadardır?',sec:['1 yıl','3 yıl','5 yıl','7 yıl','10 yıl'],d:2,a:'Tarh zamanaşımı, vergiyi doğuran olayı izleyen yılın başından itibaren 5 yıldır.'},
+  {k:'Vergi Mevzuatı',s:'Aşağıdakilerden hangisi dolaylı vergidir?',sec:['Gelir vergisi','Kurumlar vergisi','KDV','Emlak vergisi','Veraset vergisi'],d:2,a:'KDV harcama üzerinden alınan ve fiyata yansıtılan dolaylı vergidir; gelir/kurumlar/emlak/veraset dolaysızdır.'},
+  {k:'Vergi Mevzuatı',s:'Pişmanlıkla beyan yapan mükellef hangi cezadan kurtulur?',sec:['Vergi aslından','Gecikme faizinden','Vergi ziyaı cezasından','Damga vergisinden','Hiçbirinden'],d:2,a:'Pişmanlıkla beyanda vergi ziyaı cezası kesilmez; sadece pişmanlık zammı ödenir.'},
+  {k:'Vergi Mevzuatı',s:'Fatura, malın teslimi/hizmetin yapılmasından itibaren en geç kaç gün içinde düzenlenir?',sec:['3 gün','7 gün','10 gün','15 gün','30 gün'],d:1,a:'Fatura en geç 7 gün içinde düzenlenir; süre geçerse hiç düzenlenmemiş sayılır.'},
+  {k:'Vergi Mevzuatı',s:'Vergiden muaf esnaftan yapılan alımlarda hangi belge düzenlenir?',sec:['Fatura','Gider pusulası','Serbest meslek makbuzu','Perakende fiş','Müstahsil makbuzu'],d:1,a:'Vergi mükellefi olmayanlardan/muaf esnaftan alımda, alıcı gider pusulası düzenler.'},
+  // ─── TMS/TFRS ek ───
+  {k:'TMS/TFRS',s:'TMS 7 Nakit Akış Tablosu faaliyetleri hangileridir?',sec:['Üretim, satış, yönetim','İşletme, yatırım, finansman','Gelir, gider, kâr','Kısa, orta, uzun vade','Nakit, kredi, sermaye'],d:1,a:'Nakit akışları işletme, yatırım ve finansman faaliyetleri olarak üçe ayrılır.'},
+  {k:'TMS/TFRS',s:'Kredi geri ödemesinin anaparası nakit akış tablosunda nerede yer alır?',sec:['İşletme faaliyeti','Yatırım faaliyeti','Finansman faaliyeti','Gösterilmez','Özkaynak'],d:2,a:'Kredi anapara geri ödemesi finansman faaliyetlerinde gösterilir.'},
+  {k:'TMS/TFRS',s:'TFRS 9\'a göre finansal varlıklarda karşılık modeli hangisidir?',sec:['Gerçekleşen zarar','Beklenen kredi zararı (ECL)','Maliyet modeli','Sabit oran','Karşılık ayrılmaz'],d:1,a:'TFRS 9, zararın gerçekleşmesini beklemeden beklenen kredi zararı (ECL) modelini getirmiştir.'},
+  {k:'TMS/TFRS',s:'TMS 33 Hisse Başına Kazanç nasıl hesaplanır?',sec:['Net kâr / toplam varlık','Net kâr / ağırlıklı ortalama adi pay sayısı','Temettü / hisse fiyatı','Özkaynak / pay sayısı','Satış / pay sayısı'],d:1,a:'Adi HBK = adi paylara ait net kâr / dönem ağırlıklı ortalama adi pay sayısı.'},
+  {k:'TMS/TFRS',s:'TMS 10\'a göre bilanço tarihinden sonra ortaya çıkan, o tarihteki durumu teyit eden olay ne yapılır?',sec:['Dipnotta açıklanır sadece','Finansal tablolar düzeltilir','Dikkate alınmaz','Gelecek döneme atılır','Sadece denetçiye bildirilir'],d:1,a:'Düzeltme gerektiren olaylar (bilanço tarihindeki durumu teyit eden) finansal tablolara yansıtılır.'},
+  // ─── Denetim ek ───
+  {k:'Denetim',s:'Denetim riski modelinde denetçinin doğrudan kontrol ettiği risk hangisidir?',sec:['Doğal risk','Kontrol riski','Saptanamama (tespit) riski','İş riski','Piyasa riski'],d:2,a:'Doğal ve kontrol riski işletmeye aittir; saptanamama riskini denetçi prosedürleriyle yönetir.'},
+  {k:'Denetim',s:'Denetçinin bağımsızlığını tehdit eden unsurlardan biri DEĞİLDİR?',sec:['Öz-çıkar','Öz-denetim','Yakınlık','Yıldırma','Mesleki şüphecilik'],d:4,a:'Mesleki şüphecilik bir tehdit değil, denetçinin taşıması gereken tutumdur. Tehditler: öz-çıkar, öz-denetim, taraf tutma, yakınlık, yıldırma.'},
+  {k:'Denetim',s:'"Performans önemliliği" neyi amaçlar?',sec:['Ücret belirlemeyi','Tek tek önemsiz yanlışlıkların toplamının önemliliği aşma riskini azaltmayı','Denetim süresini','Rapor formatını','Örneklem seçimini engellemeyi'],d:1,a:'Performans önemliliği, toplam önemlilik altında belirlenip küçük yanlışlıkların toplamının riskini azaltır.'},
+  {k:'Denetim',s:'Yönetimin yazılı beyanı (teyit mektubu) ne işe yarar?',sec:['Denetim ücretini belirler','Yönetimin sorumluluklarını ve bilgilerin doğruluğunu teyit eder','Vergi hesaplar','Görüşü değiştirir','Raporu imzalar'],d:1,a:'Yönetim beyan mektubu, yönetimin sorumluluklarını ve verdiği bilgilerin doğruluğunu yazılı teyit eder.'},
+  {k:'Denetim',s:'Denetim örneklemesi neden kullanılır?',sec:['Zorunlu olduğu için','Tüm kitleyi test etmek çoğu zaman verimsiz olduğu için','Kanıt gerekmediği için','Yönetim istediği için','Ücret düşük olduğu için'],d:1,a:'Kitlenin tamamını test etmek genelde ekonomik/mümkün olmadığından örneklemle geneli hakkında sonuç çıkarılır.'},
+  // ─── Ticaret/Borçlar ek ───
+  {k:'Ticaret/Borçlar Hukuku',s:'Kambiyo senetleri (bono, poliçe, çek) için itiraz süresi ödeme emrine karşı kaç gündür?',sec:['3 gün','5 gün','7 gün','15 gün','30 gün'],d:1,a:'Kambiyo senetlerine mahsus takipte ödeme emrine itiraz süresi 5 gündür ve itiraz icra mahkemesine yapılır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Bonoda zorunlu unsurlardan biri eksikse ne olur?',sec:['Geçerli kalır','Bono vasfını kaybedebilir','Çeke dönüşür','Poliçe olur','Faizsiz olur'],d:1,a:'Zorunlu unsurların eksikliği (yasal tamamlama halleri dışında) senedin bono vasfını kaybetmesine yol açar.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Poliçede kaç taraf bulunur?',sec:['1','2','3','4','5'],d:2,a:'Poliçede üç taraf vardır: düzenleyen (keşideci), muhatap ve lehtar. Bonoda iki taraf vardır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Anonim şirkette yönetim kurulu toplantı nisabı nedir?',sec:['Üye tam sayısının 1/3\'ü','Üye tam sayısının çoğunluğu','Tüm üyeler','2/3 çoğunluk','Tek üye yeter'],d:1,a:'Yönetim kurulu, üye tam sayısının çoğunluğuyla toplanır ve toplantıda hazır bulunanların çoğunluğuyla karar alır.'},
+  // ─── Kurumsal Yönetim & Finansal Yönetim ───
+  {k:'Kurumsal Yönetim/Finans',s:'Kurumsal yönetimin temel ilkelerinden biri DEĞİLDİR?',sec:['Şeffaflık','Hesap verebilirlik','Adillik','Sorumluluk','Kâr maksimizasyonu'],d:4,a:'Kurumsal yönetimin dört temel ilkesi: şeffaflık, hesap verebilirlik, adillik (eşitlik) ve sorumluluk.'},
+  {k:'Kurumsal Yönetim/Finans',s:'"Vekâlet (temsil) sorunu" neyi ifade eder?',sec:['Ortaklar arası anlaşmazlık','Yönetici ile pay sahibi çıkar farklılığı','Müşteri şikayeti','Devletle ihtilaf','Çalışan grevi'],d:1,a:'Vekâlet sorunu, vekil (yönetici) ile asil (pay sahipleri) arasındaki çıkar farklılığından doğan risktir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Cari oran neyi ölçer?',sec:['Kârlılığı','Kısa vadeli borç ödeme gücünü','Uzun vadeli borçları','Verimliliği','Piyasa değerini'],d:1,a:'Cari oran = Dönen Varlıklar / KVYK; kısa vadeli borç ödeme gücünü gösterir (ideal ≈ 2).'},
+  {k:'Kurumsal Yönetim/Finans',s:'ROE (özkaynak kârlılığı) nasıl hesaplanır?',sec:['Net kâr / satışlar','Net kâr / özkaynaklar','Net kâr / toplam varlık','Satış / özkaynak','FVÖK / varlık'],d:1,a:'ROE = Net Kâr / Özkaynaklar; ortakların sermayesinin verimini gösterir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'NPV (net bugünkü değer) bir yatırım için pozitifse ne yapılır?',sec:['Proje reddedilir','Proje kabul edilir','Kararsız kalınır','Sadece IRR\'ye bakılır','Ertelenir'],d:1,a:'NPV > 0 ise proje değer yaratır ve kabul edilir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'WACC neyi ifade eder?',sec:['Sadece borç maliyeti','Ağırlıklı ortalama sermaye maliyeti','Özkaynak kârlılığı','Net kâr marjı','Faiz oranı'],d:1,a:'WACC, öz kaynak ve borç maliyetlerinin sermaye yapısındaki ağırlıklarına göre ortalamasıdır; iskonto oranı olarak kullanılır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Sistematik risk (piyasa riski) için hangisi doğrudur?',sec:['Çeşitlendirmeyle yok edilir','Çeşitlendirmeyle yok edilemez','Firmaya özgüdür','Sıfırdır','Sadece tahvillerde vardır'],d:1,a:'Sistematik risk tüm piyasayı etkiler, çeşitlendirmeyle yok edilemez; sistematik olmayan risk çeşitlendirilebilir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Beta katsayısı 1\'den büyük bir hisse için ne söylenir?',sec:['Piyasadan az oynak','Risksiz','Piyasadan daha oynak','Getirisi sabit','Tahvil gibidir'],d:2,a:'Beta > 1 olan hisse, piyasa hareketlerine göre daha oynak (yüksek sistematik risk) demektir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Denetim komitesinin temel görevi nedir?',sec:['Ürün pazarlamak','Finansal raporlama ve iç kontrol/denetimin gözetimi','Personel almak','Kâr dağıtmak','Fiyat belirlemek'],d:1,a:'Denetim komitesi; finansal raporlamanın doğruluğunu, iç kontrol-iç denetimi ve bağımsız denetçinin bağımsızlığını gözetir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Sürdürülebilir büyüme oranı formülü nedir?',sec:['ROE × dağıtım oranı','ROE × (1 − temettü dağıtım oranı)','ROA × kaldıraç','Net marj × devir','Beta × getiri'],d:1,a:'SGO = ROE × (1 − temettü dağıtım oranı); dış finansman olmadan büyünebilecek orandır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Başabaş noktası nasıl bulunur?',sec:['Sabit maliyet / birim fiyat','Sabit maliyet / birim katkı payı','Toplam maliyet / adet','Kâr / satış','Satış / maliyet'],d:1,a:'Başabaş adet = Sabit Maliyet / (Birim Fiyat − Birim Değişken Maliyet).'},
+  {k:'Kurumsal Yönetim/Finans',s:'Bağımsız yönetim kurulu üyesinin amacı nedir?',sec:['Ücreti artırmak','Tarafsız denetim ve azınlık/paydaş çıkarını gözetmek','Ana ortağı temsil','Sadece oy kullanmak','Vergi planlaması'],d:1,a:'Bağımsız üye, yönetim üzerinde tarafsız denetim sağlayıp tüm paydaşların çıkarını gözetir.'},
+  // ─── Sermaye Piyasası / Bankacılık / Sigorta ───
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Halka açık şirketler önemli bilgileri hangi platformda açıklar?',sec:['Ticaret sicili','KAP (Kamuyu Aydınlatma Platformu)','Resmi Gazete','SGK','Vergi dairesi'],d:1,a:'Halka açık şirketler, önemli olayları ve finansalları KAP üzerinden kamuya açıklar.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sermaye piyasasını düzenleyen ve denetleyen kurum hangisidir?',sec:['BDDK','SPK','TCMB','KGK','Hazine'],d:1,a:'Sermaye piyasalarını Sermaye Piyasası Kurulu (SPK) düzenler ve denetler.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankaları düzenleyen ve denetleyen kurum hangisidir?',sec:['SPK','BDDK','KGK','SGK','Borsa İstanbul'],d:1,a:'Bankacılık sektörünü Bankacılık Düzenleme ve Denetleme Kurumu (BDDK) düzenler ve denetler.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankalarda sermaye yeterlilik rasyosu (SYR) neyi ölçer?',sec:['Kârlılığı','Özkaynağın risk ağırlıklı varlıklara oranını','Mevduat miktarını','Kredi faizini','Şube sayısını'],d:1,a:'SYR = özkaynak / risk ağırlıklı varlıklar; bankanın riske karşı sermaye gücünü gösterir (Basel).'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'"İçeriden öğrenenlerin ticareti" (insider trading) nedir?',sec:['Normal alım-satım','Kamuya açıklanmamış bilgiyle menfaat sağlama','Halka arz','Temettü dağıtımı','Aracılık'],d:1,a:'Henüz kamuya açıklanmamış, fiyatı etkileyecek bilgiyi kullanarak menfaat sağlamaktır; yasaktır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'İzahname (prospektüs) ne zaman düzenlenir?',sec:['Kâr dağıtımında','Halka arzda','Tasfiyede','Birleşmede zorunlu değil','Denetimde'],d:1,a:'İzahname, sermaye piyasası araçlarının halka arzında yatırımcıyı bilgilendirmek için düzenlenir ve SPK onayına tabidir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sigortacılıkta "muallak hasar karşılığı" nedir?',sec:['Tahsil edilen prim','Gerçekleşmiş ama henüz ödenmemiş hasarlar için ayrılan karşılık','Reasürans payı','Kâr payı','Komisyon'],d:1,a:'Muallak hasar karşılığı, gerçekleşmiş fakat henüz ödenmemiş (dosyası açık) hasarlar için ayrılır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Reasürans ne demektir?',sec:['Sigorta satışı','Sigortacının riskinin bir kısmını başka şirkete devretmesi','Prim tahsili','Hasar ödeme','Poliçe iptali'],d:1,a:'Reasürans, sigorta şirketinin üstlendiği riskin bir kısmını başka bir (reasürans) şirkete devrederek paylaşmasıdır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'"Kazanılmamış primler karşılığı" nedir?',sec:['Ödenmemiş hasar','Primin gelecek döneme ait (henüz hak edilmemiş) kısmı','Komisyon gideri','Vergi karşılığı','Reasürans alacağı'],d:1,a:'Tahsil edilen primin, gelecek döneme sarkan ve henüz hak edilmemiş kısmı için ayrılan karşılıktır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Yatırım fonu katılma payı neyi temsil eder?',sec:['Şirket ortaklığını','Fon portföyündeki paya sahipliği','Tahvil alacağını','Mevduatı','Sigorta poliçesini'],d:1,a:'Katılma payı, yatırımcının fon portföyündeki payını (oransal sahipliğini) temsil eder.'},
+  // ─── Genel Hukuk ───
+  {k:'Genel Hukuk',s:'Kanunların Anayasaya uygunluğunu hangi mahkeme denetler?',sec:['Yargıtay','Danıştay','Anayasa Mahkemesi','Sayıştay','Bölge Adliye Mahkemesi'],d:2,a:'Kanunların Anayasaya uygunluğunu Anayasa Mahkemesi denetler.'},
+  {k:'Genel Hukuk',s:'İdari işlemlere karşı açılan davalara hangi yargı bakar?',sec:['Adli yargı','İdari yargı (Danıştay/İdare Mahkemeleri)','Anayasa Mahkemesi','Askeri yargı','Ceza mahkemesi'],d:1,a:'İdari işlem ve eylemlere karşı davalara idari yargı (idare/vergi mahkemeleri, Danıştay) bakar.'},
+  {k:'Genel Hukuk',s:'Ceza hukukunda "kanunsuz suç ve ceza olmaz" ilkesi ne anlama gelir?',sec:['Herkes suçludur','Kanunda tanımlanmayan fiil suç sayılamaz','Ceza takdiridir','Suç affedilir','Ceza uygulanmaz'],d:1,a:'Suçta ve cezada kanunilik ilkesi: bir fiil ancak kanunda açıkça suç olarak tanımlanmışsa cezalandırılır.'},
+  {k:'Genel Hukuk',s:'Bir hakkın kullanımının süreye bağlı olarak sona ermesi hangi kavramdır?',sec:['İbra','Zamanaşımı/hak düşürücü süre','Takas','Tecdit','Havale'],d:1,a:'Zamanaşımı ve hak düşürücü süreler, hakkın belirli süre içinde kullanılmaması halinde talep/koruma imkânını sınırlar.'},
+  {k:'Genel Hukuk',s:'Türkiye\'de en üst genel mahkeme (adli yargı) hangisidir?',sec:['Danıştay','Yargıtay','Anayasa Mahkemesi','Sayıştay','AYİM'],d:1,a:'Adli yargının en üst temyiz mercii Yargıtay\'dır; idari yargıda ise Danıştay.'},
+  {k:'Genel Hukuk',s:'Sözleşmenin kurulması için gereken temel unsur nedir?',sec:['Noter onayı','Karşılıklı ve birbirine uygun irade beyanı','Tanık','Damga vergisi','Tescil'],d:1,a:'Sözleşme, tarafların karşılıklı ve birbirine uygun irade beyanlarıyla (icap-kabul) kurulur.'},
+  {k:'Genel Hukuk',s:'Devletin temel organları hangileridir?',sec:['Yasama, yürütme, yargı','Meclis, ordu, polis','Merkez, taşra, yerel','Vergi, güvenlik, eğitim','Başkan, vekil, memur'],d:0,a:'Kuvvetler ayrılığı gereği devletin üç temel organı: yasama, yürütme ve yargı.'},
+  {k:'Genel Hukuk',s:'"Hukuki ehliyet" (fiil ehliyeti) için genel şart nedir?',sec:['Vergi mükellefi olmak','Ergin, ayırt etme gücüne sahip ve kısıtlı olmamak','Tacir olmak','Kamu görevlisi olmak','Şirket ortağı olmak'],d:1,a:'Tam fiil ehliyeti için kişinin ergin, ayırt etme gücüne sahip ve kısıtlı olmaması gerekir.'},
+  // ═══ 2. GENİŞLETME (her ders +13) ═══
+  // TMS/TFRS
+  {k:'TMS/TFRS',s:'TMS 1 zorunlu finansal tablolardan biri DEĞİLDİR?',sec:['Finansal durum tablosu','Kâr/zarar ve DKG tablosu','Nakit akış tablosu','Üretim maliyet tablosu','Özkaynak değişim tablosu'],d:3,a:'TMS 1: finansal durum, kâr/zarar-DKG, özkaynak değişim, nakit akış tabloları ve dipnotlar. Üretim maliyet tablosu zorunlu değildir.'},
+  {k:'TMS/TFRS',s:'TMS 38\'e göre içsel oluşturulan şerefiye nasıl kaydedilir?',sec:['Aktifleştirilir','Aktifleştirilmez','Amortismana tabidir','Yeniden değerlenir','DKG\'ye yazılır'],d:1,a:'İşletme içi yaratılan şerefiye güvenilir ölçülemediğinden aktifleştirilmez.'},
+  {k:'TMS/TFRS',s:'TMS 38\'de geliştirme gideri ne zaman aktifleştirilir?',sec:['Her zaman','Hiçbir zaman','Teknik yapılabilirlik ve gelecekteki fayda kanıtlanırsa','Araştırma aşamasında','Yönetim isterse'],d:2,a:'Araştırma gideri doğrudan gider yazılır; geliştirme gideri belirli şartlar (teknik yapılabilirlik, fayda vb.) sağlanırsa aktifleştirilir.'},
+  {k:'TMS/TFRS',s:'Muhasebe TAHMİNİ değişikliği nasıl uygulanır?',sec:['Geriye dönük','İleriye dönük','Uygulanmaz','Sadece dipnotta','Sermayeden'],d:1,a:'Tahmin değişikliği ileriye dönük (o dönem ve sonrası) uygulanır; politika değişikliği ise geriye dönük.'},
+  {k:'TMS/TFRS',s:'TFRS 3 iş birleşmeleri hangi yöntemle muhasebeleştirilir?',sec:['Havuzlama','Satın alma (edinim) yöntemi','Özkaynak yöntemi','Maliyet yöntemi','Oransal'],d:1,a:'İş birleşmeleri satın alma (edinim) yöntemiyle; edinilen net varlıklar gerçeğe uygun değerle ölçülür.'},
+  {k:'TMS/TFRS',s:'TMS 2\'ye göre stok maliyet yöntemlerinden hangisi KULLANILMAZ?',sec:['FIFO (İlk giren ilk çıkar)','Ağırlıklı ortalama','LIFO (Son giren ilk çıkar)','Gerçek parti maliyeti','Standart maliyet (yaklaşıksa)'],d:2,a:'TMS 2, LIFO yöntemini yasaklar; FIFO ve ağırlıklı ortalama kabul edilir.'},
+  {k:'TMS/TFRS',s:'Değer düşüklüğü zararı hangi varlık için ASLA iptal edilemez?',sec:['Stoklar','Maddi duran varlık','Şerefiye','Maddi olmayan varlık','Alacaklar'],d:2,a:'Şerefiyeye ilişkin değer düşüklüğü zararı sonraki dönemlerde iptal edilemez.'},
+  {k:'TMS/TFRS',s:'TMS 21\'de parasal kalemler dönem sonunda hangi kurla değerlenir?',sec:['İşlem tarihi kuru','Kapanış (dönem sonu) kuru','Ortalama kur','Sabit kur','Serbest kur'],d:1,a:'Parasal kalemler kapanış kuruyla değerlenir, kur farkı kâr/zarara yansır; parasal olmayanlar işlem tarihi kuruyla taşınır.'},
+  {k:'TMS/TFRS',s:'TFRS 5 satış amaçlı elde tutulan duran varlık için ne yapılır?',sec:['Amortisman devam eder','Amortisman durur, düşük değerle ölçülür','Yeniden değerlenir','Gider yazılır','Silinir'],d:1,a:'Satış amaçlı elde tutulan varlığın amortismanı durur; defter değeri ile GUD eksi satış maliyetinden düşük olanıyla ölçülür.'},
+  {k:'TMS/TFRS',s:'Kapsamlı gelir neyi ifade eder?',sec:['Sadece net kâr','Sadece hasılat','Dönem kârı + diğer kapsamlı gelir','Sadece temettü','Brüt satış'],d:2,a:'Toplam kapsamlı gelir = dönem kâr/zararı + diğer kapsamlı gelir (yeniden değerleme fonu, bazı kur/türev farkları).'},
+  {k:'TMS/TFRS',s:'TMS 12\'ye göre kalıcı fark ertelenmiş vergi yaratır mı?',sec:['Evet, her zaman','Hayır','Sadece gider için','Sadece gelir için','Oran değişirse'],d:1,a:'Kalıcı farklar (örn. KKEG, istisna kazanç) ertelenmiş vergi doğurmaz; sadece geçici farklar doğurur.'},
+  {k:'TMS/TFRS',s:'TMS 41 tarımsal ürün/canlı varlık nasıl ölçülür?',sec:['Maliyetle','GUD eksi satış maliyetleriyle','Nominal değerle','Rayiç bedelle','Defter değeriyle'],d:1,a:'Canlı varlıklar ve hasat anındaki ürünler, gerçeğe uygun değerinden satış maliyetleri düşülerek ölçülür.'},
+  {k:'TMS/TFRS',s:'TMS 23\'te aktifleştirme ne zaman durur?',sec:['Kredi bitince','Varlık kullanıma/satışa hazır hale gelince','Yıl sonunda','Faiz ödenince','Hiçbir zaman'],d:1,a:'Borçlanma maliyetlerinin aktifleştirilmesi, özellikli varlık kullanıma/satışa hazır hale geldiğinde sona erer.'},
+  // Denetim
+  {k:'Denetim',s:'Denetim sürecinin ilk aşaması hangisidir?',sec:['Raporlama','Tözel testler','Müşteri kabulü ve planlama','Görüş oluşturma','Kontrol testleri'],d:2,a:'Süreç müşteri kabulü ve planlamayla başlar; risk değerlendirme, testler, görüş ve raporlama izler.'},
+  {k:'Denetim',s:'Kontrol testleri neyi test eder?',sec:['Bakiyelerin doğruluğunu','İç kontrollerin etkin çalışıp çalışmadığını','Vergi tutarını','Kârı','Nakit mevcudunu'],d:1,a:'Kontrol testleri, iç kontrollerin tasarlandığı gibi işleyip işlemediğini test eder.'},
+  {k:'Denetim',s:'Tözel (maddi doğruluk) testi neyi hedefler?',sec:['Kontrol etkinliğini','Hesap bakiyelerindeki maddi yanlışlığı doğrudan tespit etmeyi','Personeli','Bütçeyi','Fiyatı'],d:1,a:'Tözel testler, hesap ve işlemlerdeki maddi yanlışlıkları doğrudan tespit etmeye yöneliktir.'},
+  {k:'Denetim',s:'Analitik prosedür örneği hangisidir?',sec:['Fiziki sayım','Brüt kâr marjının dönemler arası karşılaştırılması','Belge inceleme','Yeniden hesaplama','Gözlem'],d:1,a:'Analitik prosedür; oran/trend analiziyle veriler arası mantıksal ilişkilerin incelenmesidir.'},
+  {k:'Denetim',s:'Denetimde "gözlem" yöntemi nedir?',sec:['Belge okuma','Bir süreç veya işlemin fiilen izlenmesi','Teyit alma','Hesaplama','Soruşturma'],d:1,a:'Gözlem, bir sürecin (örn. stok sayımının) fiilen yapılışının denetçi tarafından izlenmesidir.'},
+  {k:'Denetim',s:'"Soruşturma" (inquiry) prosedürünün sınırı nedir?',sec:['Çok pahalıdır','Tek başına yeterli kanıt sayılmaz','Yasaktır','Sadece yazılı olur','Kanıt değildir'],d:1,a:'Sözlü/yazılı bilgi talebine dayandığından tek başına yeterli değildir, başka kanıtlarla desteklenir.'},
+  {k:'Denetim',s:'Denetim sözleşmesi (engagement letter) neyi içermez?',sec:['Denetimin amacı ve kapsamı','Tarafların sorumlulukları','Ücret','Kesin denetim görüşü','Raporlama şekli'],d:3,a:'Sözleşme amaç, kapsam, sorumluluk, ücret ve raporlamayı içerir; görüş önceden verilemez.'},
+  {k:'Denetim',s:'Kilit denetim ortağı kimdir?',sec:['İç denetçi','Denetimden ve rapordan nihai sorumlu ortak','Muhasebe müdürü','Vergi müfettişi','Yönetim kurulu üyesi'],d:1,a:'Kilit denetim ortağı, denetimin yürütülmesinden ve raporun imzalanmasından nihai sorumlu kişidir.'},
+  {k:'Denetim',s:'Denetçi rotasyonu neyi azaltmayı amaçlar?',sec:['Ücreti','Yakınlık/öz-menfaat kaynaklı bağımsızlık riskini','Süreyi','Kanıt miktarını','Rapor sayısını'],d:1,a:'Kilit ortağın belirli süre sonra değişmesi, müşteriye aşırı yakınlıktan doğan bağımsızlık riskini azaltır.'},
+  {k:'Denetim',s:'Grup denetiminde nihai sorumluluk kimdedir?',sec:['Bileşen denetçisi','Ana (grup) denetçisi','Yönetim','KGK','Vergi dairesi'],d:1,a:'TDS 600: grup görüşünden ana (grup) denetim ortağı nihai olarak sorumludur.'},
+  {k:'Denetim',s:'Denetim kanıtının "uygunluğu" neyi ifade eder?',sec:['Miktarını','Kalitesini (ilgililik+güvenilirlik)','Maliyetini','Süresini','Sayısını'],d:1,a:'Uygunluk kanıtın kalitesidir (ilgili ve güvenilir olması); yeterlilik ise miktarıdır.'},
+  {k:'Denetim',s:'Vurgu (dikkat çekme) paragrafı görüşü değiştirir mi?',sec:['Evet','Hayır, görüşü değiştirmez','Olumsuz yapar','Şartlı yapar','Reddeder'],d:1,a:'Vurgu paragrafı, görüşü değiştirmeden yeterince açıklanmış önemli bir hususa dikkat çeker.'},
+  // Ticaret/Borçlar Hukuku
+  {k:'Ticaret/Borçlar Hukuku',s:'Aval kıymetli evrakta ne anlama gelir?',sec:['Ciro','Senet borcuna kefalet benzeri teminat','İptal','Devir','Ödeme'],d:1,a:'Aval, bono/poliçe borcunu borçluyla birlikte ödeme taahhüdüdür (kambiyo hukukuna özgü teminat).'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Çekte karşılıksızlık halinde güncel yaptırım nedir?',sec:['Doğrudan hapis','Adli para cezası ve çek yasağı','Sadece faiz','Yaptırım yok','İdari para cezası yok'],d:1,a:'Karşılıksız çekte adli para cezası ve çek düzenleme yasağı uygulanır; doğrudan hapis kaldırılmıştır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Tür değiştiren şirketin tüzel kişiliği ne olur?',sec:['Sona erer','Aynen devam eder','Askıya alınır','Tasfiye olur','Bölünür'],d:1,a:'Tür değiştirmede (örn. Ltd→A.Ş.) tüzel kişilik sona ermez, aynı tüzel kişilik yeni türde devam eder.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Birleşmede devrolan şirket ne olur?',sec:['Tasfiyeli sona erer','Tasfiyesiz sona erer, malvarlığı devralana geçer','Devam eder','Bölünür','Askıya alınır'],d:1,a:'Devrolan şirket tasfiyesiz sona erer; aktif-pasifi külli halefiyetle devralan şirkete geçer.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Genel kurulun devredilemez yetkilerinden biridir?',sec:['Günlük işlemler','Yönetim kurulu üyelerini seçmek','Fatura kesmek','Personel almak','Kredi çekmek'],d:1,a:'Yönetim kurulu üyelerini seçmek/ibra etmek genel kurulun devredilemez yetkisidir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Ticari iş karinesi" ne demektir?',sec:['Her iş ticaridir','Bir tacirin borçları aksi ispatlanmadıkça ticari sayılır','Ticari iş yoktur','Sadece şirketler tacirdir','Faiz yasaktır'],d:1,a:'Bir tacirin borçlarının, aksi ispatlanmadıkça ticari iş sayılması karinesidir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Borcun "tecdit" (yenileme) ile sona ermesi nedir?',sec:['Borcun affı','Eski borcun yeni bir borçla ortadan kaldırılması','Takas','Zamanaşımı','İfa'],d:1,a:'Tecdit, tarafların eski borcu sona erdirip yerine yeni bir borç kurmasıdır.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Takas" ne demektir?',sec:['Borcun devri','Karşılıklı ve muaccel borçların birbirine mahsubu','Kefalet','Havale','İbra'],d:1,a:'Takas, karşılıklı, aynı cinsten ve muaccel iki borcun birbiriyle mahsup edilerek sona erdirilmesidir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Anonim şirkette sermaye taahhüdü tescilden sonra en geç ne kadar sürede ödenir?',sec:['6 ay','12 ay','24 ay','36 ay','48 ay'],d:2,a:'Nakden taahhüt edilen payların kalan kısmı, tescili izleyen 24 ay içinde ödenir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Nama yazılı hisse senedi nasıl devredilir?',sec:['Sadece teslimle','Ciro + teslim','İlan ile','Tescil ile','Devredilemez'],d:1,a:'Nama yazılı pay senedi ciro edilip zilyetliğin (teslim) geçirilmesiyle devredilir; pay defterine kayıt gerekir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'"Müteselsil kefalet"te alacaklı kime başvurabilir?',sec:['Önce asıl borçluya','Doğrudan kefile de','Sadece kefile','Mahkemeye','Hiç kimseye'],d:1,a:'Müteselsil kefalette alacaklı, asıl borçluya başvurmadan doğrudan kefilden de talep edebilir.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Ticaret sicilinin temel işlevi nedir?',sec:['Vergi toplamak','Aleniyet (kamuya duyuru) ve hukuki güvenlik','Denetim','Kâr dağıtımı','Ceza vermek'],d:1,a:'Ticaret sicili, tacirlerle ilgili hususları kamuya duyurarak aleniyet ve hukuki güvenlik sağlar.'},
+  {k:'Ticaret/Borçlar Hukuku',s:'Şirketler topluluğunda hakim şirket için hangisi doğrudur?',sec:['Bağlı şirketi kontrol eder','Bağlı şirkete tabidir','İlişkisizdir','Tasfiyededir','Ortak değildir'],d:0,a:'Hakim şirket, bir/birden çok bağlı şirketi doğrudan veya dolaylı kontrol eder.'},
+  // Vergi Mevzuatı
+  {k:'Vergi Mevzuatı',s:'Gelir vergisi beyannamesi hangi ayda verilir?',sec:['Nisan','Mart','Şubat','Mayıs','Ocak'],d:1,a:'Yıllık gelir vergisi beyannamesi izleyen yıl Mart ayında verilir (kurumlar Nisan).'},
+  {k:'Vergi Mevzuatı',s:'Amortismanda azalan bakiyeler oranı en fazla kaçtır?',sec:['%20','%25','%40','%50','%100'],d:3,a:'Azalan bakiyeler oranı normal oranın 2 katıdır ve her halükarda %50\'yi geçemez.'},
+  {k:'Vergi Mevzuatı',s:'KKEG neyi ifade eder?',sec:['Kabul edilen gider','Kanunen kabul edilmeyen gider','Kamu gideri','Kar payı','Kur farkı'],d:1,a:'KKEG, ticari kârdan düşülmüş olsa da vergi matrahına geri eklenen, indirimi kabul edilmeyen giderdir.'},
+  {k:'Vergi Mevzuatı',s:'Şüpheli alacak karşılığı için aşağıdakilerden hangisi GEREKLİDİR?',sec:['Alacağın teminatlı olması','Dava/icra safhasında olması','Peşin olması','Yurt dışı olması','Nakit olması'],d:1,a:'Dava/icra safhasında veya protestoya rağmen ödenmemiş alacaklar için karşılık ayrılır; teminatlı kısma ayrılamaz.'},
+  {k:'Vergi Mevzuatı',s:'Değersiz alacak nasıl işlem görür?',sec:['Karşılık ayrılır','Doğrudan zarar yazılır','Gelir yazılır','Bekletilir','Reeskonta tabidir'],d:1,a:'Kazai hüküm/kanaat verici vesikayla tahsili imkânsızlaşan değersiz alacak doğrudan zarar yazılır.'},
+  {k:'Vergi Mevzuatı',s:'İhraç kayıtlı satışta imalatçının KDV\'si ne olur?',sec:['Tahsil edilir','Tecil-terkin edilir','İade edilmez','İki kat alınır','Gider yazılır'],d:1,a:'İmalatçı KDV tahsil etmez; hesaplanan KDV tecil edilip ihracat gerçekleşince terkin edilir.'},
+  {k:'Vergi Mevzuatı',s:'Sorumlu sıfatıyla KDV hangi beyanname ile verilir?',sec:['1 No.lu KDV','2 No.lu KDV','Muhtasar','Geçici vergi','Damga'],d:1,a:'Tevkifat ve yurt dışı hizmet alımlarında alıcı, sorumlu sıfatıyla 2 No.lu KDV beyannamesi verir.'},
+  {k:'Vergi Mevzuatı',s:'Yıllara sari inşaat işinde kazanç ne zaman beyan edilir?',sec:['Her yıl','İşin bittiği yıl','Sözleşmede','İlk yıl','Beyan edilmez'],d:1,a:'Yıllara yaygın inşaat işinde kâr/zarar işin bittiği yıl beyan edilir; hakedişlerden %5 stopaj yapılır.'},
+  {k:'Vergi Mevzuatı',s:'Geçmiş yıl zararları en fazla kaç yıl mahsup edilir?',sec:['3 yıl','5 yıl','7 yıl','10 yıl','Süresiz'],d:1,a:'Geçmiş yıl zararları izleyen 5 yıl içindeki kurum kazancından mahsup edilebilir.'},
+  {k:'Vergi Mevzuatı',s:'Re\'sen vergi tarhı hangi durumda yapılır?',sec:['Mükellef beyan verince','Matrah defterlerden tespit edilemeyince','Her zaman','İade talebinde','Uzlaşmada'],d:1,a:'Defter/belge ibraz edilmemesi gibi matrahın tespit edilemediği hallerde idarece re\'sen tarh yapılır.'},
+  {k:'Vergi Mevzuatı',s:'Damga vergisinde sorumluluk nasıldır?',sec:['Sadece düzenleyen','İmzalayan taraflar müteselsilen','Devlet','Noter','Alıcı'],d:1,a:'Bir kağıdı imzalayan taraflar damga vergisinden müteselsilen sorumludur.'},
+  {k:'Vergi Mevzuatı',s:'Yenileme fonu kaç yıl pasifte bekletilebilir?',sec:['1 yıl','2 yıl','3 yıl','5 yıl','Süresiz'],d:2,a:'Satılan iktisadi kıymetin kârı, yenisinin alımı için 3 yıl özel fonda (yenileme fonu) bekletilebilir.'},
+  {k:'Vergi Mevzuatı',s:'Özel maliyet bedelleri nasıl itfa edilir?',sec:['5 yılda','Kira süresince (belirsizse 5 yıl)','10 yılda','Bir defada','İtfa edilmez'],d:1,a:'Özel maliyetler kira süresi içinde eşit itfa edilir; kira süresi belirsizse 5 yılda.'},
+  // Kurumsal Yönetim/Finans
+  {k:'Kurumsal Yönetim/Finans',s:'Asit-test (likidite) oranında ne çıkarılır?',sec:['Alacaklar','Stoklar','Kasa','Borçlar','Duran varlıklar'],d:1,a:'Asit-test = (Dönen Varlık − Stoklar) / KVYK; stok satılmadan borç ödeme gücünü ölçer.'},
+  {k:'Kurumsal Yönetim/Finans',s:'IRR (iç verim oranı) neyi ifade eder?',sec:['Faiz oranı','NPV\'yi sıfır yapan iskonto oranı','Kâr marjı','Devir hızı','Beta'],d:1,a:'IRR, projenin NPV\'sini sıfıra eşitleyen iskonto oranıdır; sermaye maliyetini aşarsa proje kabul edilir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Faaliyet kaldıracı yüksek bir firma için ne söylenir?',sec:['Sabit maliyeti düşüktür','Sabit maliyet ağırlığı ve risk yüksektir','Borcu yoktur','Kârı sabittir','Riski sıfırdır'],d:1,a:'Yüksek faaliyet kaldıracı = yüksek sabit maliyet ağırlığı; satış değişimi kârı daha çok etkiler, risk artar.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Net işletme sermayesi nasıl bulunur?',sec:['Dönen varlık − KVYK','Toplam varlık − borç','Özkaynak − borç','Satış − maliyet','Nakit + stok'],d:0,a:'Net işletme sermayesi = Dönen Varlıklar − Kısa Vadeli Yabancı Kaynaklar.'},
+  {k:'Kurumsal Yönetim/Finans',s:'DuPont analizi ROE\'yi kaç sürücüye ayırır?',sec:['2','3','4','5','1'],d:1,a:'DuPont: ROE = Net Kâr Marjı × Aktif Devir Hızı × Finansal Kaldıraç (3 sürücü).'},
+  {k:'Kurumsal Yönetim/Finans',s:'F/K (fiyat/kazanç) oranı neyi gösterir?',sec:['Borç oranını','1 TL kâr için ödenen tutarı','Likiditeyi','Temettüyü','Devir hızını'],d:1,a:'F/K = hisse fiyatı / hisse başına kâr; yatırımcıların 1 TL kâr için ödediği tutarı gösterir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Modigliani-Miller (vergisiz) teoremi ne der?',sec:['Sermaye yapısı değeri belirler','Firma değeri sermaye yapısından bağımsızdır','Borç değeri artırır','Özkaynak en iyisidir','Temettü önemsizdir'],d:1,a:'Vergisiz-mükemmel piyasada firma değeri sermaye yapısından bağımsızdır; değeri varlıkların nakit akışı belirler.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Optimal sermaye yapısı neyi hedefler?',sec:['Borcu sıfırlamak','WACC\'ı minimize edip firma değerini maksimize etmek','Kârı gizlemek','Temettüyü artırmak','Riski artırmak'],d:1,a:'Optimal sermaye yapısı, ağırlıklı ortalama sermaye maliyetini en aza indirerek firma değerini en yükseğe çıkarır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Katkı payı nasıl hesaplanır?',sec:['Fiyat + değişken maliyet','Birim fiyat − birim değişken maliyet','Sabit maliyet / adet','Kâr / satış','Fiyat − sabit maliyet'],d:1,a:'Katkı payı = birim satış fiyatı − birim değişken maliyet; sabit maliyet ve kâra katkıyı gösterir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Temettü artışının sinyal etkisi nedir?',sec:['Olumsuz algı','Yönetimin geleceğe güveni olarak olumlu algı','Etkisiz','İflas işareti','Zorunluluk'],d:1,a:'Temettü artışı çoğu zaman yönetimin geleceğe güveninin işareti olarak olumlu algılanır.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Nakit dönüşüm süresi hangi bileşenleri içerir?',sec:['Sadece stok','Stok + alacak − borç süresi','Sadece alacak','Sadece borç','Satış süresi'],d:1,a:'Nakit dönüşüm süresi = stok devir süresi + alacak tahsil süresi − borç ödeme süresi.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Kurumsal risk yönetiminde riske karşı stratejilerden biri DEĞİLDİR?',sec:['Kaçınma','Azaltma','Transfer','Kabullenme','Görmezden gelme'],d:4,a:'Temel stratejiler: kaçınma, azaltma, transfer (sigorta/hedge), kabullenme. "Görmezden gelme" bir strateji değildir.'},
+  {k:'Kurumsal Yönetim/Finans',s:'Bağımsız denetimden geçmiş finansal tablo yatırımcıya ne sağlar?',sec:['Kâr garantisi','Güvenilirlik ve karşılaştırılabilirlik','Vergi muafiyeti','Temettü','Kredi'],d:1,a:'Bağımsız denetim, finansal tablolara güven ve karşılaştırılabilirlik kazandırarak piyasaların sağlıklı işlemesini destekler.'},
+  // Sermaye Piyasası/Banka/Sigorta
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Borsada işlem gören payların saklaması hangi kurumda tutulur?',sec:['Vergi dairesi','MKK (Merkezi Kayıt Kuruluşu)','TCMB','SGK','Ticaret sicili'],d:1,a:'Sermaye piyasası araçları kaydileştirilerek Merkezi Kayıt Kuruluşu (MKK) nezdinde izlenir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Halka arzda aracılık yapan kuruluş nedir?',sec:['Noter','Aracı kurum/yatırım bankası','Vergi dairesi','SGK','Ticaret odası'],d:1,a:'Halka arz, yetkili aracı kurumlar/yatırım bankaları aracılığıyla gerçekleştirilir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Manipülasyon (piyasa dolandırıcılığı) nedir?',sec:['Normal işlem','Fiyatı yapay etkileyen aldatıcı işlemler','Halka arz','Temettü','Aracılık'],d:1,a:'Manipülasyon, sermaye piyasası aracının fiyat/hacmini yapay olarak etkileyen aldatıcı işlemlerdir; yasaktır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Tahvil sahibinin şirketle ilişkisi nedir?',sec:['Ortak','Alacaklı','Yönetici','Denetçi','Müşteri'],d:1,a:'Tahvil bir borçlanma aracıdır; sahibi şirkete ortak değil, alacaklıdır (sabit getirili).'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Hisse senedi sahibinin şirketle ilişkisi nedir?',sec:['Alacaklı','Ortak (pay sahibi)','Kefil','Müşteri','Çalışan'],d:1,a:'Hisse senedi ortaklık payını temsil eder; sahibi şirkete ortaktır (temettü ve oy hakkı).'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankalarda "donuk (takipteki) alacak" ne demektir?',sec:['Yeni kredi','Tahsili gecikmiş/şüpheli hale gelmiş kredi','Mevduat','Sermaye','Faiz geliri'],d:1,a:'Donuk alacak, geri ödemesi belirli süre geciken ve tahsili şüpheli hale gelen kredidir; karşılık ayrılır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Mevduat sigortası hangi kurumca sağlanır (Türkiye)?',sec:['SPK','TMSF','BDDK','TCMB','MKK'],d:1,a:'Tasarruf mevduatı, Tasarruf Mevduatı Sigorta Fonu (TMSF) tarafından belirli limitte güvence altındadır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sigortada "aşkın sigorta" nedir?',sec:['Değerin altında sigorta','Sigorta bedelinin gerçek değeri aşması','Çifte sigorta','Reasürans','Muafiyet'],d:1,a:'Aşkın sigorta, sigorta bedelinin sigortalı menfaatin gerçek değerini aşmasıdır; aşan kısım geçersizdir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Sigortada "rücu hakkı" nedir?',sec:['Prim iadesi','Ödeyen sigortacının zarara sebep olana başvurma hakkı','Poliçe iptali','Muafiyet','Reasürans'],d:1,a:'Sigortacı, ödediği tazminat için zarara sebep olan üçüncü kişiye rücu edebilir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Yatırım fonlarını kim düzenler?',sec:['BDDK','SPK','TCMB','SGK','TMSF'],d:1,a:'Yatırım fonları ve portföy yönetim şirketleri Sermaye Piyasası Kurulu (SPK) düzenlemesine tabidir.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'"Repo" işlemi nedir?',sec:['Hisse alımı','Menkul kıymetin geri alım taahhüdüyle satılması','Kredi','Sigorta','Halka arz'],d:1,a:'Repo, bir menkul kıymetin belirli tarihte geri alım taahhüdüyle satılmasıdır (kısa vadeli fonlama).'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Bankalarda kredi riskini azaltan temel unsur nedir?',sec:['Yüksek faiz','Teminat/kefalet','Reklam','Şube sayısı','Mevduat'],d:1,a:'Teminat, kefalet ve iyi kredi analizi (5C) bankanın kredi riskini azaltır.'},
+  {k:'Sermaye Piyasası/Banka/Sigorta',s:'Kredi analizinde "5C" unsurlarından biri DEĞİLDİR?',sec:['Karakter','Kapasite','Sermaye','Teminat','Kâr payı'],d:4,a:'5C: Karakter, Kapasite, Sermaye, Teminat (collateral), Koşullar. Kâr payı 5C unsuru değildir.'},
+  // Genel Hukuk
+  {k:'Genel Hukuk',s:'Vergi uyuşmazlıklarına hangi yargı bakar?',sec:['Adli yargı','Vergi mahkemeleri (idari yargı)','Anayasa Mahkemesi','Ceza mahkemesi','Sayıştay'],d:1,a:'Vergi uyuşmazlıkları idari yargı kolundaki vergi mahkemelerinde görülür; üst mercii Danıştay.'},
+  {k:'Genel Hukuk',s:'Kanun teklifini kim yasalaştırır?',sec:['Cumhurbaşkanı','TBMM (yasama)','Danıştay','Bakanlık','Yargıtay'],d:1,a:'Kanunları yapma yetkisi (yasama) TBMM\'ye aittir.'},
+  {k:'Genel Hukuk',s:'"İyiniyet" (TMK md.3) hukukta neyi sağlar?',sec:['Cezasızlık','Bilmemenin/yanılmanın belirli hallerde korunması','Vergi muafiyeti','Sözleşme iptali','Zamanaşımı'],d:1,a:'Kanunun iyiniyete sonuç bağladığı hallerde, durumun gerektirdiği özeni gösteren kişi korunur.'},
+  {k:'Genel Hukuk',s:'Bir sözleşme kesin hükümsüz (batıl) ise sonucu nedir?',sec:['Geçerlidir','Baştan itibaren hüküm doğurmaz','Sonradan geçerli olur','Askıdadır','İptal edilebilir'],d:1,a:'Kesin hükümsüz (batıl) sözleşme baştan itibaren (ex tunc) hiçbir hukuki sonuç doğurmaz.'},
+  {k:'Genel Hukuk',s:'İdarenin hukuka aykırı işlemine karşı açılan dava türü nedir?',sec:['Tam yargı davası','İptal davası','Ceza davası','Alacak davası','Tespit davası'],d:1,a:'İdari işlemin hukuka aykırılığı nedeniyle iptali için iptal davası; zarar varsa tam yargı davası açılır.'},
+  {k:'Genel Hukuk',s:'Ceza sorumluluğu için kural olarak ne aranır?',sec:['Sadece fiil','Kast veya taksir (kusur)','Zarar','Şikayet','Tanık'],d:1,a:'Ceza sorumluluğu şahsidir ve kural olarak kusur (kast/taksir) aranır; kusursuz ceza olmaz.'},
+  {k:'Genel Hukuk',s:'Miras hukukunda "saklı pay" nedir?',sec:['Vergiden muaf pay','Belirli mirasçılara kanunen ayrılan, dokunulamayan pay','Vasiyet','Bağış','Terekenin borcu'],d:1,a:'Saklı pay, altsoy/eş gibi mirasçılara kanunen ayrılan ve mirasbırakanın tasarrufuyla ihlal edilemeyen asgari paydır.'},
+  {k:'Genel Hukuk',s:'Yürütme organının başı kimdir (Cumhurbaşkanlığı sistemi)?',sec:['Başbakan','Cumhurbaşkanı','Meclis Başkanı','Bakan','Vali'],d:1,a:'Cumhurbaşkanlığı hükümet sisteminde yürütme yetkisi Cumhurbaşkanı\'ndadır.'},
+  {k:'Genel Hukuk',s:'Temel hak ve özgürlükler kural olarak nasıl sınırlanır?',sec:['İdari kararla','Kanunla','Genelgeyle','Sözleşmeyle','Sınırsızdır'],d:1,a:'Temel hak ve özgürlükler, Anayasadaki ilgili maddelere dayanılarak ancak kanunla sınırlanabilir.'},
+  {k:'Genel Hukuk',s:'"Kesin hüküm" (kesinleşmiş karar) neyi sağlar?',sec:['Yeniden yargılama','Aynı konunun tekrar dava edilememesi','Temyiz','İtiraz','İnfaz durması'],d:1,a:'Kesin hüküm, aynı taraflar arasında aynı konunun tekrar dava edilmesini engeller (kesin hüküm etkisi).'},
+];
+
+/* ═══ GÜNLÜK SEED ROTASYON ═══ */
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
+function prng(seed){let s=seed>>>0;return()=>{s=(s*1103515245+12345)>>>0;return s/4294967296;};}
+function karistir(arr,seed){const a=arr.slice();const r=prng(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function bugunKey(){return new Date().toISOString().slice(0,10);}
+
+/* Havuz 100'den küçükse tekrarla genişlet, sonra karıştırıp 100 al */
+function gununSorulari(){
+  let havuz=SORULAR.slice();
+  const seed=hash('gm-'+bugunKey());
+  havuz=karistir(havuz,seed);
+  const out=[];let i=0,tur=0;
+  while(out.length<100){
+    out.push(havuz[i%havuz.length]);
+    i++;
+    if(i%havuz.length===0){tur++;havuz=karistir(SORULAR,seed+tur);} // her turda farklı sıra
+  }
+  return out.slice(0,100);
+}
+
+let _acikSayisi=0;
+function qHtml(q,i){
+  return `<div class="qitem" data-i="${i}">
+    <div class="q" onclick="this.parentElement.classList.toggle('open');sayacGuncelle()"><span class="no">${i+1}</span><div><span class="tag">${q.k}</span><br>${q.s}</div></div>
+    <div class="a">${q.c}</div>
+  </div>`;
+}
+let _gunun=[];
+function gununCiz(){
+  $("gununTarih").textContent=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · her gün farklı 100 soru';
+  _gunun=gununSorulari();
+  $("gununListe").innerHTML=_gunun.map((q,i)=>qHtml(q,i)).join('');
+  sayacGuncelle();
+}
+function sayacGuncelle(){
+  const ac=document.querySelectorAll('#gununListe .qitem.open').length;
+  $("gununSayac").textContent=ac+'/100';
+}
+function hepsiniAc(ac){
+  document.querySelectorAll('#gununListe .qitem').forEach(q=>q.classList.toggle('open',ac));
+  sayacGuncelle();
+}
+function sesliOku(){
+  if(!('speechSynthesis'in window))return;
+  if(speechSynthesis.speaking){speechSynthesis.cancel();return;}
+  _gunun.slice(0,10).forEach((q,i)=>{
+    const u=new SpeechSynthesisUtterance(`${i+1}. ${q.s} Cevap: ${q.c}`);u.lang='tr-TR';u.rate=.98;speechSynthesis.speak(u);
+  });
+}
+
+/* ═══ TEST MODU ═══ */
+let _test={sorular:[],cvp:{},bitti:false};
+function testDersDoldur(){
+  const sel=document.getElementById('testDers');if(!sel||sel.dataset.dolu)return;
+  const dersler=[...new Set(TEST_SORULARI.map(t=>t.k))];
+  dersler.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d+' ('+TEST_SORULARI.filter(t=>t.k===d).length+')';sel.appendChild(o);});
+  sel.dataset.dolu="1";
+  const hiz=document.getElementById('testHizli');
+  if(hiz)hiz.innerHTML=dersler.map(d=>`<button class="gbtn" style="font-size:12px" onclick="testHizliBaslat('${d.replace(/'/g,"\\'")}')">${d} (${TEST_SORULARI.filter(t=>t.k===d).length})</button>`).join('');
+  testIstatistikCiz();
+}
+function testHizliBaslat(ders){
+  document.getElementById('testDers').value=ders;
+  document.getElementById('testAdet').value='10';
+  testBaslat();
+}
+function testIstatistikCiz(){
+  const el=document.getElementById('testIstatistik');if(!el)return;
+  let g=[];try{g=JSON.parse(localStorage.getItem('gm_test_gecmis')||'[]');}catch(e){}
+  if(!g.length){el.textContent='Toplam '+TEST_SORULARI.length+' çoktan seçmeli soru · henüz test çözmedin.';return;}
+  const ort=Math.round(g.reduce((s,x)=>s+x.yuzde,0)/g.length);
+  const enIyi=Math.max(...g.map(x=>x.yuzde));
+  el.innerHTML='📊 '+g.length+' test çözdün · ortalama <b style="color:var(--acc)">%'+ort+'</b> · en iyi <b style="color:#66bb6a">%'+enIyi+'</b> · toplam '+TEST_SORULARI.length+' soru havuzu';
+}
+function testBaslat(){
+  const ders=document.getElementById('testDers').value;
+  const adet=parseInt(document.getElementById('testAdet').value,10);
+  let havuz=ders?TEST_SORULARI.filter(t=>t.k===ders):TEST_SORULARI.slice();
+  havuz=karistir(havuz,hash('test-'+Date.now()));
+  _test={sorular:havuz.slice(0,Math.min(adet,havuz.length)),cvp:{},bitti:false};
+  document.getElementById('testKurulum').style.display='none';
+  testRender();
+}
+function testRender(){
+  const HARF=['A','B','C','D','E'];
+  const alan=document.getElementById('testAlan');
+  const cevaplanan=Object.keys(_test.cvp).length;
+  alan.innerHTML=`<div class="card" style="position:sticky;top:106px;z-index:5;display:flex;justify-content:space-between;align-items:center">
+      <b>${cevaplanan}/${_test.sorular.length} cevaplandı</b>
+      <button class="gbtn" style="background:var(--acc);color:#04121c;font-weight:800" onclick="testBitir()">✅ Testi Bitir</button>
+    </div>`+
+    _test.sorular.map((q,i)=>{
+      const secilen=_test.cvp[i];const cevaplandi=secilen!==undefined;
+      return `<div class="card">
+        <div style="font-size:11px;color:var(--mut);font-weight:700;margin-bottom:4px">SORU ${i+1} · ${q.k}</div>
+        <div style="font-weight:600;margin-bottom:10px">${q.s}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${q.sec.map((se,j)=>{
+            let bg='var(--panel2)',bd='var(--line)',ic='';
+            if(cevaplandi){
+              if(j===q.d){bg='rgba(102,187,106,.18)';bd='#66bb6a';ic=' ✓';}
+              else if(j===secilen){bg='rgba(239,83,80,.15)';bd='#ef5350';ic=' ✗';}
+            }
+            return `<div onclick="testSec(${i},${j})" style="cursor:${cevaplandi?'default':'pointer'};padding:9px 12px;border-radius:10px;background:${bg};border:1px solid ${bd};font-size:13.5px"><b>${HARF[j]})</b> ${se}${ic}</div>`;
+          }).join('')}
+        </div>
+        ${cevaplandi?`<div style="margin-top:8px;padding:9px 12px;background:rgba(79,195,247,.1);border-left:3px solid var(--acc);border-radius:8px;font-size:12.5px"><b>${secilen===q.d?'✅ Doğru!':'❌ Yanlış.'}</b> ${q.a}</div>`:''}
+      </div>`;
+    }).join('');
+}
+function testSec(i,j){
+  if(_test.cvp[i]!==undefined)return; // tek sefer
+  _test.cvp[i]=j;
+  testRender();
+}
+function testBitir(){
+  const toplam=_test.sorular.length;
+  let dogru=0;_test.sorular.forEach((q,i)=>{if(_test.cvp[i]===q.d)dogru++;});
+  const yuzde=Math.round(dogru/toplam*100);
+  try{const g=JSON.parse(localStorage.getItem('gm_test_gecmis')||'[]');g.push({tarih:new Date().toISOString(),dogru,toplam,yuzde});localStorage.setItem('gm_test_gecmis',JSON.stringify(g.slice(-100)));}catch(e){}
+  const renk=yuzde>=70?'#66bb6a':yuzde>=50?'#ffb74d':'#ef5350';
+  const mesaj=yuzde>=70?'Harika! Bu tempoyla sınav senin 💪':yuzde>=50?'İyi yoldasın, yanlışları tekrar et 👊':'Biraz daha çalışalım, açıklamaları oku 🌱';
+  const alan=document.getElementById('testAlan');
+  alan.insertAdjacentHTML('afterbegin',`<div class="card" style="text-align:center;border:2px solid ${renk}">
+    <div style="font-size:13px;color:var(--mut)">TEST KARNESİ</div>
+    <div style="font-size:40px;font-weight:800;color:${renk}">%${yuzde}</div>
+    <div style="font-size:15px;font-weight:700">${dogru} / ${toplam} doğru</div>
+    <div style="font-size:12.5px;color:var(--mut);margin-top:6px">${mesaj}</div>
+    <button class="gbtn" style="margin-top:12px" onclick="testYeniden()">🔄 Yeni Test</button>
+  </div>`);
+  testIstatistikCiz();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function testYeniden(){document.getElementById('testAlan').innerHTML='';document.getElementById('testKurulum').style.display='block';testIstatistikCiz();window.scrollTo(0,0);}
+
+/* ═══ KONU ÖZETLERİ ═══ */
+function ozetCiz(){
+  const q=($("ozetAra").value||'').toLocaleLowerCase('tr').trim();
+  const liste=KONU_OZET.filter(o=>!q||(o.ad+' '+o.mad.join(' ')).toLocaleLowerCase('tr').includes(q));
+  $("ozetListe").innerHTML=liste.length?liste.map(o=>`<div class="ozet"><h3>${o.ad}</h3><ul>${o.mad.map(m=>`<li>${m}</li>`).join('')}</ul></div>`).join(''):'<p style="color:var(--mut)">Eşleşen konu yok.</p>';
+}
+
+/* ═══ TÜM SORULAR ═══ */
+function tumCiz(){
+  const q=($("tumAra").value||'').toLocaleLowerCase('tr').trim();
+  const liste=SORULAR.filter(x=>!q||(x.k+' '+x.s+' '+x.c).toLocaleLowerCase('tr').includes(q));
+  $("tumSayac").textContent=liste.length+' / '+SORULAR.length+' soru';
+  const vur=t=>q?t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):t;
+  $("tumListe").innerHTML=liste.length?liste.map((x,i)=>`<div class="qitem" onclick="this.classList.toggle('open')">
+    <div class="q"><span class="no">${i+1}</span><div><span class="tag">${x.k}</span><br>${vur(x.s)}</div></div>
+    <div class="a">${vur(x.c)}</div></div>`).join(''):'<p style="color:var(--mut)">Eşleşen soru yok.</p>';
+}
+
+/* ═══ NAV ═══ */
+document.querySelectorAll('nav a').forEach(a=>{
+  a.onclick=()=>{
+    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    $('pane'+a.dataset.p.charAt(0).toUpperCase()+a.dataset.p.slice(1)).classList.add('active');
+    if(a.dataset.p==='ozet')ozetCiz();
+    if(a.dataset.p==='tum')tumCiz();
+    if(a.dataset.p==='test')testDersDoldur();
+  };
+});
+
+gununCiz();ozetCiz();tumCiz();testDersDoldur();
+</script>
+</body>
+</html>

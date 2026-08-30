@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muhasebe TR - Günlük Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .category {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .category-content {
+            padding: 20px;
+        }
+
+        .article {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .article:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .article-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .article-desc {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        .article-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .article-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 12px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .article-link:hover {
+            text-decoration: underline;
+        }
+
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Muhasebe TR - Günlük Panel</h1>
+            <p>Güncellenme: 18.08.2026 08:01</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Toplam Yazı</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2</div>
+                <div class="stat-label">Vergi</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Amortisman</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Asgari Ücret</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Muhasebe</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="category">
+                <div class="category-header">Vergi (2)</div>
+                <div class="category-content">
+                    <div class="article">
+                        <div class="article-title">KDV Oranlarında Yeni Değişiklikler</div>
+                        <div class="article-desc">Vergi Müfettişleri Derneği tarafından yayınlanan KDV oranı değişiklikleri</div>
+                        <div class="article-meta">16.08.2026</div>
+                        <a href="https://www.muhasebetr.com/kdv-degisiklikleri/" target="_blank" class="article-link">Devamını Oku →</a>
+                    </div>
+                    <div class="article">
+                        <div class="article-title">İhracat Gümrük Vergileri</div>
+                        <div class="article-desc">Dış ticaret işlemlerinde gümrük vergilendirmesi</div>
+                        <div class="article-meta">14.08.2026</div>
+                        <a href="https://www.muhasebetr.com/gumruk-vergiler/" target="_blank" class="article-link">Devamını Oku →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="category">
+                <div class="category-header">Amortisman (1)</div>
+                <div class="category-content">
+                    <div class="article">
+                        <div class="article-title">Demirbaş Amortisman Sınırları</div>
+                        <div class="article-desc">2026 yılı için demirbaş ve amortisman oranları</div>
+                        <div class="article-meta">15.08.2026</div>
+                        <a href="https://www.muhasebetr.com/amortisman-2026/" target="_blank" class="article-link">Devamını Oku →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="category">
+                <div class="category-header">Asgari Ücret (1)</div>
+                <div class="category-content">
+                    <div class="article">
+                        <div class="article-title">2026 Asgari Ücret Güncellemesi</div>
+                        <div class="article-desc">Yeni asgari ücret oranları ve bordro hesaplamalarında nelerin değişeceği</div>
+                        <div class="article-meta">17.08.2026</div>
+                        <a href="https://www.muhasebetr.com/asgari-ucret-2026/" target="_blank" class="article-link">Devamını Oku →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="category">
+                <div class="category-header">Muhasebe (1)</div>
+                <div class="category-content">
+                    <div class="article">
+                        <div class="article-title">Köprü Kredilerin Finansman Gider Kısıtlaması</div>
+                        <div class="article-desc">Birebir Aktarılan Köprü Kredilerin Finansman Gider Kısıtlaması Karşısındaki Durumu ve Muhasebe Kayıtları</div>
+                        <div class="article-meta">18.08.2026</div>
+                        <a href="https://www.muhasebetr.com/kopru-krediler/" target="_blank" class="article-link">Devamını Oku →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Muhasebe TR - Günlük Muhasebe Yazıları Panel | Otomatis Oluşturulan Sistem</p>
+        </div>
+    </div>
+</body>
+</html>
